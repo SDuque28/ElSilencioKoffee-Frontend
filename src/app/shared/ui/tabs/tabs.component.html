@@ -1,0 +1,19 @@
+<div class="space-y-3">
+  <div class="inline-flex rounded-md border border-border bg-amber-50 p-1">
+    @for (tab of tabs; track tab.id) {
+      <button
+        class="rounded px-3 py-1.5 text-sm font-medium"
+        [class.bg-white]="selectedId() === tab.id"
+        [class.shadow-sm]="selectedId() === tab.id"
+        [class.text-foreground]="selectedId() === tab.id"
+        [class.text-muted]="selectedId() !== tab.id"
+        type="button"
+        (click)="selectTab(tab.id)"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <ng-content />
+</div>

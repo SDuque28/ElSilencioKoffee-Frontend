@@ -1,0 +1,22 @@
+<div class="pointer-events-none fixed inset-x-0 top-4 z-[60] flex justify-center px-4">
+  <div class="w-full max-w-sm space-y-2">
+    @for (toast of toastService.messages(); track toast.id) {
+      <div
+        class="pointer-events-auto rounded-md border p-4 shadow-lg"
+        [ngClass]="getClasses(toast.variant)"
+      >
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-sm font-semibold">{{ toast.title }}</p>
+            @if (toast.description) {
+              <p class="mt-1 text-xs opacity-85">{{ toast.description }}</p>
+            }
+          </div>
+          <button class="text-xs font-semibold" (click)="toastService.dismiss(toast.id)">
+            Close
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

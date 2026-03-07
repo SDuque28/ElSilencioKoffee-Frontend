@@ -1,0 +1,22 @@
+<div class="overflow-hidden rounded-xl border border-border bg-white">
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-left text-sm">
+      <thead class="bg-amber-50">
+        <tr>
+          @for (column of columns; track column.key) {
+            <th class="px-4 py-3 font-semibold text-foreground">{{ column.label }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows; track $index) {
+          <tr class="border-t border-border">
+            @for (column of columns; track column.key) {
+              <td class="px-4 py-3 text-muted">{{ row[column.key] }}</td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

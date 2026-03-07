@@ -1,0 +1,13 @@
+<div class="space-y-2">
+  @if (label) {
+    <p class="text-sm font-medium text-foreground">{{ label }}</p>
+  }
+
+  <ng-content />
+
+  @if (error) {
+    <p class="text-xs text-danger">{{ error }}</p>
+  } @else if (hint) {
+    <p class="text-xs text-muted">{{ hint }}</p>
+  }
+</div>

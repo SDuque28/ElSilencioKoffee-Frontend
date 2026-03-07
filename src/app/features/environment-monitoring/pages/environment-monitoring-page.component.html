@@ -1,0 +1,16 @@
+<section class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-semibold">Environmental Monitoring</h1>
+    <p class="text-sm text-muted">Track humidity and temperature from sensor streams.</p>
+  </div>
+
+  <app-card>
+    <h2 class="mb-4 text-lg font-semibold">Temperature</h2>
+    <app-chart-container type="line" [data]="temperatureData" />
+  </app-card>
+
+  <app-card>
+    <h2 class="mb-4 text-lg font-semibold">Humidity</h2>
+    <app-chart-container type="line" [data]="humidityData" />
+  </app-card>
+</section>

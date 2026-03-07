@@ -1,0 +1,27 @@
+<div class="mx-auto max-w-md py-12">
+  <app-card>
+    <h1 class="text-2xl font-semibold text-foreground">Create account</h1>
+    <p class="mt-1 text-sm text-muted">Register to purchase coffee and access order history.</p>
+
+    <form class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+      <app-form-field label="Full name">
+        <input class="{{ controlClasses }}" type="text" formControlName="name" />
+      </app-form-field>
+
+      <app-form-field label="Email">
+        <input class="{{ controlClasses }}" type="email" formControlName="email" />
+      </app-form-field>
+
+      <app-form-field label="Password">
+        <input class="{{ controlClasses }}" type="password" formControlName="password" />
+      </app-form-field>
+
+      <app-button type="submit" className="w-full">Register</app-button>
+    </form>
+
+    <p class="mt-4 text-sm text-muted">
+      Already registered?
+      <a routerLink="/login" class="font-medium text-primary hover:underline">Sign in</a>
+    </p>
+  </app-card>
+</div>

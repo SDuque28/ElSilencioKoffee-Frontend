@@ -1,0 +1,17 @@
+<div class="relative inline-block" appClickOutside (appClickOutside)="close()">
+  <button
+    class="inline-flex h-10 items-center rounded-md border border-border bg-white px-3 text-sm font-medium"
+    type="button"
+    (click)="toggle()"
+  >
+    {{ label }}
+  </button>
+
+  @if (isOpen()) {
+    <div
+      class="absolute right-0 z-30 mt-2 min-w-[10rem] rounded-md border border-border bg-white p-2 shadow-soft"
+    >
+      <ng-content />
+    </div>
+  }
+</div>

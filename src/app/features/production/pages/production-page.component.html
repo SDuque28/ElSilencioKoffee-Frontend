@@ -1,0 +1,11 @@
+<section class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-semibold">Production Analytics</h1>
+    <p class="text-sm text-muted">Monitor coffee output to align operations and sales demand.</p>
+  </div>
+
+  <app-card>
+    <h2 class="mb-4 text-lg font-semibold">Production Output</h2>
+    <app-chart-container type="bar" [data]="productionData" />
+  </app-card>
+</section>
