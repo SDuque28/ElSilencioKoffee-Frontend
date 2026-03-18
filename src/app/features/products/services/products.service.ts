@@ -3,6 +3,11 @@ import { delay, of, tap, type Observable } from 'rxjs';
 
 import type { Product } from '../../../core/models/product.model';
 
+export interface ProductsListResponse {
+  count: number;
+  products: Product[];
+}
+
 const MOCK_PRODUCTS: Product[] = [
   {
     id: 'ethiopian-yirgacheffe',
@@ -114,14 +119,19 @@ const MOCK_PRODUCTS: Product[] = [
   providedIn: 'root',
 })
 export class ProductsService {
-  listProducts(): Observable<Product[]> {
+  listProducts(): Observable<ProductsListResponse> {
     console.log('[ProductsService] listProducts() called');
 
-    return this.withLatency(MOCK_PRODUCTS.map((product) => ({ ...product }))).pipe(
-      tap((products) => {
+    const response: ProductsListResponse = {
+      count: MOCK_PRODUCTS.length,
+      products: MOCK_PRODUCTS.map((product) => ({ ...product })),
+    };
+
+    return this.withLatency(response).pipe(
+      tap((result) => {
         console.log('[ProductsService] listProducts() resolved', {
-          count: products.length,
-          ids: products.map((product) => product.id),
+          count: result.count,
+          ids: result.products.map((product) => product.id),
         });
       }),
     );

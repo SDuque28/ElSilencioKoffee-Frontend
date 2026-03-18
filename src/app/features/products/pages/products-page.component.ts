@@ -8,7 +8,7 @@ import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { ProductsService } from '../services/products.service';
+import { ProductsService, type ProductsListResponse } from '../services/products.service';
 
 @Component({
   selector: 'app-products-page',
@@ -36,13 +36,13 @@ export class ProductsPageComponent implements OnInit {
       .listProducts()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (products) => {
+        next: (response: ProductsListResponse) => {
           console.log('[ProductsPageComponent] products received', {
-            count: products.length,
-            products,
+            count: response.count,
+            products: response.products,
           });
 
-          this.products = products;
+          this.products = Array.isArray(response.products) ? response.products : [];
           this.isLoading = false;
         },
         error: (error) => {
