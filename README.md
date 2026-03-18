@@ -1,18 +1,26 @@
 # El Silencio Koffee Frontend
 
-Angular frontend foundation for an ecommerce platform with analytics and environmental monitoring, designed to consume a Spring Boot REST API.
+Angular frontend for El Silencio Koffee in `PRE-BACKEND STABILIZATION` mode. The application is fully navigable with structured mocks aligned to the API contract defined in [`documentation/routes.md`](./documentation/routes.md).
 
-## 1. Tech Stack
+## 1. Current Status
 
-- Angular 21 (Standalone Components + Angular Router + HttpClient)
+- Frontend works standalone without a real backend connection
+- Global mock mode is enabled through `isMockMode = true`
+- All frontend routes are accessible
+- Services are aligned with the documented API contract
+- Mocks live in services, not in components
+
+## 2. Tech Stack
+
+- Angular 21
 - TypeScript strict mode
+- Angular Router + HttpClient
 - TailwindCSS
-- class-variance-authority + clsx + tailwind-merge (design-system style variants)
-- lucide-angular (icon system)
-- Chart.js (dashboard chart rendering)
+- Chart.js
+- lucide-angular
 - ESLint + Prettier
 
-## 2. Setup
+## 3. Local Setup
 
 ### Install dependencies
 
@@ -28,7 +36,7 @@ npm start
 
 Default URL: `http://localhost:4200`
 
-### Build for production
+### Build
 
 ```bash
 npm run build
@@ -41,100 +49,106 @@ npm run lint
 npm run format
 ```
 
-## 3. Environment Configuration
+## 4. Environment Configuration
 
-Environment files live in `src/environments`:
+Environment files live in [`src/environments`](./src/environments):
 
 - `environment.ts`
 - `environment.development.ts`
 - `environment.production.ts`
 
-Each exposes:
+Current shared configuration:
 
 ```ts
-apiUrl: 'http://localhost:8080/api';
+apiUrl: 'https://elsilenciokofee.com/api/v1';
+isMockMode: true;
+debugApiLogging: true;
 ```
 
-Production replaces this with:
+### Mock Mode Behavior
 
-```ts
-apiUrl: 'https://api.elsilenciokoffee.com/api';
-```
+When `isMockMode` is `true`:
 
-`angular.json` is configured with file replacements for development and production builds.
+- guards allow full navigation
+- services return structured mock responses
+- interceptor keeps auth header behavior ready for future backend integration
+- API logs are printed for debugging
 
-## 4. Architecture Summary
+When `isMockMode` is changed to `false` later:
 
-This project follows a feature-based, scalable structure:
+- the frontend will use the centralized API base URL
+- guards can enforce real access rules again
+- services are already prepared to call the documented endpoints
+
+## 5. Architecture Summary
 
 ```text
 src/app
   core/
-    services/
-    interceptors/
     guards/
+    interceptors/
     models/
-  shared/
-    components/
-    ui/
-    directives/
-    pipes/
-  layout/
-    components/
-    header/
-    footer/
-    sidebar/
-    main-layout/
+    services/
   features/
     auth/
-    products/
     cart/
-    orders/
     dashboard/
     environment-monitoring/
+    orders/
     production/
+    products/
+  layout/
+  shared/
 ```
 
-### Core layer
+### Core Layer
 
-Contains singleton infrastructure:
+- [`ApiService`](./src/app/core/services/api.service.ts) centralizes `get`, `post`, `patch`, `delete`
+- [`AuthService`](./src/app/core/services/auth.service.ts) manages mock/local session state
+- [`authInterceptor`](./src/app/core/interceptors/auth.interceptor.ts) attaches `Authorization` only when a token exists and normalizes HTTP errors
+- [`authGuard`](./src/app/core/guards/auth.guard.ts) and [`adminGuard`](./src/app/core/guards/admin.guard.ts) are bypassed by flag in mock mode
 
-- `ApiService` (`core/services/api.service.ts`) wraps `HttpClient` with `get/post/put/delete`.
-- `AuthService` (`core/services/auth.service.ts`) manages token/user session state.
-- `authInterceptor` (`core/interceptors/auth.interceptor.ts`) injects JWT token into API requests.
-- `authGuard` and `adminGuard` protect authenticated and admin routes.
+### Feature Layer
 
-### Shared layer
+Each feature owns its pages and services. Mock data is centralized in services to keep components simple and ready for future backend integration.
 
-Reusable, cross-feature UI and primitives:
+### Shared Layer
 
-- `shared/ui/button`
-- `shared/ui/card`
-- `shared/ui/input`
-- `shared/ui/form-field`
-- `shared/ui/dialog`
-- `shared/ui/toast`
-- `shared/ui/badge`
-- `shared/ui/dropdown`
-- `shared/ui/tabs`
-- `shared/ui/table`
-- `shared/ui/chart`
+Reusable UI primitives live under `shared/ui` and are used across ecommerce and dashboard flows.
 
-### Layout layer
+## 6. API Contract Alignment
 
-Separates layout concerns from feature content:
+The single source of truth is [`documentation/routes.md`](./documentation/routes.md).
 
-- `Header` + `Footer` for global shell
-- `Sidebar` for admin navigation
-- `MainLayout` supports both public ecommerce and admin dashboard modes
+The frontend is currently prepared around:
 
-### Features layer
+- Base URL: `/api/v1`
+- Standard success response:
 
-Each feature owns its routes/pages/services and can evolve independently.
+```json
+{ "success": true, "data": {}, "message": "OK" }
+```
 
-## 5. Routing and Lazy Loading
+- Standard error response:
 
-Configured in `src/app/app.routes.ts` with lazy loading for features:
+```json
+{ "success": false, "error": "message", "code": 400 }
+```
+
+Typed models already aligned with the contract include:
+
+- `User`
+- `AuthSession`
+- `Product`
+- `Order`
+- `Cart`
+- `Production`
+- `EnvironmentReading`
+- dashboard metric models
+
+## 7. Routing
+
+Main frontend routes:
 
 - `/login`
 - `/register`
@@ -148,33 +162,24 @@ Configured in `src/app/app.routes.ts` with lazy loading for features:
 - `/dashboard/environment`
 - `/dashboard/production`
 
-Admin dashboard routes are protected with `authGuard` + `adminGuard`.
+In the current phase, no route is blocked.
 
-## 6. State Management Strategy
+## 8. Manual Testing Documentation
 
-Current state strategy is intentionally simple:
+Use [`documentation/test-routes.md`](./documentation/test-routes.md) to test the frontend manually.
 
-- Angular Signals for local and feature state (for example `CartStateService`)
-- RxJS streams for async HTTP interactions
+That file includes:
 
-This avoids premature complexity and leaves room for NgRx adoption only if scale demands it.
+- all frontend routes
+- expected API endpoint per page
+- HTTP method
+- auth required by contract
+- current mode (`MOCK`)
+- manual validation checklist
 
-## 7. Design System Foundation
+## 9. Development Notes
 
-A shadcn-inspired Angular UI approach is implemented using:
-
-- `class-variance-authority` for variant APIs (button/badge)
-- `clsx` + `tailwind-merge` via `cn()` helper for predictable class composition
-- Tailwind utility tokens centralized in `tailwind.config.js`
-
-## 8. Chart Support
-
-`shared/ui/chart/chart-container.component.ts` wraps Chart.js so future dashboard charts can be added with a unified API.
-
-## 9. REST Integration Pattern
-
-All HTTP calls should pass through `ApiService` to keep:
-
-- Base URL handling centralized
-- Request conventions consistent
-- Future enhancements (retry, error mapping, telemetry) in one place
+- Do not move mocks back into components
+- Keep services aligned with `documentation/routes.md`
+- Prefer extending typed models before integrating the real backend
+- Preserve `isMockMode` until the backend is ready
