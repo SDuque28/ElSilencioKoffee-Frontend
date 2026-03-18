@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { delay, of, type Observable } from 'rxjs';
+import { delay, of, tap, type Observable } from 'rxjs';
 
 import type { Product } from '../../../core/models/product.model';
 
@@ -115,7 +115,16 @@ const MOCK_PRODUCTS: Product[] = [
 })
 export class ProductsService {
   listProducts(): Observable<Product[]> {
-    return this.withLatency(MOCK_PRODUCTS.map((product) => ({ ...product })));
+    console.log('[ProductsService] listProducts() called');
+
+    return this.withLatency(MOCK_PRODUCTS.map((product) => ({ ...product }))).pipe(
+      tap((products) => {
+        console.log('[ProductsService] listProducts() resolved', {
+          count: products.length,
+          ids: products.map((product) => product.id),
+        });
+      }),
+    );
   }
 
   listFeaturedProducts(): Observable<Product[]> {
@@ -135,8 +144,17 @@ export class ProductsService {
   }
 
   getProduct(productId: string): Observable<Product | undefined> {
+    console.log('[ProductsService] getProduct() called', { productId });
+
     const product = MOCK_PRODUCTS.find((item) => item.id === productId);
-    return this.withLatency(product ? { ...product } : undefined);
+    return this.withLatency(product ? { ...product } : undefined).pipe(
+      tap((result) => {
+        console.log('[ProductsService] getProduct() resolved', {
+          productId,
+          found: Boolean(result),
+        });
+      }),
+    );
   }
 
   private withLatency<T>(data: T): Observable<T> {

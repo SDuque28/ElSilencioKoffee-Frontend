@@ -1,3 +1,4 @@
+import { NgFor, NgIf } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -11,7 +12,7 @@ import { ProductsService } from '../services/products.service';
 
 @Component({
   selector: 'app-products-page',
-  imports: [RouterLink, CardComponent, ButtonComponent, BadgeComponent],
+  imports: [NgIf, NgFor, RouterLink, CardComponent, ButtonComponent, BadgeComponent],
   templateUrl: './products-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -26,13 +27,29 @@ export class ProductsPageComponent implements OnInit {
   });
 
   products: Product[] = [];
+  isLoading = true;
 
   ngOnInit(): void {
+    console.log('[ProductsPageComponent] ngOnInit()');
+
     this.productsService
       .listProducts()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((products) => {
-        this.products = products;
+      .subscribe({
+        next: (products) => {
+          console.log('[ProductsPageComponent] products received', {
+            count: products.length,
+            products,
+          });
+
+          this.products = products;
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('[ProductsPageComponent] listProducts() failed', error);
+          this.products = [];
+          this.isLoading = false;
+        },
       });
   }
 
@@ -71,5 +88,9 @@ export class ProductsPageComponent implements OnInit {
     }
 
     return 'Sold out';
+  }
+
+  trackByProductId(_index: number, product: Product): string {
+    return product.id;
   }
 }
