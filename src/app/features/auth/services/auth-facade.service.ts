@@ -1,11 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 
-import {
-  AuthService,
-  type LoginPayload,
-  type RegisterPayload,
-} from '../../../core/services/auth.service';
+import type { AuthSession, LoginPayload, RegisterPayload } from '../../../core/models/auth.model';
+import type { ApiResponse } from '../../../core/models/api-response.model';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,11 +11,11 @@ import {
 export class AuthFacadeService {
   private readonly authService = inject(AuthService);
 
-  login(payload: LoginPayload): Observable<unknown> {
+  login(payload: LoginPayload): Observable<ApiResponse<AuthSession>> {
     return this.authService.login(payload);
   }
 
-  register(payload: RegisterPayload): Observable<unknown> {
+  register(payload: RegisterPayload): Observable<ApiResponse<AuthSession>> {
     return this.authService.register(payload);
   }
 }
