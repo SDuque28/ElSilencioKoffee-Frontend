@@ -1,5 +1,12 @@
 import { NgFor, NgIf } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  type OnInit,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 
@@ -17,6 +24,7 @@ import { ProductsService, type ProductsListResponse } from '../services/products
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductsPageComponent implements OnInit {
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly productsService = inject(ProductsService);
   private readonly toastService = inject(ToastService);
@@ -44,11 +52,13 @@ export class ProductsPageComponent implements OnInit {
 
           this.products = Array.isArray(response.products) ? response.products : [];
           this.isLoading = false;
+          this.cdr.markForCheck();
         },
         error: (error) => {
           console.error('[ProductsPageComponent] listProducts() failed', error);
           this.products = [];
           this.isLoading = false;
+          this.cdr.markForCheck();
         },
       });
   }

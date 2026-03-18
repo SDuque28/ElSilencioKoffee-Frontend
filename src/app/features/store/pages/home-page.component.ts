@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  type OnInit,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 
@@ -15,6 +22,7 @@ import { ProductsService } from '../../products/services/products.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomePageComponent implements OnInit {
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly productsService = inject(ProductsService);
   private readonly toastService = inject(ToastService);
@@ -36,6 +44,7 @@ export class HomePageComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((products) => {
         this.featuredProducts = products.slice(0, 4);
+        this.cdr.markForCheck();
       });
 
     this.productsService
@@ -43,6 +52,7 @@ export class HomePageComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((products) => {
         this.collectionProducts = products;
+        this.cdr.markForCheck();
       });
   }
 
