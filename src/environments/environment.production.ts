@@ -1,4 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.elsilenciokoffee.com/api',
+  apiUrl: 'https://elsilenciokofee.com/api/v1',
+  isMockMode: true,
+  debugApiLogging: true,
 };
