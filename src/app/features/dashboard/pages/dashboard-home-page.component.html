@@ -1,22 +1,22 @@
 <section class="space-y-6">
   <div>
-    <h1 class="text-2xl font-semibold">Dashboard Overview</h1>
-    <p class="text-sm text-muted">
+    <h1 class="text-2xl font-semibold text-[#f3f4f6]">Dashboard Overview</h1>
+    <p class="text-sm text-[#9ca3af]">
       Unified entry point for ecommerce, production, and environmental analytics.
     </p>
   </div>
 
   <div class="grid gap-4 md:grid-cols-3">
     @for (kpi of kpiCards; track kpi.label) {
-      <app-card>
-        <p class="text-xs uppercase tracking-wide text-muted">{{ kpi.label }}</p>
-        <p class="mt-2 text-2xl font-semibold text-primary">{{ kpi.value }}</p>
+      <app-card className="border-[#2a2a2e] bg-[#1a1a1d] text-[#e5e5e5] shadow-none">
+        <p class="text-xs uppercase tracking-wide text-[#9ca3af]">{{ kpi.label }}</p>
+        <p class="mt-2 text-2xl font-semibold text-[#ff7a00]">{{ kpi.value }}</p>
       </app-card>
     }
   </div>
 
-  <app-card>
-    <h2 class="mb-4 text-lg font-semibold">Revenue trend</h2>
-    <app-chart-container type="line" [data]="chartData" />
+  <app-card className="border-[#2a2a2e] bg-[#1a1a1d] text-[#e5e5e5] shadow-none">
+    <h2 class="mb-4 text-lg font-semibold text-[#f3f4f6]">Revenue trend</h2>
+    <app-chart-container type="line" [data]="chartData" [options]="chartOptions" />
   </app-card>
 </section>

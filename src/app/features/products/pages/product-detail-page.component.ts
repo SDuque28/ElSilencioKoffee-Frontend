@@ -2,11 +2,11 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } f
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
-import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import type { Product } from '../../../core/models/product.model';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { ProductsService } from '../services/products.service';
 
 @Component({
@@ -19,9 +19,10 @@ export class ProductDetailPageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly productsService = inject(ProductsService);
-  private readonly currencyFormatter = new Intl.NumberFormat('es-CO', {
+  private readonly toastService = inject(ToastService);
+  private readonly currencyFormatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'COP',
+    currency: 'USD',
     maximumFractionDigits: 0,
   });
 
@@ -29,41 +30,50 @@ export class ProductDetailPageComponent implements OnInit {
   product: Product | null = null;
   loadError: string | null = null;
 
-  get priceLabel(): string {
-    return this.product ? this.currencyFormatter.format(this.product.price) : '$ 0';
-  }
-
-  get stockVariant(): 'success' | 'warning' | 'danger' {
-    if (!this.product || this.product.stock <= 0) {
-      return 'danger';
-    }
-
-    return this.product.stock > 10 ? 'success' : 'warning';
-  }
-
-  get stockLabel(): string {
-    if (!this.product || this.product.stock <= 0) {
-      return 'Out of stock';
-    }
-
-    return this.product.stock > 10
-      ? `Stock ${this.product.stock}`
-      : `Only ${this.product.stock} left`;
-  }
-
   ngOnInit(): void {
     this.productsService
       .getProduct(this.productId)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((response) => {
-        if (isApiSuccessResponse(response)) {
-          this.product = response.data;
-          this.loadError = null;
-          return;
-        }
-
-        this.product = null;
-        this.loadError = response.error;
+      .subscribe((product) => {
+        this.product = product ?? null;
+        this.loadError = product ? null : 'This mock product is not available.';
       });
+  }
+
+  addToCart(product: Product): void {
+    console.log('[MOCK CART] add product', product.id);
+    this.toastService.show({
+      title: 'Added to cart',
+      description: `${product.name} was added in mock mode.`,
+      variant: 'success',
+    });
+  }
+
+  formatPrice(price: number): string {
+    return this.currencyFormatter.format(price);
+  }
+
+  stockVariant(stock: number): 'success' | 'warning' | 'danger' {
+    if (stock > 15) {
+      return 'success';
+    }
+
+    if (stock > 0) {
+      return 'warning';
+    }
+
+    return 'danger';
+  }
+
+  stockLabel(stock: number): string {
+    if (stock > 15) {
+      return 'In stock';
+    }
+
+    if (stock > 0) {
+      return `Only ${stock} left`;
+    }
+
+    return 'Sold out';
   }
 }

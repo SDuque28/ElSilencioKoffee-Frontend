@@ -1,18 +1,40 @@
-<div class="overflow-hidden rounded-xl border border-border bg-white">
+<div
+  class="overflow-hidden rounded-xl border"
+  [class.border-border]="theme === 'default'"
+  [class.bg-white]="theme === 'default'"
+  [class.border-[#2a2a2e]]="theme === 'admin'"
+  [class.bg-[#121214]]="theme === 'admin'"
+>
   <div class="overflow-x-auto">
     <table class="min-w-full text-left text-sm">
-      <thead class="bg-amber-50">
+      <thead [class.bg-amber-50]="theme === 'default'" [class.bg-[#1b1b1f]]="theme === 'admin'">
         <tr>
           @for (column of columns; track column.key) {
-            <th class="px-4 py-3 font-semibold text-foreground">{{ column.label }}</th>
+            <th
+              class="px-4 py-3 font-semibold"
+              [class.text-foreground]="theme === 'default'"
+              [class.text-[#f3f4f6]]="theme === 'admin'"
+            >
+              {{ column.label }}
+            </th>
           }
         </tr>
       </thead>
       <tbody>
         @for (row of rows; track $index) {
-          <tr class="border-t border-border">
+          <tr
+            [class.border-t]="true"
+            [class.border-border]="theme === 'default'"
+            [class.border-[#2a2a2e]]="theme === 'admin'"
+          >
             @for (column of columns; track column.key) {
-              <td class="px-4 py-3 text-muted">{{ row[column.key] }}</td>
+              <td
+                class="px-4 py-3"
+                [class.text-muted]="theme === 'default'"
+                [class.text-[#9ca3af]]="theme === 'admin'"
+              >
+                {{ row[column.key] }}
+              </td>
             }
           </tr>
         }

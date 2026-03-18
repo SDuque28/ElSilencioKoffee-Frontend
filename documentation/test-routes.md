@@ -16,21 +16,21 @@
 
 ## Frontend Routes Matrix
 
-| Frontend Route | How To Access | What The Page Does | Expected API Endpoint | HTTP Method | Auth Required By Contract | Current Mode | Manual Test |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| `/` | Open root URL | Redirects to product catalog | N/A | N/A | No | MOCK | Confirm redirect to `/products` |
-| `/login` | Open `/login` | Mock login form and local session creation | `/auth/login` | `POST` | No | MOCK | Submit any valid email/password and confirm redirect |
-| `/register` | Open `/register` | Mock register form and local session creation | `/auth/register` | `POST` | No | MOCK | Submit valid name/email/password and confirm redirect |
-| `/products` | Open `/products` | Lists catalog items using structured product mocks | `/products?page=1&limit=10` | `GET` | No | MOCK | Confirm cards render, details button opens product page |
-| `/product/:id` | Example: `/product/prod-premium-01` | Displays a single product with stock and price | `/products/{id}` | `GET` | No | MOCK | Open a valid product id and verify content loads |
-| `/cart` | Open `/cart` | Loads cart, updates quantities, simulates checkout | `/cart`, `/cart/items`, `/cart/items/{itemId}`, `/orders` | `GET`, `POST`, `PATCH`, `DELETE` | USER | MOCK | Increase/decrease quantity, clear cart, simulate purchase |
-| `/orders` | Open `/orders` | Shows mock order history aligned with contract statuses | `/orders?page=1&limit=10` | `GET` | USER | MOCK | Confirm list renders and statuses are valid (`PENDING`, `SHIPPED`, `DELIVERED`) |
-| `/dashboard` | Open `/dashboard` | Shows overview KPIs and sales trend | `/dashboard/metrics`, `/dashboard/sales?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` | `GET`, `GET` | ADMIN | MOCK | Confirm KPIs and chart load without login |
-| `/dashboard/sales` | Open `/dashboard/sales` | Shows sales chart for mock period data | `/dashboard/sales?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` | `GET` | ADMIN | MOCK | Confirm chart loads and no route blocking occurs |
-| `/dashboard/users` | Open `/dashboard/users` | Shows mock top buyers table | `/dashboard/top-buyers` | `GET` | ADMIN | MOCK | Confirm rows render with purchases and spend |
-| `/dashboard/environment` | Open `/dashboard/environment` | Shows temperature and humidity charts | `/environment/readings?page=1&limit=10`, `/environment/readings/latest` | `GET`, `GET` | ADMIN | MOCK | Confirm both charts render with reading data |
-| `/dashboard/production` | Open `/dashboard/production` | Shows production output chart | `/production?page=1&limit=10` | `GET` | ADMIN | MOCK | Confirm chart loads with quantity data |
-| `**` | Open any invalid path | Redirects to product catalog | N/A | N/A | No | MOCK | Confirm invalid route returns to `/products` |
+| Frontend Route           | How To Access                       | What The Page Does                                      | Expected API Endpoint                                                            | HTTP Method                      | Auth Required By Contract | Current Mode | Manual Test                                                                     |
+| ------------------------ | ----------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------- | ------------------------- | ------------ | ------------------------------------------------------------------------------- |
+| `/`                      | Open root URL                       | Renders the ecommerce home page with hero and featured products | `/products`                                                                   | `GET`                            | No                        | MOCK         | Confirm hero, featured grid, collections, and brand section render              |
+| `/login`                 | Open `/login`                       | Mock login form and local session creation              | `/auth/login`                                                                    | `POST`                           | No                        | MOCK         | Submit any valid email/password and confirm redirect                            |
+| `/register`              | Open `/register`                    | Mock register form and local session creation           | `/auth/register`                                                                 | `POST`                           | No                        | MOCK         | Submit valid name/email/password and confirm redirect                           |
+| `/products`              | Open `/products`                    | Lists catalog items using structured product mocks      | `/products?page=1&limit=10`                                                      | `GET`                            | No                        | MOCK         | Confirm cards render, details button opens product page                         |
+| `/product/:id`           | Example: `/product/ethiopian-yirgacheffe` | Displays a single product with image, stock, and price | `/products/{id}`                                                                 | `GET`                            | No                        | MOCK         | Open a valid product id and verify content loads                                |
+| `/cart`                  | Open `/cart`                        | Loads cart, updates quantities, simulates checkout      | `/cart`, `/cart/items`, `/cart/items/{itemId}`, `/orders`                        | `GET`, `POST`, `PATCH`, `DELETE` | USER                      | MOCK         | Increase/decrease quantity, clear cart, simulate purchase                       |
+| `/orders`                | Open `/orders`                      | Shows mock order history aligned with contract statuses | `/orders?page=1&limit=10`                                                        | `GET`                            | USER                      | MOCK         | Confirm list renders and statuses are valid (`PENDING`, `SHIPPED`, `DELIVERED`) |
+| `/dashboard`             | Open `/dashboard`                   | Shows overview KPIs and sales trend                     | `/dashboard/metrics`, `/dashboard/sales?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` | `GET`, `GET`                     | ADMIN                     | MOCK         | Confirm KPIs and chart load without login                                       |
+| `/dashboard/sales`       | Open `/dashboard/sales`             | Shows sales chart for mock period data                  | `/dashboard/sales?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD`                       | `GET`                            | ADMIN                     | MOCK         | Confirm chart loads and no route blocking occurs                                |
+| `/dashboard/users`       | Open `/dashboard/users`             | Shows mock top buyers table                             | `/dashboard/top-buyers`                                                          | `GET`                            | ADMIN                     | MOCK         | Confirm rows render with purchases and spend                                    |
+| `/dashboard/environment` | Open `/dashboard/environment`       | Shows temperature and humidity charts                   | `/environment/readings?page=1&limit=10`, `/environment/readings/latest`          | `GET`, `GET`                     | ADMIN                     | MOCK         | Confirm both charts render with reading data                                    |
+| `/dashboard/production`  | Open `/dashboard/production`        | Shows production output chart                           | `/production?page=1&limit=10`                                                    | `GET`                            | ADMIN                     | MOCK         | Confirm chart loads with quantity data                                          |
+| `**`                     | Open any invalid path               | Redirects to the ecommerce home page                    | N/A                                                                              | N/A                              | No                        | MOCK         | Confirm invalid route returns to `/`                                            |
 
 ## Manual Validation Checklist
 
@@ -38,7 +38,7 @@
 
 - Open every route in the matrix directly from the browser
 - Confirm no route is blocked by auth or admin guards
-- Confirm invalid routes redirect safely to `/products`
+- Confirm invalid routes redirect safely to `/`
 
 ### Auth
 
@@ -49,9 +49,9 @@
 
 ### Products
 
-- Validate the catalog renders three structured mock products
-- Open `/product/prod-premium-01`
-- Open `/product/prod-forest-03`
+- Validate the catalog renders 10 structured mock products
+- Open `/product/ethiopian-yirgacheffe`
+- Open `/product/barista-pro-grinder`
 - Confirm stock labels and prices are visible
 
 ### Cart And Orders

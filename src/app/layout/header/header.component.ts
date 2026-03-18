@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
   Coffee,
@@ -19,6 +19,8 @@ import { AuthService } from '../../core/services/auth.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeaderComponent {
+  @Input() layout: 'public' | 'admin' = 'public';
+
   readonly authService = inject(AuthService);
   readonly mobileNavOpen = signal(false);
 
@@ -42,5 +44,9 @@ export class HeaderComponent {
   logout(): void {
     this.closeMobileNav();
     this.authService.logout();
+  }
+
+  get isAdminLayout(): boolean {
+    return this.layout === 'admin';
   }
 }

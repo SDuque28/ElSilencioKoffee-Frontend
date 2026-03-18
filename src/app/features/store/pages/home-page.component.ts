@@ -3,19 +3,18 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 
 import type { Product } from '../../../core/models/product.model';
-import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { ProductsService } from '../services/products.service';
+import { ProductsService } from '../../products/services/products.service';
 
 @Component({
-  selector: 'app-products-page',
-  imports: [RouterLink, CardComponent, ButtonComponent, BadgeComponent],
-  templateUrl: './products-page.component.html',
+  selector: 'app-home-page',
+  imports: [RouterLink, ButtonComponent, CardComponent],
+  templateUrl: './home-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProductsPageComponent implements OnInit {
+export class HomePageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly productsService = inject(ProductsService);
   private readonly toastService = inject(ToastService);
@@ -25,14 +24,25 @@ export class ProductsPageComponent implements OnInit {
     maximumFractionDigits: 0,
   });
 
-  products: Product[] = [];
+  readonly heroImage =
+    'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80';
+
+  featuredProducts: Product[] = [];
+  collectionProducts: Product[] = [];
 
   ngOnInit(): void {
     this.productsService
-      .listProducts()
+      .listFeaturedProducts()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((products) => {
-        this.products = products;
+        this.featuredProducts = products.slice(0, 4);
+      });
+
+    this.productsService
+      .listCollectionProducts()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((products) => {
+        this.collectionProducts = products;
       });
   }
 
@@ -47,29 +57,5 @@ export class ProductsPageComponent implements OnInit {
 
   formatPrice(price: number): string {
     return this.currencyFormatter.format(price);
-  }
-
-  stockVariant(stock: number): 'success' | 'warning' | 'danger' {
-    if (stock > 15) {
-      return 'success';
-    }
-
-    if (stock > 0) {
-      return 'warning';
-    }
-
-    return 'danger';
-  }
-
-  stockLabel(stock: number): string {
-    if (stock > 15) {
-      return 'In stock';
-    }
-
-    if (stock > 0) {
-      return `Only ${stock} left`;
-    }
-
-    return 'Sold out';
   }
 }

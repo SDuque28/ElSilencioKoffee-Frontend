@@ -1,11 +1,13 @@
 <section class="space-y-6">
   <div>
-    <h1 class="text-2xl font-semibold">Production Analytics</h1>
-    <p class="text-sm text-muted">Monitor coffee output to align operations and sales demand.</p>
+    <h1 class="text-2xl font-semibold text-[#f3f4f6]">Production Analytics</h1>
+    <p class="text-sm text-[#9ca3af]">
+      Monitor coffee output to align operations and sales demand.
+    </p>
   </div>
 
-  <app-card>
-    <h2 class="mb-4 text-lg font-semibold">Production Output</h2>
-    <app-chart-container type="bar" [data]="productionData" />
+  <app-card className="border-[#2a2a2e] bg-[#1a1a1d] text-[#e5e5e5] shadow-none">
+    <h2 class="mb-4 text-lg font-semibold text-[#f3f4f6]">Production Output</h2>
+    <app-chart-container type="bar" [data]="productionData" [options]="chartOptions" />
   </app-card>
 </section>

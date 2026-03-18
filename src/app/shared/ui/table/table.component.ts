@@ -13,4 +13,5 @@ export interface TableColumn {
 export class TableComponent {
   @Input() columns: TableColumn[] = [];
   @Input() rows: Record<string, unknown>[] = [];
+  @Input() theme: 'default' | 'admin' = 'default';
 }

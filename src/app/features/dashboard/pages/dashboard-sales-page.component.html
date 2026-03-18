@@ -1,12 +1,12 @@
 <section class="space-y-6">
   <div>
-    <h1 class="text-2xl font-semibold">Sales Metrics</h1>
-    <p class="text-sm text-muted">
+    <h1 class="text-2xl font-semibold text-[#f3f4f6]">Sales Metrics</h1>
+    <p class="text-sm text-[#9ca3af]">
       Category-level performance to support inventory and campaign decisions.
     </p>
   </div>
 
-  <app-card>
-    <app-chart-container type="bar" [data]="chartData" />
+  <app-card className="border-[#2a2a2e] bg-[#1a1a1d] text-[#e5e5e5] shadow-none">
+    <app-chart-container type="bar" [data]="chartData" [options]="chartOptions" />
   </app-card>
 </section>

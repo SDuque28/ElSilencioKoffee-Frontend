@@ -1,35 +1,37 @@
-<aside class="w-64 rounded-xl border border-border bg-surface p-4 shadow-soft">
-  <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-muted">Admin Dashboard</h3>
+<aside
+  class="w-64 rounded-2xl border border-[#2a2a2e] bg-[#171719] p-4 shadow-[0_18px_48px_rgba(0,0,0,0.3)]"
+>
+  <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-[#9ca3af]">Admin Dashboard</h3>
 
   <nav class="space-y-1 text-sm">
     <a
       routerLink="/dashboard/sales"
-      routerLinkActive="bg-amber-100 text-amber-900"
-      class="flex items-center gap-2 rounded-md px-3 py-2 text-muted hover:bg-amber-50 hover:text-foreground"
+      routerLinkActive="bg-[#ff7a00] text-white"
+      class="flex items-center gap-2 rounded-md px-3 py-2 text-[#9ca3af] transition hover:bg-[#1f1f23] hover:text-white"
     >
       <lucide-icon [img]="icons.sales" class="h-4 w-4"></lucide-icon>
       Sales Metrics
     </a>
     <a
       routerLink="/dashboard/users"
-      routerLinkActive="bg-amber-100 text-amber-900"
-      class="flex items-center gap-2 rounded-md px-3 py-2 text-muted hover:bg-amber-50 hover:text-foreground"
+      routerLinkActive="bg-[#ff7a00] text-white"
+      class="flex items-center gap-2 rounded-md px-3 py-2 text-[#9ca3af] transition hover:bg-[#1f1f23] hover:text-white"
     >
       <lucide-icon [img]="icons.users" class="h-4 w-4"></lucide-icon>
       Top Buyers
     </a>
     <a
       routerLink="/dashboard/environment"
-      routerLinkActive="bg-amber-100 text-amber-900"
-      class="flex items-center gap-2 rounded-md px-3 py-2 text-muted hover:bg-amber-50 hover:text-foreground"
+      routerLinkActive="bg-[#ff7a00] text-white"
+      class="flex items-center gap-2 rounded-md px-3 py-2 text-[#9ca3af] transition hover:bg-[#1f1f23] hover:text-white"
     >
       <lucide-icon [img]="icons.environment" class="h-4 w-4"></lucide-icon>
       Environment
     </a>
     <a
       routerLink="/dashboard/production"
-      routerLinkActive="bg-amber-100 text-amber-900"
-      class="flex items-center gap-2 rounded-md px-3 py-2 text-muted hover:bg-amber-50 hover:text-foreground"
+      routerLinkActive="bg-[#ff7a00] text-white"
+      class="flex items-center gap-2 rounded-md px-3 py-2 text-[#9ca3af] transition hover:bg-[#1f1f23] hover:text-white"
     >
       <lucide-icon [img]="icons.production" class="h-4 w-4"></lucide-icon>
       Production

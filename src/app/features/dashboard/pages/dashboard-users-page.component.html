@@ -1,12 +1,12 @@
 <section class="space-y-6">
   <div>
-    <h1 class="text-2xl font-semibold">Top Buyers</h1>
-    <p class="text-sm text-muted">
+    <h1 class="text-2xl font-semibold text-[#f3f4f6]">Top Buyers</h1>
+    <p class="text-sm text-[#9ca3af]">
       Customer ranking will map to `/dashboard/top-buyers` API endpoints.
     </p>
   </div>
 
-  <app-card>
-    <app-table [columns]="columns" [rows]="rows" />
+  <app-card className="border-[#2a2a2e] bg-[#1a1a1d] text-[#e5e5e5] shadow-none">
+    <app-table [columns]="columns" [rows]="rows" theme="admin" />
   </app-card>
 </section>

@@ -18,7 +18,10 @@ export const routes: Routes = [
     component: MainLayoutComponent,
     data: { layout: 'public' },
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'products' },
+      {
+        path: '',
+        loadChildren: () => import('./features/store/store.routes').then((m) => m.STORE_ROUTES),
+      },
       {
         path: 'products',
         loadChildren: () =>
@@ -54,5 +57,5 @@ export const routes: Routes = [
       },
     ],
   },
-  { path: '**', redirectTo: 'products' },
+  { path: '**', redirectTo: '' },
 ];

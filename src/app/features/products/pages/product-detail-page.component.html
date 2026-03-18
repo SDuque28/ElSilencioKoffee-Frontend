@@ -1,33 +1,59 @@
-<div class="mx-auto max-w-3xl">
-  <app-card>
+<div class="mx-auto max-w-5xl">
+  <app-card
+    className="overflow-hidden border-[#ebe3da] bg-white p-0 shadow-[0_18px_45px_rgba(92,65,45,0.08)]"
+  >
     @if (product; as currentProduct) {
-      <div class="flex flex-wrap items-center gap-2">
-        <h1 class="text-2xl font-semibold">{{ currentProduct.name }}</h1>
-        <app-badge [variant]="stockVariant">{{ stockLabel }}</app-badge>
-      </div>
+      <div class="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
+        <img
+          [src]="currentProduct.image"
+          [alt]="currentProduct.name"
+          class="h-full min-h-[360px] w-full object-cover"
+        />
 
-      <p class="mt-3 text-sm text-muted">{{ currentProduct.description }}</p>
-      <p class="mt-4 text-lg font-semibold text-primary">{{ priceLabel }}</p>
+        <div class="space-y-6 p-8 md:p-10">
+          <div class="space-y-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.32em] text-[#8c765f]">
+              {{ currentProduct.category }}
+            </p>
+            <div class="flex flex-wrap items-center gap-3">
+              <h1 class="text-3xl font-semibold text-[#2f2219]">{{ currentProduct.name }}</h1>
+              <app-badge [variant]="stockVariant(currentProduct.stock)">
+                {{ stockLabel(currentProduct.stock) }}
+              </app-badge>
+            </div>
+            <p class="text-base leading-7 text-[#6b5c4f]">{{ currentProduct.description }}</p>
+          </div>
 
-      <div class="mt-6 grid gap-4 md:grid-cols-2">
-        <div class="rounded-lg border border-border bg-amber-50 p-4">
-          <h2 class="font-semibold">Product ID</h2>
-          <p class="text-sm text-muted">{{ currentProduct.id }}</p>
+          <div class="grid gap-4 md:grid-cols-2">
+            <div class="rounded-2xl border border-[#ece4da] bg-[#faf6f1] p-5">
+              <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-[#8c765f]">Price</h2>
+              <p class="mt-3 text-2xl font-semibold text-[#2f2219]">
+                {{ formatPrice(currentProduct.price) }}
+              </p>
+            </div>
+            <div class="rounded-2xl border border-[#ece4da] bg-[#faf6f1] p-5">
+              <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-[#8c765f]">Stock</h2>
+              <p class="mt-3 text-2xl font-semibold text-[#2f2219]">{{ currentProduct.stock }}</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-3">
+            <app-button (buttonClick)="addToCart(currentProduct)">Add to cart</app-button>
+            <app-button variant="outline" routerLink="/products">Back to catalog</app-button>
+          </div>
+
+          <div class="rounded-2xl border border-[#ece4da] bg-[#fcf9f5] p-5">
+            <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-[#8c765f]">
+              Product reference
+            </h2>
+            <p class="mt-3 text-sm text-[#6b5c4f]">{{ currentProduct.id }}</p>
+          </div>
         </div>
-        <div class="rounded-lg border border-border bg-amber-50 p-4">
-          <h2 class="font-semibold">Stock</h2>
-          <p class="text-sm text-muted">{{ currentProduct.stock }} units available</p>
-        </div>
-      </div>
-
-      <div class="mt-6 flex gap-2">
-        <app-button routerLink="/cart">Add to cart</app-button>
-        <app-button variant="outline" routerLink="/products">Back to catalog</app-button>
       </div>
     } @else {
-      <div class="space-y-4">
-        <h1 class="text-2xl font-semibold">Product #{{ productId }}</h1>
-        <p class="text-sm text-muted">
+      <div class="space-y-4 p-8">
+        <h1 class="text-2xl font-semibold text-[#2f2219]">Product #{{ productId }}</h1>
+        <p class="text-sm text-[#6b5c4f]">
           {{ loadError ?? 'No product information is available for this route yet.' }}
         </p>
         <div class="flex gap-2">

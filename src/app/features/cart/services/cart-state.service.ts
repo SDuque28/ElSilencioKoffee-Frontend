@@ -13,20 +13,20 @@ import { OrdersService } from '../../orders/services/orders.service';
 
 const INITIAL_CART_ITEMS: CartItem[] = [
   {
-    itemId: 'item-prod-premium-01',
-    productId: 'prod-premium-01',
-    name: 'Cafe Premium',
+    itemId: 'item-ethiopian-yirgacheffe',
+    productId: 'ethiopian-yirgacheffe',
+    name: 'Ethiopian Yirgacheffe',
     quantity: 1,
-    unitPrice: 15000,
-    subtotal: 15000,
+    unitPrice: 26,
+    subtotal: 26,
   },
   {
-    itemId: 'item-prod-forest-03',
-    productId: 'prod-forest-03',
-    name: 'Forest Blend',
+    itemId: 'item-ceramic-mug',
+    productId: 'ceramic-mug',
+    name: 'Ceramic Mug',
     quantity: 2,
-    unitPrice: 16500,
-    subtotal: 33000,
+    unitPrice: 16,
+    subtotal: 32,
   },
 ];
 
