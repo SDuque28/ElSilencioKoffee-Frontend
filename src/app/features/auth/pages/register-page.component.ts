@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
+import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import { AuthFacadeService } from '../services/auth-facade.service';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
@@ -36,7 +37,16 @@ export class RegisterPageComponent {
     }
 
     this.authFacade.register(this.form.getRawValue()).subscribe({
-      next: () => {
+      next: (response) => {
+        if (!isApiSuccessResponse(response)) {
+          this.toastService.show({
+            title: 'Registration failed',
+            description: response.error,
+            variant: 'error',
+          });
+          return;
+        }
+
         this.toastService.show({
           title: 'Account created',
           description: 'Welcome to El Silencio Koffee.',

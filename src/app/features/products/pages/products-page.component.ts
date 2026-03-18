@@ -1,16 +1,21 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 
+import { isApiSuccessResponse } from '../../../core/models/api-response.model';
+import type { Product } from '../../../core/models/product.model';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
+import { ProductsService } from '../services/products.service';
 
 interface ProductCard {
   id: string;
   name: string;
   description: string;
-  price: string;
-  tag: 'new' | 'featured' | 'organic';
+  priceLabel: string;
+  stockLabel: string;
+  stockVariant: 'success' | 'warning' | 'danger';
 }
 
 @Component({
@@ -19,40 +24,37 @@ interface ProductCard {
   templateUrl: './products-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProductsPageComponent {
-  readonly products: ProductCard[] = [
-    {
-      id: '1',
-      name: 'Volcanic Roast',
-      description: 'Dark roast with cocoa and caramel profile from mountain farms.',
-      price: '$18.90',
-      tag: 'featured',
-    },
-    {
-      id: '2',
-      name: 'Forest Honey Blend',
-      description: 'Medium roast with citrus acidity and floral finish.',
-      price: '$16.20',
-      tag: 'new',
-    },
-    {
-      id: '3',
-      name: 'Organic Sierra Beans',
-      description: 'Certified organic beans with balanced body and sweet aroma.',
-      price: '$21.00',
-      tag: 'organic',
-    },
-  ];
+export class ProductsPageComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly productsService = inject(ProductsService);
+  private readonly currencyFormatter = new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+  });
 
-  badgeVariant(tag: ProductCard['tag']): 'warning' | 'success' | 'neutral' {
-    if (tag === 'new') {
-      return 'warning';
-    }
+  products: ProductCard[] = [];
 
-    if (tag === 'organic') {
-      return 'success';
-    }
+  ngOnInit(): void {
+    this.productsService
+      .listProducts()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => {
+        this.products = isApiSuccessResponse(response)
+          ? response.data.map((product) => this.toProductCard(product))
+          : [];
+      });
+  }
 
-    return 'neutral';
+  private toProductCard(product: Product): ProductCard {
+    return {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      priceLabel: this.currencyFormatter.format(product.price),
+      stockLabel:
+        product.stock > 10 ? 'Available' : product.stock > 0 ? 'Low stock' : 'Out of stock',
+      stockVariant: product.stock > 10 ? 'success' : product.stock > 0 ? 'warning' : 'danger',
+    };
   }
 }

@@ -26,8 +26,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     setHeaders['Content-Type'] = 'application/json';
   }
 
-  const nextRequest =
-    Object.keys(setHeaders).length > 0 ? request.clone({ setHeaders }) : request;
+  const nextRequest = Object.keys(setHeaders).length > 0 ? request.clone({ setHeaders }) : request;
 
   return next(nextRequest).pipe(
     catchError((error: unknown) => {

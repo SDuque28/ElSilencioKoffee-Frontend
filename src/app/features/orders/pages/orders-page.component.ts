@@ -1,7 +1,11 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
+import { isApiSuccessResponse } from '../../../core/models/api-response.model';
+import type { Order } from '../../../core/models/order.model';
 import { CardComponent } from '../../../shared/ui/card/card.component';
 import { TableComponent, type TableColumn } from '../../../shared/ui/table/table.component';
+import { OrdersService } from '../services/orders.service';
 
 @Component({
   selector: 'app-orders-page',
@@ -9,7 +13,15 @@ import { TableComponent, type TableColumn } from '../../../shared/ui/table/table
   templateUrl: './orders-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrdersPageComponent {
+export class OrdersPageComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly ordersService = inject(OrdersService);
+  private readonly currencyFormatter = new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+  });
+
   readonly columns: TableColumn[] = [
     { key: 'id', label: 'Order ID' },
     { key: 'date', label: 'Date' },
@@ -17,8 +29,25 @@ export class OrdersPageComponent {
     { key: 'status', label: 'Status' },
   ];
 
-  readonly rows: Record<string, unknown>[] = [
-    { id: 'ORD-1001', date: '2026-03-01', total: '$52.30', status: 'COMPLETED' },
-    { id: 'ORD-1002', date: '2026-03-04', total: '$31.70', status: 'PENDING' },
-  ];
+  rows: Record<string, unknown>[] = [];
+
+  ngOnInit(): void {
+    this.ordersService
+      .listOrders()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => {
+        this.rows = isApiSuccessResponse(response)
+          ? response.data.map((order) => this.toRow(order))
+          : [];
+      });
+  }
+
+  private toRow(order: Order): Record<string, unknown> {
+    return {
+      id: order.id,
+      date: order.createdAt.slice(0, 10),
+      total: this.currencyFormatter.format(order.total),
+      status: order.status,
+    };
+  }
 }

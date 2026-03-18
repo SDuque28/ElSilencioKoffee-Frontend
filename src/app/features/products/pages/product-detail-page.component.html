@@ -1,28 +1,39 @@
 <div class="mx-auto max-w-3xl">
   <app-card>
-    <div class="flex flex-wrap items-center gap-2">
-      <h1 class="text-2xl font-semibold">Product #{{ productId }}</h1>
-      <app-badge variant="neutral">In stock</app-badge>
-    </div>
-
-    <p class="mt-3 text-sm text-muted">
-      This page is wired for dynamic product details from Spring Boot REST endpoints.
-    </p>
-
-    <div class="mt-6 grid gap-4 md:grid-cols-2">
-      <div class="rounded-lg border border-border bg-amber-50 p-4">
-        <h2 class="font-semibold">Origin</h2>
-        <p class="text-sm text-muted">Andean highlands, washed process.</p>
+    @if (product; as currentProduct) {
+      <div class="flex flex-wrap items-center gap-2">
+        <h1 class="text-2xl font-semibold">{{ currentProduct.name }}</h1>
+        <app-badge [variant]="stockVariant">{{ stockLabel }}</app-badge>
       </div>
-      <div class="rounded-lg border border-border bg-amber-50 p-4">
-        <h2 class="font-semibold">Profile</h2>
-        <p class="text-sm text-muted">Chocolate, panela sweetness, medium acidity.</p>
-      </div>
-    </div>
 
-    <div class="mt-6 flex gap-2">
-      <app-button routerLink="/cart">Add to cart</app-button>
-      <app-button variant="outline" routerLink="/products">Back to catalog</app-button>
-    </div>
+      <p class="mt-3 text-sm text-muted">{{ currentProduct.description }}</p>
+      <p class="mt-4 text-lg font-semibold text-primary">{{ priceLabel }}</p>
+
+      <div class="mt-6 grid gap-4 md:grid-cols-2">
+        <div class="rounded-lg border border-border bg-amber-50 p-4">
+          <h2 class="font-semibold">Product ID</h2>
+          <p class="text-sm text-muted">{{ currentProduct.id }}</p>
+        </div>
+        <div class="rounded-lg border border-border bg-amber-50 p-4">
+          <h2 class="font-semibold">Stock</h2>
+          <p class="text-sm text-muted">{{ currentProduct.stock }} units available</p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex gap-2">
+        <app-button routerLink="/cart">Add to cart</app-button>
+        <app-button variant="outline" routerLink="/products">Back to catalog</app-button>
+      </div>
+    } @else {
+      <div class="space-y-4">
+        <h1 class="text-2xl font-semibold">Product #{{ productId }}</h1>
+        <p class="text-sm text-muted">
+          {{ loadError ?? 'No product information is available for this route yet.' }}
+        </p>
+        <div class="flex gap-2">
+          <app-button variant="outline" routerLink="/products">Back to catalog</app-button>
+        </div>
+      </div>
+    }
   </app-card>
 </div>

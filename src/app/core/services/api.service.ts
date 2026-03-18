@@ -32,7 +32,11 @@ export class ApiService {
     return this.request<T>('GET', endpoint, undefined, options);
   }
 
-  post<T>(endpoint: string, body: unknown, options?: RequestOptions<T>): Observable<ApiResponse<T>> {
+  post<T>(
+    endpoint: string,
+    body: unknown,
+    options?: RequestOptions<T>,
+  ): Observable<ApiResponse<T>> {
     return this.request<T>('POST', endpoint, body, options);
   }
 
@@ -104,7 +108,7 @@ export class ApiService {
       return of(errorResponse);
     }
 
-    const data = typeof mock.data === 'function' ? mock.data() : mock.data;
+    const data = typeof mock.data === 'function' ? (mock.data as () => T)() : mock.data;
     const response: ApiSuccessResponse<T> = {
       success: true,
       data,
@@ -162,7 +166,7 @@ export class ApiService {
         error:
           typeof error.error === 'string'
             ? error.error
-            : error.error?.message ?? error.message ?? 'Unexpected API error.',
+            : (error.error?.message ?? error.message ?? 'Unexpected API error.'),
         code: error.status || 500,
       };
     }

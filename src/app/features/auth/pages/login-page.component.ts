@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
+import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import { AuthFacadeService } from '../services/auth-facade.service';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
@@ -36,7 +37,16 @@ export class LoginPageComponent {
     }
 
     this.authFacade.login(this.form.getRawValue()).subscribe({
-      next: () => {
+      next: (response) => {
+        if (!isApiSuccessResponse(response)) {
+          this.toastService.show({
+            title: 'Authentication failed',
+            description: response.error,
+            variant: 'error',
+          });
+          return;
+        }
+
         this.toastService.show({
           title: 'Welcome back',
           description: 'Authentication completed successfully.',

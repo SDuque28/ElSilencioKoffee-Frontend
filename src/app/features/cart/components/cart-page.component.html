@@ -1,9 +1,7 @@
 <section class="space-y-6">
   <div>
     <h1 class="text-2xl font-semibold">Shopping Cart</h1>
-    <p class="text-sm text-muted">
-      Signal-based local state for quick and simple feature evolution.
-    </p>
+    <p class="text-sm text-muted">Mock-safe cart flow aligned with `/cart` and `/cart/items`.</p>
   </div>
 
   <app-card>
@@ -11,7 +9,7 @@
       <p class="text-sm text-muted">Your cart is empty.</p>
     } @else {
       <div class="space-y-3">
-        @for (item of cartState.items(); track item.id) {
+        @for (item of cartState.items(); track item.itemId) {
           <div class="flex items-center justify-between rounded-md border border-border p-3">
             <div>
               <p class="font-medium">{{ item.name }}</p>
@@ -22,14 +20,14 @@
               <app-button
                 size="sm"
                 variant="outline"
-                (buttonClick)="cartState.decreaseQuantity(item.id)"
+                (buttonClick)="decreaseQuantity(item.itemId, item.quantity)"
                 >-</app-button
               >
               <span class="min-w-8 text-center text-sm font-semibold">{{ item.quantity }}</span>
               <app-button
                 size="sm"
                 variant="outline"
-                (buttonClick)="cartState.increaseQuantity(item.id)"
+                (buttonClick)="increaseQuantity(item.itemId, item.quantity)"
                 >+</app-button
               >
             </div>
@@ -43,7 +41,7 @@
       </div>
 
       <div class="mt-4 flex gap-2">
-        <app-button>Simulate purchase</app-button>
+        <app-button (buttonClick)="checkout()">Simulate purchase</app-button>
         <app-button variant="ghost" (buttonClick)="cartState.clear()">Clear</app-button>
       </div>
     }

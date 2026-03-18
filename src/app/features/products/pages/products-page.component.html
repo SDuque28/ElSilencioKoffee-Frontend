@@ -9,11 +9,11 @@
       <app-card>
         <div class="mb-3 flex items-center justify-between">
           <h2 class="text-lg font-semibold">{{ product.name }}</h2>
-          <app-badge [variant]="badgeVariant(product.tag)">{{ product.tag }}</app-badge>
+          <app-badge [variant]="product.stockVariant">{{ product.stockLabel }}</app-badge>
         </div>
 
         <p class="text-sm text-muted">{{ product.description }}</p>
-        <p class="mt-4 text-lg font-semibold text-primary">{{ product.price }}</p>
+        <p class="mt-4 text-lg font-semibold text-primary">{{ product.priceLabel }}</p>
 
         <div class="mt-4 flex gap-2">
           <app-button size="sm" routerLink="/product/{{ product.id }}">Details</app-button>
