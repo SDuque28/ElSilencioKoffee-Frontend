@@ -38,18 +38,25 @@
         [class.hover:text-[#2f2219]]="!isAdminLayout"
         >Products</a
       >
-      <a
-        routerLink="/cart"
-        routerLinkActive="text-primary"
+      <button
+        type="button"
         class="flex items-center gap-1 transition"
         [class.text-[#9ca3af]]="isAdminLayout"
         [class.hover:text-[#f5efe8]]="isAdminLayout"
         [class.text-[#6b5c4f]]="!isAdminLayout"
         [class.hover:text-[#2f2219]]="!isAdminLayout"
+        (click)="openCart()"
       >
         <lucide-icon [img]="icons.cart" class="h-4 w-4"></lucide-icon>
         Cart
-      </a>
+        @if (cartState.itemCount() > 0) {
+          <span
+            class="inline-flex min-w-5 items-center justify-center rounded-full bg-[#6b3f1d] px-1.5 py-0.5 text-[10px] font-semibold text-white"
+          >
+            {{ cartState.itemCount() }}
+          </span>
+        }
+      </button>
       <a
         routerLink="/orders"
         routerLinkActive="text-primary"
@@ -155,16 +162,17 @@
           (click)="closeMobileNav()"
           >Products</a
         >
-        <a
-          routerLink="/cart"
+        <button
+          type="button"
           class="rounded px-2 py-1.5 transition"
           [class.text-[#f4ede5]]="isAdminLayout"
           [class.hover:bg-[#1c1c20]]="isAdminLayout"
           [class.text-[#2f2219]]="!isAdminLayout"
           [class.hover:bg-[#f5ede4]]="!isAdminLayout"
-          (click)="closeMobileNav()"
-          >Cart</a
+          (click)="openCart()"
         >
+          Cart
+        </button>
         <a
           routerLink="/orders"
           class="rounded px-2 py-1.5 transition"

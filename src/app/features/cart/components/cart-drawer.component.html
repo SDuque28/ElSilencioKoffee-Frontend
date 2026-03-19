@@ -1,0 +1,144 @@
+<div class="cart-drawer" [class.cart-drawer--open]="cartState.isDrawerOpen()">
+  <button
+    type="button"
+    class="cart-drawer__overlay"
+    (click)="close()"
+    [attr.tabindex]="cartState.isDrawerOpen() ? 0 : -1"
+    [attr.aria-hidden]="!cartState.isDrawerOpen()"
+    aria-label="Close cart drawer"
+  ></button>
+
+  <aside
+    class="cart-drawer__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="cart-drawer-title"
+    [attr.aria-hidden]="!cartState.isDrawerOpen()"
+  >
+    <header class="cart-drawer__header">
+      <div class="cart-drawer__header-copy">
+        <p class="cart-drawer__eyebrow">Curated cart</p>
+        <h2 id="cart-drawer-title" class="cart-drawer__title">Your Selection</h2>
+      </div>
+
+      <button type="button" class="cart-drawer__icon-button" (click)="close()" aria-label="Close">
+        <lucide-icon [img]="icons.close" class="h-4 w-4"></lucide-icon>
+      </button>
+    </header>
+
+    <div class="cart-drawer__body">
+      @if (cartState.items().length === 0) {
+        <section class="cart-drawer__empty">
+          <div class="cart-drawer__empty-icon">
+            <lucide-icon [img]="icons.bag" class="h-5 w-5"></lucide-icon>
+          </div>
+          <div class="space-y-2">
+            <p class="cart-drawer__empty-title">Your cart is empty</p>
+            <p class="cart-drawer__empty-text">
+              Add coffee, brewing tools, or accessories to see them here.
+            </p>
+          </div>
+        </section>
+      } @else {
+        <section class="cart-drawer__items">
+          @for (item of cartState.items(); track item.itemId) {
+            <article class="cart-item">
+              <img [src]="item.image" [alt]="item.name" class="cart-item__image" />
+
+              <div class="cart-item__content">
+                <div class="cart-item__topline">
+                  <div class="cart-item__details">
+                    <h3 class="cart-item__name">{{ item.name }}</h3>
+                    <p class="cart-item__meta">{{ item.category }} · {{ item.selectionLabel }}</p>
+                  </div>
+
+                  <div class="cart-item__actions">
+                    <p class="cart-item__price">{{ item.subtotal | currency: 'USD' : 'symbol' : '1.2-2' }}</p>
+                    <button
+                      type="button"
+                      class="cart-drawer__icon-button cart-item__remove"
+                      (click)="removeItem(item.itemId)"
+                      aria-label="Remove item"
+                    >
+                      <lucide-icon [img]="icons.remove" class="h-4 w-4"></lucide-icon>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="cart-item__footer">
+                  <span class="cart-item__unit-price">
+                    {{ item.unitPrice | currency: 'USD' : 'symbol' : '1.2-2' }} each
+                  </span>
+
+                  <div class="cart-item__quantity">
+                    <button
+                      type="button"
+                      class="cart-drawer__icon-button cart-item__quantity-button"
+                      (click)="decreaseQuantity(item.itemId, item.quantity)"
+                      aria-label="Decrease quantity"
+                    >
+                      <lucide-icon [img]="icons.minus" class="h-3.5 w-3.5"></lucide-icon>
+                    </button>
+                    <span class="cart-item__quantity-value">{{ item.quantity }}</span>
+                    <button
+                      type="button"
+                      class="cart-drawer__icon-button cart-item__quantity-button"
+                      (click)="increaseQuantity(item.itemId, item.quantity)"
+                      aria-label="Increase quantity"
+                    >
+                      <lucide-icon [img]="icons.plus" class="h-3.5 w-3.5"></lucide-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          }
+        </section>
+      }
+    </div>
+
+    <footer class="cart-drawer__footer">
+      <section class="summary-card">
+        <div class="summary-card__header">
+          <h3 class="summary-card__title">Order Summary</h3>
+        </div>
+
+        @if (cartState.items().length === 0) {
+          <p class="summary-card__empty">Add products to generate your summary.</p>
+        } @else {
+          <div class="summary-card__rows">
+            @for (item of cartState.items(); track item.itemId) {
+              <div class="summary-card__row">
+                <span>{{ item.name }}</span>
+                <span>{{ item.subtotal | currency: 'USD' : 'symbol' : '1.2-2' }}</span>
+              </div>
+            }
+          </div>
+        }
+
+        <div class="summary-card__totals">
+          <div class="summary-card__row">
+            <span>Subtotal</span>
+            <span>{{ cartState.subtotal() | currency: 'USD' : 'symbol' : '1.2-2' }}</span>
+          </div>
+          <div class="summary-card__row">
+            <span>Shipping</span>
+            <span>{{ cartState.shipping() === 0 ? 'FREE' : (cartState.shipping() | currency: 'USD' : 'symbol' : '1.2-2') }}</span>
+          </div>
+          <div class="summary-card__row summary-card__row--total">
+            <span>Total</span>
+            <span>{{ cartState.total() | currency: 'USD' : 'symbol' : '1.2-2' }}</span>
+          </div>
+        </div>
+      </section>
+
+      <app-button
+        className="cart-drawer__checkout-button"
+        [disabled]="cartState.items().length === 0"
+        (buttonClick)="checkout()"
+      >
+        Continue to Checkout
+      </app-button>
+    </footer>
+  </aside>
+</div>

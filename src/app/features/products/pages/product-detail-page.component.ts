@@ -9,11 +9,13 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
+import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import type { Product } from '../../../core/models/product.model';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
+import { CartStateService } from '../../cart/services/cart-state.service';
 import { ProductsService } from '../services/products.service';
 
 @Component({
@@ -28,6 +30,7 @@ export class ProductDetailPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly productsService = inject(ProductsService);
   private readonly toastService = inject(ToastService);
+  private readonly cartState = inject(CartStateService);
   private readonly currencyFormatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -50,12 +53,25 @@ export class ProductDetailPageComponent implements OnInit {
   }
 
   addToCart(product: Product): void {
-    console.log('[MOCK CART] add product', product.id);
-    this.toastService.show({
-      title: 'Added to cart',
-      description: `${product.name} was added in mock mode.`,
-      variant: 'success',
-    });
+    this.cartState
+      .addItem(product)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => {
+        if (isApiSuccessResponse(response)) {
+          this.toastService.show({
+            title: 'Added to cart',
+            description: `${product.name} was added to your selection.`,
+            variant: 'success',
+          });
+          return;
+        }
+
+        this.toastService.show({
+          title: 'Unable to add item',
+          description: response.error,
+          variant: 'error',
+        });
+      });
   }
 
   formatPrice(price: number): string {

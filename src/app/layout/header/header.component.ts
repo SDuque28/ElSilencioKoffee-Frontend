@@ -11,6 +11,7 @@ import {
 } from 'lucide-angular';
 
 import { AuthService } from '../../core/services/auth.service';
+import { CartStateService } from '../../features/cart/services/cart-state.service';
 
 @Component({
   selector: 'app-header',
@@ -22,6 +23,7 @@ export class HeaderComponent {
   @Input() layout: 'public' | 'admin' = 'public';
 
   readonly authService = inject(AuthService);
+  readonly cartState = inject(CartStateService);
   readonly mobileNavOpen = signal(false);
 
   protected readonly icons = {
@@ -39,6 +41,11 @@ export class HeaderComponent {
 
   closeMobileNav(): void {
     this.mobileNavOpen.set(false);
+  }
+
+  openCart(): void {
+    this.closeMobileNav();
+    this.cartState.openDrawer();
   }
 
   logout(): void {
