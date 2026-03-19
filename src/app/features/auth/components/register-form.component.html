@@ -1,0 +1,46 @@
+<div class="grid gap-7">
+  <div class="grid gap-2">
+    <p class="m-0 text-[0.72rem] font-bold uppercase tracking-[0.26em] text-[#9c8068]">
+      Coffee account
+    </p>
+    <h1 class="m-0 text-[clamp(2rem,3.4vw,2.75rem)] leading-[1.05] text-[#2f2219]">
+      Create account
+    </h1>
+    <p class="m-0 text-[0.96rem] leading-[1.65] text-[#756557]">
+      Create an account and start your coffee journey.
+    </p>
+  </div>
+
+  <form class="grid gap-4" [formGroup]="form" (ngSubmit)="submit()">
+    <label class="grid gap-2">
+      <span class="text-[0.82rem] font-bold tracking-[0.04em] text-[#2f2219]">Full name</span>
+      <input class="{{ inputClasses }}" type="text" formControlName="name" placeholder="Pablo Herrera" />
+      @if (errorFor('name')) {
+        <span class="text-[0.76rem] text-[#c15d56]">{{ errorFor('name') }}</span>
+      }
+    </label>
+
+    <label class="grid gap-2">
+      <span class="text-[0.82rem] font-bold tracking-[0.04em] text-[#2f2219]">Email</span>
+      <input class="{{ inputClasses }}" type="email" formControlName="email" placeholder="you@example.com" />
+      @if (errorFor('email')) {
+        <span class="text-[0.76rem] text-[#c15d56]">{{ errorFor('email') }}</span>
+      }
+    </label>
+
+    <label class="grid gap-2">
+      <span class="text-[0.82rem] font-bold tracking-[0.04em] text-[#2f2219]">Password</span>
+      <input class="{{ inputClasses }}" type="password" formControlName="password" placeholder="Choose a password" />
+      @if (errorFor('password')) {
+        <span class="text-[0.76rem] text-[#c15d56]">{{ errorFor('password') }}</span>
+      }
+    </label>
+
+    <button
+      type="submit"
+      class="mt-2 w-full rounded-[1.1rem] border-0 bg-[linear-gradient(135deg,#6f4e37_0%,#4b2e2b_100%)] px-5 py-4 text-[0.95rem] font-bold text-[#fff7f1] shadow-[0_16px_30px_rgba(111,78,55,0.22)] transition duration-200 hover:scale-[1.02] hover:brightness-[0.98] hover:shadow-[0_18px_34px_rgba(111,78,55,0.26)] active:scale-[0.98]"
+    >
+      Register
+    </button>
+  </form>
+</div>

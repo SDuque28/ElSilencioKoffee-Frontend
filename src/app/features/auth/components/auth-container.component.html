@@ -1,0 +1,71 @@
+<section class="auth-experience">
+  <div class="auth-shell" [class.auth-shell--register]="!isLoginMode()">
+    <div class="auth-shell__mobile-toggle">
+      <button
+        type="button"
+        class="auth-shell__mobile-pill"
+        [class.auth-shell__mobile-pill--active]="isLoginMode()"
+        (click)="setMode('login')"
+      >
+        Sign In
+      </button>
+      <button
+        type="button"
+        class="auth-shell__mobile-pill"
+        [class.auth-shell__mobile-pill--active]="!isLoginMode()"
+        (click)="setMode('register')"
+      >
+        Register
+      </button>
+    </div>
+
+    <div class="auth-shell__surface auth-shell__surface--login">
+      <div class="auth-shell__surface-card">
+        <app-login-form (formSubmit)="onLogin($event)" />
+      </div>
+    </div>
+
+    <div class="auth-shell__surface auth-shell__surface--register">
+      <div class="auth-shell__surface-card">
+        <app-register-form (formSubmit)="onRegister($event)" />
+      </div>
+    </div>
+
+    <aside
+      class="auth-shell__visual"
+      [style.background-image]="isLoginMode() ? loginVisualStyle : registerVisualStyle"
+    >
+      <div class="auth-shell__visual-layer">
+        <a
+          routerLink="/"
+          class="inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[0.82rem] font-semibold tracking-[0.05em] text-[#f8f2eb]"
+        >
+          <lucide-icon [img]="icons.coffee" class="h-4 w-4"></lucide-icon>
+          El Silencio Koffee
+        </a>
+
+        <div class="auth-shell__visual-stage">
+          <div class="auth-shell__visual-copy auth-shell__visual-copy--login">
+            <p class="auth-shell__visual-kicker">Returning customer</p>
+            <h2 class="auth-shell__visual-title">Welcome back</h2>
+            <p class="auth-shell__visual-text">Login to continue your coffee experience.</p>
+            <button type="button" class="auth-shell__ghost" (click)="setMode('register')">
+              Create account
+            </button>
+          </div>
+
+          <div class="auth-shell__visual-copy auth-shell__visual-copy--register">
+            <p class="auth-shell__visual-kicker">New to the ritual</p>
+            <h2 class="auth-shell__visual-title">Join the coffee experience</h2>
+            <p class="auth-shell__visual-text">
+              Create an account and start your journey with specialty brews and curated gear.
+            </p>
+            <button type="button" class="auth-shell__ghost" (click)="setMode('login')">
+              Sign in
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
