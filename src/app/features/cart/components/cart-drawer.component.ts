@@ -13,6 +13,7 @@ import { LucideAngularModule, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
+import { ProductModalService } from '../../products/services/product-modal.service';
 import { CartStateService } from '../services/cart-state.service';
 
 @Component({
@@ -26,6 +27,7 @@ export class CartDrawerComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
   private readonly toastService = inject(ToastService);
+  private readonly productModal = inject(ProductModalService);
 
   readonly cartState = inject(CartStateService);
 
@@ -41,7 +43,8 @@ export class CartDrawerComponent {
     this.cartState.loadCart().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
 
     effect(() => {
-      this.document.body.style.overflow = this.cartState.isDrawerOpen() ? 'hidden' : '';
+      const shouldLockScroll = this.cartState.isDrawerOpen() || this.productModal.isOpen();
+      this.document.body.style.overflow = shouldLockScroll ? 'hidden' : '';
     });
 
     this.destroyRef.onDestroy(() => {

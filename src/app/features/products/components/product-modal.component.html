@@ -1,0 +1,87 @@
+<div class="product-modal" [class.product-modal--open]="modalState.isOpen()">
+  <button
+    type="button"
+    class="product-modal__overlay"
+    (click)="close()"
+    [attr.tabindex]="modalState.isOpen() ? 0 : -1"
+    [attr.aria-hidden]="!modalState.isOpen()"
+    aria-label="Close product modal"
+  ></button>
+
+  @if (modalState.product(); as product) {
+    <section
+      class="product-modal__dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="product-modal-title"
+    >
+      <button
+        type="button"
+        class="product-modal__close"
+        (click)="close()"
+        aria-label="Close product modal"
+      >
+        <lucide-icon [img]="icons.close" class="h-4 w-4"></lucide-icon>
+      </button>
+
+      <div class="product-modal__layout">
+        <div class="product-modal__image-panel">
+          <img
+            [src]="product.image || fallbackImage"
+            [alt]="product.name"
+            class="product-modal__image"
+            (error)="onImageError($event)"
+          />
+        </div>
+
+        <div class="product-modal__content">
+          <div class="space-y-3">
+            <p class="product-modal__category">{{ product.category }}</p>
+            <div class="product-modal__heading">
+              <h2 id="product-modal-title" class="product-modal__title">{{ product.name }}</h2>
+              <app-badge [variant]="product.stock > 0 ? 'success' : 'danger'">
+                {{ product.stock > 0 ? 'In stock' : 'Sold out' }}
+              </app-badge>
+            </div>
+            <p class="product-modal__description">{{ product.description }}</p>
+          </div>
+
+          <div class="product-modal__stats">
+            <div class="product-modal__stat">
+              <h3 class="product-modal__stat-label">Price</h3>
+              <p class="product-modal__stat-value">
+                {{ product.price | currency: 'USD' : 'symbol' : '1.0-0' }}
+              </p>
+            </div>
+            <div class="product-modal__stat">
+              <h3 class="product-modal__stat-label">Stock</h3>
+              <p class="product-modal__stat-value">{{ product.stock }}</p>
+            </div>
+          </div>
+
+          <div class="product-modal__actions">
+            <app-button
+              className="rounded-full px-5"
+              [disabled]="product.stock <= 0"
+              (buttonClick)="addToCart(product)"
+            >
+              <span class="inline-flex items-center gap-2">
+                <lucide-icon [img]="icons.cart" class="h-4 w-4"></lucide-icon>
+                Add to cart
+              </span>
+            </app-button>
+
+            <app-button variant="outline" className="rounded-full px-5" (buttonClick)="close()">
+              Back to catalog
+            </app-button>
+          </div>
+
+          <div class="product-modal__reference">
+            <h3 class="product-modal__stat-label">Product reference</h3>
+            <p class="product-modal__reference-value">{{ product.id }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  }
+</div>

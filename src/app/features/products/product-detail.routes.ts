@@ -4,6 +4,6 @@ export const PRODUCT_DETAIL_ROUTES: Routes = [
   {
     path: ':id',
     loadComponent: () =>
-      import('./pages/product-detail-page.component').then((m) => m.ProductDetailPageComponent),
+      import('./components/product-route-entry.component').then((m) => m.ProductRouteEntryComponent),
   },
 ];

@@ -8,20 +8,17 @@ import {
   type OnInit,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import type { Product } from '../../../core/models/product.model';
-import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
-import { ButtonComponent } from '../../../shared/ui/button/button.component';
-import { CardComponent } from '../../../shared/ui/card/card.component';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { CartStateService } from '../../cart/services/cart-state.service';
+import { ProductCardComponent } from '../components/product-card.component';
 import { ProductsService, type ProductsListResponse } from '../services/products.service';
 
 @Component({
   selector: 'app-products-page',
-  imports: [NgIf, NgFor, RouterLink, CardComponent, ButtonComponent, BadgeComponent],
+  imports: [NgIf, NgFor, ProductCardComponent],
   templateUrl: './products-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -31,11 +28,6 @@ export class ProductsPageComponent implements OnInit {
   private readonly productsService = inject(ProductsService);
   private readonly toastService = inject(ToastService);
   private readonly cartState = inject(CartStateService);
-  private readonly currencyFormatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  });
 
   products: Product[] = [];
   isLoading = true;
@@ -86,34 +78,6 @@ export class ProductsPageComponent implements OnInit {
           variant: 'error',
         });
       });
-  }
-
-  formatPrice(price: number): string {
-    return this.currencyFormatter.format(price);
-  }
-
-  stockVariant(stock: number): 'success' | 'warning' | 'danger' {
-    if (stock > 15) {
-      return 'success';
-    }
-
-    if (stock > 0) {
-      return 'warning';
-    }
-
-    return 'danger';
-  }
-
-  stockLabel(stock: number): string {
-    if (stock > 15) {
-      return 'In stock';
-    }
-
-    if (stock > 0) {
-      return `Only ${stock} left`;
-    }
-
-    return 'Sold out';
   }
 
   trackByProductId(_index: number, product: Product): string {

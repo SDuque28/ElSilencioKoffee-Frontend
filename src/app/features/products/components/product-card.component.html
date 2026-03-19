@@ -1,0 +1,62 @@
+<app-card
+  [className]="cardClasses"
+  class="group cursor-pointer focus-within:ring-2 focus-within:ring-[#6b3f1d]/30"
+>
+  <article
+    class="flex h-full flex-col"
+    role="button"
+    tabindex="0"
+    [attr.aria-label]="'Open details for ' + product.name"
+    (click)="openProduct()"
+    (keydown)="onKeydown($event)"
+  >
+    <div class="relative overflow-hidden">
+      <img
+        [src]="product.image || fallbackImage"
+        [alt]="product.name"
+        class="h-64 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+        [class.h-56]="compact"
+        (error)="onImageError($event)"
+      />
+
+      <div class="absolute right-4 top-4">
+        <app-badge [variant]="stockVariant">
+          {{ stockLabel }}
+        </app-badge>
+      </div>
+    </div>
+
+    <div class="flex h-full flex-col gap-4 p-5" [class.p-4]="compact">
+      <div class="space-y-2">
+        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-[#8c765f]">
+          {{ product.category }}
+        </p>
+        <h3 class="line-clamp-2 text-xl font-semibold leading-snug text-[#2f2219]">
+          {{ product.name }}
+        </h3>
+      </div>
+
+      <p class="line-clamp-2 text-sm leading-6 text-[#6b5c4f]">
+        {{ product.description }}
+      </p>
+
+      <div class="mt-auto flex items-end justify-between gap-4">
+        <p class="text-lg font-semibold text-[#2f2219]">
+          {{ product.price | currency: 'USD' : 'symbol' : '1.0-0' }}
+        </p>
+
+        <app-button
+          size="sm"
+          className="shrink-0 rounded-full px-4"
+          [disabled]="product.stock <= 0"
+          (buttonClick)="onAddToCart($event)"
+        >
+          <span class="inline-flex items-center gap-2">
+            <lucide-icon [img]="icons.cart" class="h-4 w-4"></lucide-icon>
+            Add to cart
+          </span>
+        </app-button>
+      </div>
+    </div>
+  </article>
+</app-card>
