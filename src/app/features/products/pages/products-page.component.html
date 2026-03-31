@@ -1,4 +1,4 @@
-<section class="space-y-8">
+<section data-cy="products-page" class="space-y-8">
   <div class="space-y-2">
     <p class="text-xs font-semibold uppercase tracking-[0.35em] text-[#8c765f]">Catalog</p>
     <h1 class="text-3xl font-semibold text-[#2f2219] md:text-4xl">
@@ -10,18 +10,27 @@
     </p>
   </div>
 
-  <div *ngIf="isLoading" class="rounded-2xl border border-[#ebe3da] bg-white p-6 text-sm text-[#6b5c4f]">
+  <div
+    *ngIf="isLoading"
+    data-cy="products-loading"
+    class="rounded-2xl border border-[#ebe3da] bg-white p-6 text-sm text-[#6b5c4f]"
+  >
     Loading mock products...
   </div>
 
   <div
     *ngIf="!isLoading && products.length === 0"
+    data-cy="products-empty"
     class="rounded-2xl border border-[#ebe3da] bg-white p-6 text-sm text-[#6b5c4f]"
   >
     No mock products available.
   </div>
 
-  <div *ngIf="!isLoading && products.length > 0" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+  <div
+    *ngIf="!isLoading && products.length > 0"
+    data-cy="products-grid"
+    class="grid gap-6 md:grid-cols-2 xl:grid-cols-3"
+  >
     <app-product-card
       *ngFor="let product of products; trackBy: trackByProductId"
       [product]="product"

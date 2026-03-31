@@ -1,0 +1,15 @@
+{
+  "user": {
+    "email": "user@test.com",
+    "password": "123456"
+  },
+  "admin": {
+    "email": "admin@test.com",
+    "password": "123456"
+  },
+  "register": {
+    "name": "Pablo Herrera",
+    "email": "pablo.herrera@test.com",
+    "password": "123456"
+  }
+}

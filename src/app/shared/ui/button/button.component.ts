@@ -51,6 +51,7 @@ export class ButtonComponent implements OnInit {
   @Input() type: 'button' | 'submit' | 'reset' = 'button';
   @Input() disabled = false;
   @Input() className = '';
+  @Input() dataCy: string | null = null;
   @Output() buttonClick = new EventEmitter<MouseEvent>();
 
   buttonClasses = '';

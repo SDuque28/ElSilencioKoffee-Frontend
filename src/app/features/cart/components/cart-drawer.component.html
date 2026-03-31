@@ -1,5 +1,6 @@
-<div class="cart-drawer" [class.cart-drawer--open]="cartState.isDrawerOpen()">
+<div data-cy="cart-drawer" class="cart-drawer" [class.cart-drawer--open]="cartState.isDrawerOpen()">
   <button
+    data-cy="cart-drawer-overlay"
     type="button"
     class="cart-drawer__overlay"
     (click)="close()"
@@ -42,7 +43,7 @@
       } @else {
         <section class="cart-drawer__items">
           @for (item of cartState.items(); track item.itemId) {
-            <article class="cart-item">
+            <article [attr.data-cy]="'cart-drawer-item-' + item.productId" class="cart-item">
               <img [src]="item.image" [alt]="item.name" class="cart-item__image" />
 
               <div class="cart-item__content">
@@ -56,6 +57,7 @@
                     <p class="cart-item__price">{{ item.subtotal | currency: 'USD' : 'symbol' : '1.2-2' }}</p>
                     <button
                       type="button"
+                      [attr.data-cy]="'cart-drawer-remove-' + item.productId"
                       class="cart-drawer__icon-button cart-item__remove"
                       (click)="removeItem(item.itemId)"
                       aria-label="Remove item"
@@ -73,15 +75,19 @@
                   <div class="cart-item__quantity">
                     <button
                       type="button"
+                      [attr.data-cy]="'cart-drawer-decrease-' + item.productId"
                       class="cart-drawer__icon-button cart-item__quantity-button"
                       (click)="decreaseQuantity(item.itemId, item.quantity)"
                       aria-label="Decrease quantity"
                     >
                       <lucide-icon [img]="icons.minus" class="h-3.5 w-3.5"></lucide-icon>
                     </button>
-                    <span class="cart-item__quantity-value">{{ item.quantity }}</span>
+                    <span [attr.data-cy]="'cart-drawer-quantity-' + item.productId" class="cart-item__quantity-value">
+                      {{ item.quantity }}
+                    </span>
                     <button
                       type="button"
+                      [attr.data-cy]="'cart-drawer-increase-' + item.productId"
                       class="cart-drawer__icon-button cart-item__quantity-button"
                       (click)="increaseQuantity(item.itemId, item.quantity)"
                       aria-label="Increase quantity"
@@ -133,6 +139,7 @@
       </section>
 
       <app-button
+        dataCy="cart-drawer-checkout"
         className="cart-drawer__checkout-button"
         [disabled]="cartState.items().length === 0"
         (buttonClick)="checkout()"

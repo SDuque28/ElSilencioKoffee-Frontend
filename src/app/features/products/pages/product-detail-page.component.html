@@ -1,10 +1,11 @@
-<div class="mx-auto max-w-5xl">
+<div data-cy="product-detail-page" class="mx-auto max-w-5xl">
   <app-card
     className="overflow-hidden border-[#ebe3da] bg-white p-0 shadow-[0_18px_45px_rgba(92,65,45,0.08)]"
   >
     @if (product; as currentProduct) {
       <div class="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
         <img
+          data-cy="product-detail-image"
           [src]="currentProduct.image"
           [alt]="currentProduct.name"
           class="h-full min-h-[360px] w-full object-cover"
@@ -38,15 +39,21 @@
           </div>
 
           <div class="flex flex-wrap gap-3">
-            <app-button (buttonClick)="addToCart(currentProduct)">Add to cart</app-button>
-            <app-button variant="outline" routerLink="/products">Back to catalog</app-button>
+            <app-button dataCy="product-detail-add-to-cart" (buttonClick)="addToCart(currentProduct)">
+              Add to cart
+            </app-button>
+            <app-button dataCy="product-detail-back" variant="outline" routerLink="/products">
+              Back to catalog
+            </app-button>
           </div>
 
           <div class="rounded-2xl border border-[#ece4da] bg-[#fcf9f5] p-5">
             <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-[#8c765f]">
               Product reference
             </h2>
-            <p class="mt-3 text-sm text-[#6b5c4f]">{{ currentProduct.id }}</p>
+            <p data-cy="product-detail-reference" class="mt-3 text-sm text-[#6b5c4f]">
+              {{ currentProduct.id }}
+            </p>
           </div>
         </div>
       </div>

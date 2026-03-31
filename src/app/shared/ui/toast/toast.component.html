@@ -1,7 +1,8 @@
-<div class="pointer-events-none fixed inset-x-0 top-4 z-[60] flex justify-center px-4">
+<div data-cy="toast-list" class="pointer-events-none fixed inset-x-0 top-4 z-[60] flex justify-center px-4">
   <div class="w-full max-w-sm space-y-2">
     @for (toast of toastService.messages(); track toast.id) {
       <div
+        data-cy="toast-item"
         class="pointer-events-auto rounded-md border p-4 shadow-lg"
         [ngClass]="getClasses(toast.variant)"
       >

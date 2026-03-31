@@ -1,5 +1,6 @@
-<div class="product-modal" [class.product-modal--open]="modalState.isOpen()">
+<div data-cy="product-modal" class="product-modal" [class.product-modal--open]="modalState.isOpen()">
   <button
+    data-cy="product-modal-overlay"
     type="button"
     class="product-modal__overlay"
     (click)="close()"
@@ -16,6 +17,7 @@
       aria-labelledby="product-modal-title"
     >
       <button
+        data-cy="product-modal-close"
         type="button"
         class="product-modal__close"
         (click)="close()"
@@ -62,6 +64,7 @@
           <div class="product-modal__actions">
             <app-button
               className="rounded-full px-5"
+              dataCy="product-modal-add-to-cart"
               [disabled]="product.stock <= 0"
               (buttonClick)="addToCart(product)"
             >
@@ -71,7 +74,12 @@
               </span>
             </app-button>
 
-            <app-button variant="outline" className="rounded-full px-5" (buttonClick)="close()">
+            <app-button
+              variant="outline"
+              className="rounded-full px-5"
+              dataCy="product-modal-back"
+              (buttonClick)="close()"
+            >
               Back to catalog
             </app-button>
           </div>
