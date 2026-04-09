@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
   Coffee,
@@ -11,6 +11,7 @@ import {
 } from 'lucide-angular';
 
 import { AuthService } from '../../core/services/auth.service';
+import { CartStateService } from '../../features/cart/services/cart-state.service';
 
 @Component({
   selector: 'app-header',
@@ -19,7 +20,10 @@ import { AuthService } from '../../core/services/auth.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeaderComponent {
+  @Input() layout: 'public' | 'admin' = 'public';
+
   readonly authService = inject(AuthService);
+  readonly cartState = inject(CartStateService);
   readonly mobileNavOpen = signal(false);
 
   protected readonly icons = {
@@ -39,8 +43,17 @@ export class HeaderComponent {
     this.mobileNavOpen.set(false);
   }
 
+  openCart(): void {
+    this.closeMobileNav();
+    this.cartState.openDrawer();
+  }
+
   logout(): void {
     this.closeMobileNav();
     this.authService.logout();
+  }
+
+  get isAdminLayout(): boolean {
+    return this.layout === 'admin';
   }
 }

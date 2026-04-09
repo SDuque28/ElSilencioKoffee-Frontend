@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import type { ChartData } from 'chart.js';
+import type { ChartConfiguration, ChartData } from 'chart.js';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import { CardComponent } from '../../../shared/ui/card/card.component';
@@ -17,13 +17,43 @@ export class DashboardSalesPageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly dashboardService = inject(DashboardService);
 
+  readonly chartOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: {
+          color: '#e5e5e5',
+        },
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: '#9ca3af',
+        },
+        grid: {
+          color: 'rgba(255,255,255,0.08)',
+        },
+      },
+      y: {
+        ticks: {
+          color: '#9ca3af',
+        },
+        grid: {
+          color: 'rgba(255,255,255,0.08)',
+        },
+      },
+    },
+  };
+
   chartData: ChartData<'bar'> = {
     labels: [],
     datasets: [
       {
         label: 'Orders by week',
         data: [],
-        backgroundColor: ['#6d3a1a', '#2f6f54', '#8a5a3a', '#d4b69b'],
+        backgroundColor: ['#ff7a00', '#ff922e', '#ffab5c', '#ffbf82'],
       },
     ],
   };

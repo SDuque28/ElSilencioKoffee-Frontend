@@ -1,8 +1,95 @@
-<footer class="border-t border-border bg-surface">
+<footer
+  class="border-t"
+  [class.border-[#2a2a2e]]="isAdminLayout"
+  [class.bg-[#121212]]="isAdminLayout"
+  [class.border-[#e9e0d5]]="!isAdminLayout"
+  [class.bg-[#fbf7f2]]="!isAdminLayout"
+>
+  <div class="mx-auto grid w-full max-w-screen-2xl gap-8 px-4 py-10 md:grid-cols-4">
+    <div class="space-y-3">
+      <h3
+        class="text-sm font-semibold uppercase tracking-[0.28em]"
+        [class.text-[#f4ede5]]="isAdminLayout"
+        [class.text-[#2f2219]]="!isAdminLayout"
+      >
+        El Silencio
+      </h3>
+      <p
+        class="text-sm leading-6"
+        [class.text-[#9ca3af]]="isAdminLayout"
+        [class.text-[#6b5c4f]]="!isAdminLayout"
+      >
+        Premium coffee, elegant tools, and a mock-ready ecommerce experience built for the next
+        backend phase.
+      </p>
+    </div>
+
+    <div class="space-y-3">
+      <h3
+        class="text-sm font-semibold uppercase tracking-[0.28em]"
+        [class.text-[#f4ede5]]="isAdminLayout"
+        [class.text-[#2f2219]]="!isAdminLayout"
+      >
+        Navigation
+      </h3>
+      <div
+        class="space-y-2 text-sm"
+        [class.text-[#9ca3af]]="isAdminLayout"
+        [class.text-[#6b5c4f]]="!isAdminLayout"
+      >
+        @for (item of navigationLinks; track item) {
+          <p>{{ item }}</p>
+        }
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <h3
+        class="text-sm font-semibold uppercase tracking-[0.28em]"
+        [class.text-[#f4ede5]]="isAdminLayout"
+        [class.text-[#2f2219]]="!isAdminLayout"
+      >
+        Contact
+      </h3>
+      <div
+        class="space-y-2 text-sm"
+        [class.text-[#9ca3af]]="isAdminLayout"
+        [class.text-[#6b5c4f]]="!isAdminLayout"
+      >
+        <p>hello@elsilenciokoffee.com</p>
+        <p>Bogota, Colombia</p>
+        <p>Mon - Sat / 8am - 6pm</p>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      <h3
+        class="text-sm font-semibold uppercase tracking-[0.28em]"
+        [class.text-[#f4ede5]]="isAdminLayout"
+        [class.text-[#2f2219]]="!isAdminLayout"
+      >
+        Social
+      </h3>
+      <div
+        class="space-y-2 text-sm"
+        [class.text-[#9ca3af]]="isAdminLayout"
+        [class.text-[#6b5c4f]]="!isAdminLayout"
+      >
+        @for (item of socialLinks; track item) {
+          <p>{{ item }}</p>
+        }
+      </div>
+    </div>
+  </div>
+
   <div
-    class="mx-auto flex w-full max-w-screen-2xl flex-col gap-2 px-4 py-6 text-xs text-muted md:flex-row md:items-center md:justify-between"
+    class="mx-auto flex w-full max-w-screen-2xl flex-col gap-2 border-t px-4 py-4 text-xs md:flex-row md:items-center md:justify-between"
+    [class.border-[#2a2a2e]]="isAdminLayout"
+    [class.text-[#7d7d85]]="isAdminLayout"
+    [class.border-[#e9e0d5]]="!isAdminLayout"
+    [class.text-[#8c7b6d]]="!isAdminLayout"
   >
-    <p>© {{ year }} El Silencio Koffee. Engineering architecture foundation.</p>
-    <p>Angular + Tailwind + Spring Boot REST integration ready.</p>
+    <p>© {{ year }} El Silencio Koffee.</p>
+    <p>Frontend mock mode ready for future API integration.</p>
   </div>
 </footer>

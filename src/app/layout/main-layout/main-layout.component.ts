@@ -16,4 +16,10 @@ export class MainLayoutComponent {
 
   readonly layout =
     (this.route.snapshot.data['layout'] as 'public' | 'admin' | undefined) ?? 'public';
+
+  get shellClasses(): string {
+    return this.layout === 'admin'
+      ? 'min-h-screen bg-[#0f0f10] text-[#e5e5e5]'
+      : 'min-h-screen bg-[#f7f3ef] text-[#2f2219]';
+  }
 }

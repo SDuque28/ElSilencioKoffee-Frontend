@@ -38,6 +38,16 @@ yarn-error.log
 testem.log
 /typings
 __screenshots__/
+/cypress/downloads/*
+!/cypress/downloads/.gitkeep
+/cypress/screenshots/*
+!/cypress/screenshots/.gitkeep
+/cypress/videos/*
+!/cypress/videos/.gitkeep
+/cypress/results/*.json
+!/cypress/results/.gitkeep
+/cypress/artifacts/*
+!/cypress/artifacts/.gitkeep
 
 # System files
 .DS_Store

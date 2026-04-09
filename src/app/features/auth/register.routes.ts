@@ -3,7 +3,10 @@ import type { Routes } from '@angular/router';
 export const REGISTER_ROUTES: Routes = [
   {
     path: '',
+    data: {
+      mode: 'register',
+    },
     loadComponent: () =>
-      import('./pages/register-page.component').then((m) => m.RegisterPageComponent),
+      import('./components/auth-container.component').then((m) => m.AuthContainerComponent),
   },
 ];

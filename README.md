@@ -9,6 +9,7 @@ Angular frontend for El Silencio Koffee in `PRE-BACKEND STABILIZATION` mode. The
 - All frontend routes are accessible
 - Services are aligned with the documented API contract
 - Mocks live in services, not in components
+- Ecommerce home page is available at `/`
 
 ## 2. Tech Stack
 
@@ -97,6 +98,7 @@ src/app
     orders/
     production/
     products/
+    store/
   layout/
   shared/
 ```
@@ -150,6 +152,7 @@ Typed models already aligned with the contract include:
 
 Main frontend routes:
 
+- `/`
 - `/login`
 - `/register`
 - `/products`

@@ -1,60 +1,86 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } from '@angular/core';
+import { NgFor, NgIf } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  type OnInit,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import type { Product } from '../../../core/models/product.model';
-import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
-import { ButtonComponent } from '../../../shared/ui/button/button.component';
-import { CardComponent } from '../../../shared/ui/card/card.component';
-import { ProductsService } from '../services/products.service';
-
-interface ProductCard {
-  id: string;
-  name: string;
-  description: string;
-  priceLabel: string;
-  stockLabel: string;
-  stockVariant: 'success' | 'warning' | 'danger';
-}
+import { ToastService } from '../../../shared/ui/toast/toast.service';
+import { CartStateService } from '../../cart/services/cart-state.service';
+import { ProductCardComponent } from '../components/product-card.component';
+import { ProductsService, type ProductsListResponse } from '../services/products.service';
 
 @Component({
   selector: 'app-products-page',
-  imports: [RouterLink, CardComponent, ButtonComponent, BadgeComponent],
+  imports: [NgIf, NgFor, ProductCardComponent],
   templateUrl: './products-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductsPageComponent implements OnInit {
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly productsService = inject(ProductsService);
-  private readonly currencyFormatter = new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  });
+  private readonly toastService = inject(ToastService);
+  private readonly cartState = inject(CartStateService);
 
-  products: ProductCard[] = [];
+  products: Product[] = [];
+  isLoading = true;
 
   ngOnInit(): void {
+    console.log('[ProductsPageComponent] ngOnInit()');
+
     this.productsService
       .listProducts()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((response) => {
-        this.products = isApiSuccessResponse(response)
-          ? response.data.map((product) => this.toProductCard(product))
-          : [];
+      .subscribe({
+        next: (response: ProductsListResponse) => {
+          console.log('[ProductsPageComponent] products received', {
+            count: response.count,
+            products: response.products,
+          });
+
+          this.products = Array.isArray(response.products) ? response.products : [];
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error('[ProductsPageComponent] listProducts() failed', error);
+          this.products = [];
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        },
       });
   }
 
-  private toProductCard(product: Product): ProductCard {
-    return {
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      priceLabel: this.currencyFormatter.format(product.price),
-      stockLabel:
-        product.stock > 10 ? 'Available' : product.stock > 0 ? 'Low stock' : 'Out of stock',
-      stockVariant: product.stock > 10 ? 'success' : product.stock > 0 ? 'warning' : 'danger',
-    };
+  addToCart(product: Product): void {
+    this.cartState
+      .addItem(product)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => {
+        if (isApiSuccessResponse(response)) {
+          this.toastService.show({
+            title: 'Added to cart',
+            description: `${product.name} was added to your selection.`,
+            variant: 'success',
+          });
+          return;
+        }
+
+        this.toastService.show({
+          title: 'Unable to add item',
+          description: response.error,
+          variant: 'error',
+        });
+      });
+  }
+
+  trackByProductId(_index: number, product: Product): string {
+    return product.id;
   }
 }

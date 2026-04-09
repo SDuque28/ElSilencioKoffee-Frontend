@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  type OnInit,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
@@ -14,6 +21,7 @@ import { OrdersService } from '../services/orders.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrdersPageComponent implements OnInit {
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly ordersService = inject(OrdersService);
   private readonly currencyFormatter = new Intl.NumberFormat('es-CO', {
@@ -39,6 +47,7 @@ export class OrdersPageComponent implements OnInit {
         this.rows = isApiSuccessResponse(response)
           ? response.data.map((order) => this.toRow(order))
           : [];
+        this.cdr.markForCheck();
       });
   }
 

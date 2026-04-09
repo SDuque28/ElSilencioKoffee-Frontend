@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  type OnInit,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
@@ -13,6 +20,7 @@ import { DashboardService } from '../services/dashboard.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardUsersPageComponent implements OnInit {
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dashboardService = inject(DashboardService);
   private readonly currencyFormatter = new Intl.NumberFormat('es-CO', {
@@ -41,6 +49,7 @@ export class DashboardUsersPageComponent implements OnInit {
               spend: this.currencyFormatter.format(buyer.totalSpend),
             }))
           : [];
+        this.cdr.markForCheck();
       });
   }
 }

@@ -1,0 +1,147 @@
+<section class="space-y-16 pb-8">
+  <section
+    class="grid gap-8 rounded-[28px] bg-gradient-to-br from-[#fbf7f2] via-[#f7f3ef] to-[#efe4d7] px-6 py-8 shadow-[0_20px_60px_rgba(92,65,45,0.08)] md:px-10 md:py-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center"
+  >
+    <div class="space-y-6">
+      <p class="text-xs font-semibold uppercase tracking-[0.38em] text-[#8f7960]">
+        El Silencio Koffee
+      </p>
+      <div class="space-y-4">
+        <h1 class="max-w-xl text-4xl font-semibold leading-tight text-[#2f2219] md:text-5xl">
+          Premium Coffee Experience
+        </h1>
+        <p class="max-w-xl text-base leading-7 text-[#6b5c4f]">
+          Discover a curated collection of specialty coffee, signature gear, and ritual-driven
+          essentials designed for a slower, richer brew at home.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <a
+          routerLink="/products"
+          class="inline-flex items-center justify-center rounded-full bg-[#6b3f1d] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(107,63,29,0.24)] transition hover:bg-[#5b3418]"
+        >
+          Shop now
+        </a>
+        <a
+          routerLink="/products"
+          class="inline-flex items-center justify-center rounded-full border border-[#dbcdbc] px-6 py-3 text-sm font-semibold text-[#4f3a2d] transition hover:border-[#c7b09a] hover:bg-white/70"
+        >
+          View collection
+        </a>
+      </div>
+    </div>
+
+    <div class="relative">
+      <div class="absolute -left-4 -top-4 h-28 w-28 rounded-full bg-white/40 blur-2xl"></div>
+      <img
+        [src]="heroImage"
+        alt="Premium coffee brewing setup"
+        class="relative h-[420px] w-full rounded-[28px] object-cover shadow-[0_24px_60px_rgba(70,46,30,0.18)]"
+      />
+    </div>
+  </section>
+
+  <section class="space-y-6" id="featured">
+    <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+      <div class="space-y-2">
+        <p class="text-xs font-semibold uppercase tracking-[0.35em] text-[#8f7960]">
+          Featured selection
+        </p>
+        <h2 class="text-3xl font-semibold text-[#2f2219]">Signature products</h2>
+      </div>
+      <a routerLink="/products" class="text-sm font-semibold text-[#6b3f1d] hover:text-[#4f2d16]">
+        Browse full catalog
+      </a>
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      @for (product of featuredProducts; track product.id) {
+        <app-product-card [product]="product" (addToCart)="addToCart($event)" />
+      }
+    </div>
+  </section>
+
+  <section class="space-y-6">
+    <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div class="space-y-2">
+        <p class="text-xs font-semibold uppercase tracking-[0.35em] text-[#8f7960]">
+          Collections
+        </p>
+        <h2 class="text-3xl font-semibold text-[#2f2219]">Curated brewing setup</h2>
+      </div>
+
+      <div class="hidden items-center gap-2 md:flex">
+        <button
+          type="button"
+          class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#dfd0c0] bg-white text-[#5f422e] shadow-[0_12px_30px_rgba(92,65,45,0.08)] transition hover:-translate-y-0.5 hover:border-[#c9b09a]"
+          (click)="scrollCollection('previous')"
+          aria-label="Scroll previous products"
+        >
+          <lucide-icon [img]="icons.previous" class="h-4 w-4"></lucide-icon>
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#dfd0c0] bg-white text-[#5f422e] shadow-[0_12px_30px_rgba(92,65,45,0.08)] transition hover:-translate-y-0.5 hover:border-[#c9b09a]"
+          (click)="scrollCollection('next')"
+          aria-label="Scroll next products"
+        >
+          <lucide-icon [img]="icons.next" class="h-4 w-4"></lucide-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="-mx-4 px-4">
+      <div
+        #collectionTrack
+        class="flex gap-5 overflow-x-auto scroll-smooth pb-3 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        @for (product of collectionProducts; track product.id) {
+          <div class="w-[min(88vw,320px)] shrink-0 snap-start md:w-[320px]">
+            <app-product-card
+              [product]="product"
+              [compact]="true"
+              [cardClassName]="'h-full'"
+              (addToCart)="addToCart($event)"
+            />
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <section
+    class="rounded-[28px] bg-[#5a3b2e] px-6 py-10 text-center text-[#f7efe6] md:px-10 md:py-14"
+  >
+    <div class="mx-auto max-w-3xl space-y-4">
+      <p class="text-xs font-semibold uppercase tracking-[0.38em] text-[#d8c1af]">The brand</p>
+      <h2 class="text-3xl font-semibold md:text-4xl">Coffee ritual, designed with intention</h2>
+      <p class="text-sm leading-7 text-[#ead7c8] md:text-base">
+        Built for modern coffee lovers who care about flavor, quiet moments, and beautiful everyday
+        tools.
+      </p>
+    </div>
+
+    <div class="mt-8 grid gap-4 md:grid-cols-3">
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-5 text-left">
+        <h3 class="text-lg font-semibold">Specialty sourcing</h3>
+        <p class="mt-2 text-sm leading-6 text-[#ead7c8]">
+          Curated beans with origin clarity, fresh profiles, and elevated roasting standards.
+        </p>
+      </div>
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-5 text-left">
+        <h3 class="text-lg font-semibold">Beautiful tools</h3>
+        <p class="mt-2 text-sm leading-6 text-[#ead7c8]">
+          Brewing gear and accessories selected to feel premium, useful, and timeless.
+        </p>
+      </div>
+      <div class="rounded-2xl border border-white/10 bg-white/5 p-5 text-left">
+        <h3 class="text-lg font-semibold">Mock-ready commerce</h3>
+        <p class="mt-2 text-sm leading-6 text-[#ead7c8]">
+          A polished storefront experience prepared for future API integration without sacrificing
+          UX today.
+        </p>
+      </div>
+    </div>
+  </section>
+</section>

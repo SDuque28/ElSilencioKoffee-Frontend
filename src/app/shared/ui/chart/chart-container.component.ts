@@ -35,6 +35,7 @@ export class ChartContainerComponent implements AfterViewInit, OnChanges, OnDest
       },
     },
   };
+  @Input() dataCy: string | null = null;
 
   private chart: Chart | null = null;
 
