@@ -11,16 +11,16 @@
 
   <form data-cy="login-form" class="grid gap-4" [formGroup]="form" (ngSubmit)="submit()">
     <label class="grid gap-2">
-      <span class="text-[0.82rem] font-bold tracking-[0.04em] text-[#2f2219]">Email</span>
+      <span class="text-[0.82rem] font-bold tracking-[0.04em] text-[#2f2219]">Username</span>
       <input
-        data-cy="login-email"
+        data-cy="login-username"
         class="{{ inputClasses }}"
-        type="email"
-        formControlName="email"
-        placeholder="you@example.com"
+        type="text"
+        formControlName="username"
+        placeholder="Your username"
       />
-      @if (errorFor('email')) {
-        <span class="text-[0.76rem] text-[#c15d56]">{{ errorFor('email') }}</span>
+      @if (errorFor('username')) {
+        <span class="text-[0.76rem] text-[#c15d56]">{{ errorFor('username') }}</span>
       }
     </label>
 
@@ -38,12 +38,19 @@
       }
     </label>
 
+    @if (serverError) {
+      <p data-cy="login-error" class="text-[0.8rem] font-medium text-[#c15d56]">
+        {{ serverError }}
+      </p>
+    }
+
     <button
       data-cy="login-submit"
       type="submit"
+      [disabled]="loading"
       class="mt-2 w-full rounded-[1.1rem] border-0 bg-[linear-gradient(135deg,#6f4e37_0%,#4b2e2b_100%)] px-5 py-4 text-[0.95rem] font-bold text-[#fff7f1] shadow-[0_16px_30px_rgba(111,78,55,0.22)] transition duration-200 hover:scale-[1.02] hover:brightness-[0.98] hover:shadow-[0_18px_34px_rgba(111,78,55,0.26)] active:scale-[0.98]"
     >
-      Sign In
+      {{ loading ? 'Signing In...' : 'Sign In' }}
     </button>
   </form>
 </div>

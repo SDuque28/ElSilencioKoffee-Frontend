@@ -73,19 +73,21 @@
         [class.hover:text-[#2f2219]]="!isAdminLayout"
         >Orders</a
       >
-      <a
-        data-cy="nav-dashboard-link"
-        routerLink="/dashboard"
-        routerLinkActive="text-primary"
-        class="flex items-center gap-1 transition"
-        [class.text-[#9ca3af]]="isAdminLayout"
-        [class.hover:text-[#f5efe8]]="isAdminLayout"
-        [class.text-[#6b5c4f]]="!isAdminLayout"
-        [class.hover:text-[#2f2219]]="!isAdminLayout"
-      >
-        <lucide-icon [img]="icons.dashboard" class="h-4 w-4"></lucide-icon>
-        Admin
-      </a>
+      @if (authService.isAdmin()) {
+        <a
+          data-cy="nav-dashboard-link"
+          routerLink="/dashboard"
+          routerLinkActive="text-primary"
+          class="flex items-center gap-1 transition"
+          [class.text-[#9ca3af]]="isAdminLayout"
+          [class.hover:text-[#f5efe8]]="isAdminLayout"
+          [class.text-[#6b5c4f]]="!isAdminLayout"
+          [class.hover:text-[#2f2219]]="!isAdminLayout"
+        >
+          <lucide-icon [img]="icons.dashboard" class="h-4 w-4"></lucide-icon>
+          Admin
+        </a>
+      }
     </nav>
 
     <div class="hidden items-center gap-2 md:flex">
@@ -97,7 +99,7 @@
           [class.bg-[#efe1d1]]="!isAdminLayout"
           [class.text-[#8b4f2a]]="!isAdminLayout"
         >
-          {{ authService.currentUser()?.name ?? 'Signed in' }}
+          {{ authService.currentUser()?.username ?? authService.currentUser()?.name ?? 'Signed in' }}
         </span>
         <button
           data-cy="nav-logout-button"
@@ -196,17 +198,19 @@
           (click)="closeMobileNav()"
           >Orders</a
         >
-        <a
-          data-cy="mobile-nav-dashboard-link"
-          routerLink="/dashboard"
-          class="rounded px-2 py-1.5 transition"
-          [class.text-[#f4ede5]]="isAdminLayout"
-          [class.hover:bg-[#1c1c20]]="isAdminLayout"
-          [class.text-[#2f2219]]="!isAdminLayout"
-          [class.hover:bg-[#f5ede4]]="!isAdminLayout"
-          (click)="closeMobileNav()"
-          >Dashboard</a
-        >
+        @if (authService.isAdmin()) {
+          <a
+            data-cy="mobile-nav-dashboard-link"
+            routerLink="/dashboard"
+            class="rounded px-2 py-1.5 transition"
+            [class.text-[#f4ede5]]="isAdminLayout"
+            [class.hover:bg-[#1c1c20]]="isAdminLayout"
+            [class.text-[#2f2219]]="!isAdminLayout"
+            [class.hover:bg-[#f5ede4]]="!isAdminLayout"
+            (click)="closeMobileNav()"
+            >Dashboard</a
+          >
+        }
         @if (authService.isAuthenticated()) {
           <button
             data-cy="mobile-nav-logout-button"

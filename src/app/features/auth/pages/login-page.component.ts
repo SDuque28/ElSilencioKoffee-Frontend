@@ -23,8 +23,8 @@ export class LoginPageComponent {
   private readonly route = inject(ActivatedRoute);
 
   readonly form = this.formBuilder.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    username: ['', [Validators.required]],
+    password: ['', [Validators.required]],
   });
 
   readonly controlClasses =
@@ -40,7 +40,7 @@ export class LoginPageComponent {
       next: (response) => {
         if (!isApiSuccessResponse(response)) {
           this.toastService.show({
-            title: 'Authentication failed',
+            title: 'No fue posible iniciar sesion',
             description: response.error,
             variant: 'error',
           });
@@ -48,18 +48,20 @@ export class LoginPageComponent {
         }
 
         this.toastService.show({
-          title: 'Welcome back',
-          description: 'Authentication completed successfully.',
+          title: 'Bienvenido de nuevo',
+          description: 'La sesion se inicio correctamente.',
           variant: 'success',
         });
 
-        const redirectTo = this.route.snapshot.queryParamMap.get('redirectTo') ?? '/products';
+        const redirectTo =
+          this.route.snapshot.queryParamMap.get('redirectTo') ??
+          (this.authFacade.isAdmin() ? '/dashboard' : '/products');
         void this.router.navigateByUrl(redirectTo);
       },
       error: () => {
         this.toastService.show({
-          title: 'Authentication failed',
-          description: 'Check your credentials and try again.',
+          title: 'No fue posible iniciar sesion',
+          description: 'No se pudo conectar con el servidor.',
           variant: 'error',
         });
       },

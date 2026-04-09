@@ -70,7 +70,8 @@
               "buildTarget": "el-silencio-koffee-frontend:build:production"
             },
             "development": {
-              "buildTarget": "el-silencio-koffee-frontend:build:development"
+              "buildTarget": "el-silencio-koffee-frontend:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

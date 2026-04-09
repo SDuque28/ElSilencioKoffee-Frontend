@@ -1,7 +1,14 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  inject,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import type { LoginPayload } from '../../../core/models/auth.model';
+import type { LoginRequest } from '../../../core/models/auth.model';
 
 @Component({
   selector: 'app-login-form',
@@ -12,11 +19,13 @@ import type { LoginPayload } from '../../../core/models/auth.model';
 export class LoginFormComponent {
   private readonly formBuilder = inject(FormBuilder);
 
-  @Output() formSubmit = new EventEmitter<LoginPayload>();
+  @Input() loading = false;
+  @Input() serverError: string | null = null;
+  @Output() formSubmit = new EventEmitter<LoginRequest>();
 
   readonly form = this.formBuilder.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    username: ['', [Validators.required]],
+    password: ['', [Validators.required]],
   });
 
   protected readonly inputClasses =
@@ -31,7 +40,7 @@ export class LoginFormComponent {
     this.formSubmit.emit(this.form.getRawValue());
   }
 
-  errorFor(controlName: 'email' | 'password'): string {
+  errorFor(controlName: 'username' | 'password'): string {
     const control = this.form.controls[controlName];
 
     if (!control.invalid || !(control.touched || control.dirty)) {
@@ -39,15 +48,7 @@ export class LoginFormComponent {
     }
 
     if (control.hasError('required')) {
-      return controlName === 'email' ? 'Email is required.' : 'Password is required.';
-    }
-
-    if (control.hasError('email')) {
-      return 'Enter a valid email address.';
-    }
-
-    if (control.hasError('minlength')) {
-      return 'Password must contain at least 6 characters.';
+      return controlName === 'username' ? 'Username is required.' : 'Password is required.';
     }
 
     return 'Check this field and try again.';

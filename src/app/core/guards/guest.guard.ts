@@ -3,13 +3,13 @@ import { type CanActivateFn, Router } from '@angular/router';
 
 import { AuthService } from '../services/auth.service';
 
-export const adminGuard: CanActivateFn = () => {
+export const guestGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isAdmin()) {
+  if (!authService.isAuthenticated()) {
     return true;
   }
 
-  return router.createUrlTree(['/products']);
+  return router.createUrlTree([authService.isAdmin() ? '/dashboard' : '/products']);
 };

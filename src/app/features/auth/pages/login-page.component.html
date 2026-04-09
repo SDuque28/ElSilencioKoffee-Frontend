@@ -4,8 +4,13 @@
     <p class="mt-1 text-sm text-muted">Access your ecommerce and analytics workspace.</p>
 
     <form data-cy="login-form" class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
-      <app-form-field label="Email">
-        <input data-cy="login-email" class="{{ controlClasses }}" type="email" formControlName="email" />
+      <app-form-field label="Username">
+        <input
+          data-cy="login-username"
+          class="{{ controlClasses }}"
+          type="text"
+          formControlName="username"
+        />
       </app-form-field>
 
       <app-form-field label="Password">

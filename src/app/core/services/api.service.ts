@@ -20,6 +20,8 @@ export interface MockOptions<T> {
 export interface RequestOptions<T = unknown> {
   params?: Record<string, string | number | boolean | null | undefined>;
   mock?: MockOptions<T>;
+  baseUrl?: string;
+  bypassMock?: boolean;
 }
 
 @Injectable({
@@ -58,11 +60,11 @@ export class ApiService {
     body?: unknown,
     options?: RequestOptions<T>,
   ): Observable<ApiResponse<T>> {
-    const url = this.buildUrl(endpoint);
+    const url = this.buildUrl(endpoint, options?.baseUrl);
     this.logRequest(method, url, options?.params, body);
 
-    if (environment.isMockMode) {
-      return this.mockRequest<T>(method, endpoint, options?.mock);
+    if (environment.isMockMode && !options?.bypassMock) {
+      return this.mockRequest<T>(method, endpoint, options?.mock, options?.baseUrl);
     }
 
     return this.http
@@ -81,21 +83,22 @@ export class ApiService {
       );
   }
 
-  private buildUrl(endpoint: string): string {
+  private buildUrl(endpoint: string, baseUrl = environment.apiUrl): string {
     if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
       return endpoint;
     }
 
     const normalizedEndpoint = endpoint.replace(/^\/+/, '');
-    return `${environment.apiUrl}/${normalizedEndpoint}`;
+    return `${baseUrl.replace(/\/+$/, '')}/${normalizedEndpoint}`;
   }
 
   private mockRequest<T>(
     method: HttpMethod,
     endpoint: string,
     mock?: MockOptions<T>,
+    baseUrl?: string,
   ): Observable<ApiResponse<T>> {
-    const url = this.buildUrl(endpoint);
+    const url = this.buildUrl(endpoint, baseUrl);
 
     if (!mock) {
       const errorResponse: ApiErrorResponse = {
@@ -161,12 +164,23 @@ export class ApiService {
         return error.error;
       }
 
+      if (error.status === 0) {
+        return {
+          success: false,
+          error: 'No se pudo conectar con el servidor.',
+          code: 0,
+        };
+      }
+
       return {
         success: false,
         error:
           typeof error.error === 'string'
             ? error.error
-            : (error.error?.message ?? error.message ?? 'Unexpected API error.'),
+            : (error.error?.error ??
+                error.error?.message ??
+                error.message ??
+                'Unexpected API error.'),
         code: error.status || 500,
       };
     }

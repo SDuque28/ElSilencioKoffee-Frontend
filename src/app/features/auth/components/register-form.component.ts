@@ -1,7 +1,14 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  inject,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import type { RegisterPayload } from '../../../core/models/auth.model';
+import type { RegisterRequest } from '../../../core/models/auth.model';
 
 @Component({
   selector: 'app-register-form',
@@ -12,12 +19,14 @@ import type { RegisterPayload } from '../../../core/models/auth.model';
 export class RegisterFormComponent {
   private readonly formBuilder = inject(FormBuilder);
 
-  @Output() formSubmit = new EventEmitter<RegisterPayload>();
+  @Input() loading = false;
+  @Input() serverError: string | null = null;
+  @Output() formSubmit = new EventEmitter<RegisterRequest>();
 
   readonly form = this.formBuilder.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(3)]],
+    username: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    password: ['', [Validators.required]],
   });
 
   protected readonly inputClasses =
@@ -32,7 +41,7 @@ export class RegisterFormComponent {
     this.formSubmit.emit(this.form.getRawValue());
   }
 
-  errorFor(controlName: 'name' | 'email' | 'password'): string {
+  errorFor(controlName: 'username' | 'email' | 'password'): string {
     const control = this.form.controls[controlName];
 
     if (!control.invalid || !(control.touched || control.dirty)) {
@@ -41,8 +50,8 @@ export class RegisterFormComponent {
 
     if (control.hasError('required')) {
       switch (controlName) {
-        case 'name':
-          return 'Full name is required.';
+        case 'username':
+          return 'Username is required.';
         case 'email':
           return 'Email is required.';
         default:
@@ -52,12 +61,6 @@ export class RegisterFormComponent {
 
     if (control.hasError('email')) {
       return 'Enter a valid email address.';
-    }
-
-    if (control.hasError('minlength')) {
-      return controlName === 'name'
-        ? 'Use at least 3 characters for your name.'
-        : 'Password must contain at least 6 characters.';
     }
 
     return 'Check this field and try again.';

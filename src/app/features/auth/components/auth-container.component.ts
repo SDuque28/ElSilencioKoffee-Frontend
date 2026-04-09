@@ -1,8 +1,15 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ViewEncapsulation,
+  inject,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { Coffee, LucideAngularModule } from 'lucide-angular';
 
-import type { LoginPayload, RegisterPayload } from '../../../core/models/auth.model';
+import type { LoginRequest, RegisterRequest } from '../../../core/models/auth.model';
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { AuthFacadeService } from '../services/auth-facade.service';
@@ -28,6 +35,10 @@ export class AuthContainerComponent {
   readonly isLoginMode = signal(
     ((this.route.snapshot.data['mode'] as AuthMode | undefined) ?? 'login') === 'login',
   );
+  readonly loginPending = signal(false);
+  readonly registerPending = signal(false);
+  readonly loginError = signal<string | null>(null);
+  readonly registerError = signal<string | null>(null);
   protected readonly icons = {
     coffee: Coffee,
   };
@@ -41,12 +52,19 @@ export class AuthContainerComponent {
     this.isLoginMode.set(mode === 'login');
   }
 
-  onLogin(payload: LoginPayload): void {
-    this.authFacade.login(payload).subscribe({
+  onLogin(payload: LoginRequest): void {
+    this.loginError.set(null);
+    this.loginPending.set(true);
+
+    this.authFacade
+      .login(payload)
+      .pipe(finalize(() => this.loginPending.set(false)))
+      .subscribe({
       next: (response) => {
         if (!isApiSuccessResponse(response)) {
+          this.loginError.set(response.error);
           this.toastService.show({
-            title: 'Authentication failed',
+            title: 'No fue posible iniciar sesion',
             description: response.error,
             variant: 'error',
           });
@@ -54,30 +72,40 @@ export class AuthContainerComponent {
         }
 
         this.toastService.show({
-          title: 'Welcome back',
-          description: 'Authentication completed successfully.',
+          title: 'Bienvenido de nuevo',
+          description: 'La sesion se inicio correctamente.',
           variant: 'success',
         });
 
-        const redirectTo = this.route.snapshot.queryParamMap.get('redirectTo') ?? '/products';
+        const redirectTo =
+          this.route.snapshot.queryParamMap.get('redirectTo') ??
+          (this.authFacade.isAdmin() ? '/dashboard' : '/products');
         void this.router.navigateByUrl(redirectTo);
       },
       error: () => {
+        this.loginError.set('No se pudo conectar con el servidor.');
         this.toastService.show({
-          title: 'Authentication failed',
-          description: 'Check your credentials and try again.',
+          title: 'No fue posible iniciar sesion',
+          description: 'No se pudo conectar con el servidor.',
           variant: 'error',
         });
       },
     });
   }
 
-  onRegister(payload: RegisterPayload): void {
-    this.authFacade.register(payload).subscribe({
+  onRegister(payload: RegisterRequest): void {
+    this.registerError.set(null);
+    this.registerPending.set(true);
+
+    this.authFacade
+      .register(payload)
+      .pipe(finalize(() => this.registerPending.set(false)))
+      .subscribe({
       next: (response) => {
         if (!isApiSuccessResponse(response)) {
+          this.registerError.set(response.error);
           this.toastService.show({
-            title: 'Registration failed',
+            title: 'No fue posible crear la cuenta',
             description: response.error,
             variant: 'error',
           });
@@ -85,17 +113,18 @@ export class AuthContainerComponent {
         }
 
         this.toastService.show({
-          title: 'Account created',
-          description: 'Welcome to El Silencio Koffee.',
+          title: 'Cuenta creada',
+          description: 'Tu usuario quedo autenticado correctamente.',
           variant: 'success',
         });
 
         void this.router.navigateByUrl('/products');
       },
       error: () => {
+        this.registerError.set('No se pudo conectar con el servidor.');
         this.toastService.show({
-          title: 'Registration failed',
-          description: 'Please verify your information and retry.',
+          title: 'No fue posible crear la cuenta',
+          description: 'No se pudo conectar con el servidor.',
           variant: 'error',
         });
       },

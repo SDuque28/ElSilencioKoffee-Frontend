@@ -7,17 +7,15 @@ import { AuthService } from '../services/auth.service';
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const authService = inject(AuthService);
-  const token = authService.token();
+  const token = authService.getToken();
+  const isKnownApiRequest =
+    request.url.startsWith(environment.apiUrl) || request.url.startsWith(environment.authApiUrl);
 
-  if (!request.url.startsWith(environment.apiUrl)) {
+  if (!isKnownApiRequest) {
     return next(request);
   }
 
-  const setHeaders: Record<string, string> = {};
-
-  if (token) {
-    setHeaders['Authorization'] = `Bearer ${token}`;
-  }
+  const setHeaders: Record<string, string> = token ? authService.getAuthHeaders() : {};
 
   if (
     !request.headers.has('Content-Type') &&

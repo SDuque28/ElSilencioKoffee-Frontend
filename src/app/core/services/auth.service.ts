@@ -1,20 +1,23 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import type { Observable } from 'rxjs';
 
 import {
-  type AuthSession,
-  type LoginPayload,
-  type RegisterPayload,
+  type AuthResponse,
+  type LoginRequest,
+  type RegisterRequest,
   type SessionUser,
+  type UserSession,
 } from '../models/auth.model';
 import { isApiSuccessResponse, type ApiResponse } from '../models/api-response.model';
+import { environment } from '../../../environments/environment';
 import { ApiService } from './api.service';
 
 const TOKEN_STORAGE_KEY = 'esk.token';
-const REFRESH_TOKEN_STORAGE_KEY = 'esk.refresh-token';
-const USER_STORAGE_KEY = 'esk.user';
+const SESSION_STORAGE_KEY = 'esk.session';
+const LEGACY_REFRESH_TOKEN_STORAGE_KEY = 'esk.refresh-token';
+const LEGACY_USER_STORAGE_KEY = 'esk.user';
 
 @Injectable({
   providedIn: 'root',
@@ -23,103 +26,186 @@ export class AuthService {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
 
-  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_STORAGE_KEY));
-  private readonly _refreshToken = signal<string | null>(
-    localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY),
-  );
-  private readonly _user = signal<SessionUser | null>(this.readStoredUser());
+  private readonly _session = signal<UserSession | null>(this.readStoredSession());
 
-  readonly token = this._token.asReadonly();
-  readonly refreshToken = this._refreshToken.asReadonly();
-  readonly currentUser = this._user.asReadonly();
-  readonly isAuthenticated = computed(() => this._token() !== null);
-  readonly isAdmin = computed(() => this._user()?.role === 'ADMIN');
+  readonly session = this._session.asReadonly();
+  readonly token = computed(() => this._session()?.token ?? null);
+  readonly currentUser = computed(() => this._session()?.user ?? null);
+  readonly isAuthenticated = computed(() => Boolean(this._session()?.token));
+  readonly isAdmin = computed(() => this.hasRole('ROLE_ADMIN'));
 
-  login(payload: LoginPayload): Observable<ApiResponse<AuthSession>> {
+  login(payload: LoginRequest): Observable<ApiResponse<UserSession>> {
     return this.api
-      .post<AuthSession>('auth/login', payload, {
-        mock: {
-          data: () => this.createMockSession(payload.email),
-          message: 'Mock login completed successfully.',
-        },
+      .post<AuthResponse>('auth/login', payload, {
+        baseUrl: environment.authApiUrl,
+        bypassMock: true,
       })
-      .pipe(tap((response) => this.persistSessionFromResponse(response)));
+      .pipe(
+        map((response) => this.normalizeAuthResponse(response)),
+        tap((response) => {
+          if (isApiSuccessResponse(response)) {
+            this.saveSession(response.data);
+          }
+        }),
+      );
   }
 
-  register(payload: RegisterPayload): Observable<ApiResponse<AuthSession>> {
+  register(payload: RegisterRequest): Observable<ApiResponse<UserSession>> {
     return this.api
-      .post<AuthSession>('auth/register', payload, {
-        mock: {
-          data: () => this.createMockSession(payload.email, payload.name),
-          message: 'Mock registration completed successfully.',
-        },
+      .post<AuthResponse>('auth/register', payload, {
+        baseUrl: environment.authApiUrl,
+        bypassMock: true,
       })
-      .pipe(tap((response) => this.persistSessionFromResponse(response)));
+      .pipe(
+        map((response) => this.normalizeAuthResponse(response)),
+        tap((response) => {
+          if (isApiSuccessResponse(response)) {
+            this.saveSession(response.data);
+          }
+        }),
+      );
+  }
+
+  saveSession(session: UserSession): void {
+    this._session.set(session);
+    localStorage.setItem(TOKEN_STORAGE_KEY, session.token);
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+  }
+
+  getSession(): UserSession | null {
+    return this._session();
+  }
+
+  getAuthenticatedUser(): SessionUser | null {
+    return this.currentUser();
+  }
+
+  getToken(): string | null {
+    return this.token();
+  }
+
+  getAuthHeaders(): Record<string, string> {
+    const token = this.getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  isSessionActive(): boolean {
+    return this.isAuthenticated();
+  }
+
+  clearSession(): void {
+    this.clearStoredSession();
+    this._session.set(null);
   }
 
   logout(): void {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
-    localStorage.removeItem(USER_STORAGE_KEY);
-    this._token.set(null);
-    this._refreshToken.set(null);
-    this._user.set(null);
+    this.clearSession();
     void this.router.navigateByUrl('/login');
   }
 
-  private persistSessionFromResponse(response: ApiResponse<AuthSession>): void {
-    if (!isApiSuccessResponse(response)) {
-      return;
-    }
-
-    const { token, refreshToken, user } = response.data;
-    this._token.set(token);
-    this._refreshToken.set(refreshToken);
-    this._user.set(user);
-
-    localStorage.setItem(TOKEN_STORAGE_KEY, token);
-    localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+  hasRole(role: string): boolean {
+    return this._session()?.roles.includes(role) ?? false;
   }
 
-  private createMockSession(email: string, name?: string): AuthSession {
-    const normalizedName =
-      name ??
-      email
-        .split('@')[0]
-        .split(/[._-]/)
-        .filter(Boolean)
-        .map((segment) => segment[0]?.toUpperCase() + segment.slice(1))
-        .join(' ');
+  private normalizeAuthResponse(response: ApiResponse<AuthResponse>): ApiResponse<UserSession> {
+    if (!isApiSuccessResponse(response)) {
+      return response;
+    }
 
-    const role = email.toLowerCase().includes('admin') ? 'ADMIN' : 'USER';
-    const idSuffix = normalizedName.toLowerCase().replace(/\s+/g, '-');
+    try {
+      return {
+        success: true,
+        data: this.toSession(response.data),
+        message: response.message,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'La respuesta del servidor no tiene el formato esperado.',
+        code: 500,
+      };
+    }
+  }
+
+  private toSession(response: AuthResponse): UserSession {
+    if (
+      !response ||
+      typeof response.token !== 'string' ||
+      typeof response.username !== 'string' ||
+      typeof response.email !== 'string' ||
+      !Array.isArray(response.roles)
+    ) {
+      throw new Error('La respuesta de autenticacion es invalida.');
+    }
+
+    const token = response.token.trim();
+    const username = response.username.trim();
+    const email = response.email.trim();
+    const roles = response.roles.filter((role): role is string => typeof role === 'string');
+
+    if (!token || !username || !email) {
+      throw new Error('La respuesta de autenticacion esta incompleta.');
+    }
 
     return {
-      token: `mock-access-token-${role.toLowerCase()}-${idSuffix}`,
-      refreshToken: `mock-refresh-token-${role.toLowerCase()}-${idSuffix}`,
+      token,
+      username,
+      email,
+      roles,
       user: {
-        id: `user-${idSuffix}`,
-        name: normalizedName || 'El Silencio User',
+        id: username,
+        username,
+        name: username,
         email,
-        role,
-        createdAt: '2026-03-18T10:00:00Z',
+        roles,
+        role: this.resolveRole(roles),
       },
     };
   }
 
-  private readStoredUser(): SessionUser | null {
-    const rawUser = localStorage.getItem(USER_STORAGE_KEY);
+  private resolveRole(roles: string[]): 'ADMIN' | 'USER' {
+    return roles.includes('ROLE_ADMIN') ? 'ADMIN' : 'USER';
+  }
 
-    if (!rawUser) {
+  private readStoredSession(): UserSession | null {
+    const rawSession = localStorage.getItem(SESSION_STORAGE_KEY);
+    const rawToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+
+    if (!rawSession) {
+      if (rawToken) {
+        this.clearStoredSession();
+      }
+
       return null;
     }
 
     try {
-      return JSON.parse(rawUser) as SessionUser;
+      const parsedSession = JSON.parse(rawSession) as UserSession;
+      const session = this.toSession({
+        token: rawToken ?? parsedSession.token,
+        username: parsedSession.username ?? parsedSession.user?.username,
+        email: parsedSession.email ?? parsedSession.user?.email,
+        roles: parsedSession.roles ?? parsedSession.user?.roles ?? [],
+      });
+
+      if (session.token !== rawToken) {
+        this.saveSession(session);
+      }
+
+      return session;
     } catch {
-      localStorage.removeItem(USER_STORAGE_KEY);
+      this.clearStoredSession();
       return null;
     }
+  }
+
+  private clearStoredSession(): void {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_REFRESH_TOKEN_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_USER_STORAGE_KEY);
   }
 }

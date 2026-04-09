@@ -1,25 +1,36 @@
-import type { User, UserRole } from './user.model';
+import type { UserRole } from './user.model';
 
-export interface SessionUser extends Pick<User, 'id'> {
-  role: UserRole;
-  name?: string;
-  email?: string;
-  createdAt?: string;
+export interface LoginRequest {
+  username: string;
+  password: string;
 }
 
-export interface AuthSession {
-  token: string;
-  refreshToken: string;
-  user: SessionUser;
-}
-
-export interface LoginPayload {
+export interface RegisterRequest {
+  username: string;
   email: string;
   password: string;
 }
 
-export interface RegisterPayload {
+export interface AuthResponse {
+  token: string;
+  username: string;
+  email: string;
+  roles: string[];
+}
+
+export interface SessionUser {
+  id: string;
+  username: string;
   name: string;
   email: string;
-  password: string;
+  roles: string[];
+  role: Exclude<UserRole, 'SYSTEM'>;
+}
+
+export interface UserSession {
+  token: string;
+  username: string;
+  email: string;
+  roles: string[];
+  user: SessionUser;
 }

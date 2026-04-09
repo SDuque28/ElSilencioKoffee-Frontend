@@ -13,7 +13,7 @@ Cypress.Commands.add('getByCy', (value: string) => cy.get(`[data-cy="${value}"]`
 Cypress.Commands.add('loginAsUser', () => {
   cy.fixture('users').then(({ user }) => {
     cy.visit('/login');
-    cy.getByCy('login-email').type(user.email);
+    cy.getByCy('login-username').type(user.username);
     cy.getByCy('login-password').type(user.password);
     cy.getByCy('login-submit').click();
     cy.location('pathname').should('eq', '/products');
@@ -23,7 +23,7 @@ Cypress.Commands.add('loginAsUser', () => {
 Cypress.Commands.add('loginAsAdmin', () => {
   cy.fixture('users').then(({ admin }) => {
     cy.visit('/login');
-    cy.getByCy('login-email').type(admin.email);
+    cy.getByCy('login-username').type(admin.username);
     cy.getByCy('login-password').type(admin.password);
     cy.getByCy('login-submit').click();
     cy.location('pathname').should('eq', '/products');
