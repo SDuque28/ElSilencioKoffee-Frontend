@@ -2,7 +2,10 @@ import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import type {
+  AuthMessageResponse,
+  ChangePasswordRequest,
   LoginRequest,
+  PasswordRecoveryRequest,
   RegisterRequest,
   UserSession,
 } from '../../../core/models/auth.model';
@@ -25,5 +28,15 @@ export class AuthFacadeService {
 
   register(payload: RegisterRequest): Observable<ApiResponse<UserSession>> {
     return this.authService.register(payload);
+  }
+
+  passwordRecovery(
+    payload: PasswordRecoveryRequest,
+  ): Observable<ApiResponse<AuthMessageResponse>> {
+    return this.authService.passwordRecovery(payload);
+  }
+
+  changePassword(payload: ChangePasswordRequest): Observable<ApiResponse<AuthMessageResponse>> {
+    return this.authService.changePassword(payload);
   }
 }

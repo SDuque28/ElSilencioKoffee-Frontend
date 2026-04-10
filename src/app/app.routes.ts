@@ -14,6 +14,16 @@ export const routes: Routes = [
     loadChildren: () => import('./features/auth/register.routes').then((m) => m.REGISTER_ROUTES),
   },
   {
+    path: 'password-recovery',
+    loadChildren: () =>
+      import('./features/auth/password-recovery.routes').then((m) => m.PASSWORD_RECOVERY_ROUTES),
+  },
+  {
+    path: 'change-password',
+    loadChildren: () =>
+      import('./features/auth/change-password.routes').then((m) => m.CHANGE_PASSWORD_ROUTES),
+  },
+  {
     path: '',
     component: MainLayoutComponent,
     data: { layout: 'public' },

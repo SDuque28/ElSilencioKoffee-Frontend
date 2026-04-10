@@ -7,12 +7,13 @@ import {
   inject,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import type { LoginRequest } from '../../../core/models/auth.model';
 
 @Component({
   selector: 'app-login-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login-form.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

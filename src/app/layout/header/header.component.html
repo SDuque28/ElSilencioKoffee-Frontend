@@ -101,6 +101,19 @@
         >
           {{ authService.currentUser()?.username ?? authService.currentUser()?.name ?? 'Signed in' }}
         </span>
+        <a
+          data-cy="nav-change-password-link"
+          routerLink="/change-password"
+          class="inline-flex items-center rounded-md border px-3 py-2 text-xs font-semibold transition"
+          [class.border-[#2f2f34]]="isAdminLayout"
+          [class.text-[#f4ede5]]="isAdminLayout"
+          [class.hover:bg-[#1c1c20]]="isAdminLayout"
+          [class.border-[#e3d6c8]]="!isAdminLayout"
+          [class.text-[#2f2219]]="!isAdminLayout"
+          [class.hover:bg-[#f5ede4]]="!isAdminLayout"
+        >
+          Change Password
+        </a>
         <button
           data-cy="nav-logout-button"
           type="button"
@@ -212,6 +225,17 @@
           >
         }
         @if (authService.isAuthenticated()) {
+          <a
+            data-cy="mobile-nav-change-password-link"
+            routerLink="/change-password"
+            class="rounded px-2 py-1.5 transition"
+            [class.text-[#f4ede5]]="isAdminLayout"
+            [class.hover:bg-[#1c1c20]]="isAdminLayout"
+            [class.text-[#2f2219]]="!isAdminLayout"
+            [class.hover:bg-[#f5ede4]]="!isAdminLayout"
+            (click)="closeMobileNav()"
+            >Change Password</a
+          >
           <button
             data-cy="mobile-nav-logout-button"
             type="button"

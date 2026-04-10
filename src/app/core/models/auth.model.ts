@@ -18,6 +18,23 @@ export interface AuthResponse {
   roles: string[];
 }
 
+export interface AuthMessageResponse {
+  message: string;
+}
+
+export interface PasswordRecoveryRequest {
+  username: string;
+  email: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export interface SessionUser {
   id: string;
   username: string;

@@ -4,8 +4,11 @@ import { map, tap } from 'rxjs/operators';
 import type { Observable } from 'rxjs';
 
 import {
+  type AuthMessageResponse,
   type AuthResponse,
+  type ChangePasswordRequest,
   type LoginRequest,
+  type PasswordRecoveryRequest,
   type RegisterRequest,
   type SessionUser,
   type UserSession,
@@ -64,6 +67,22 @@ export class AuthService {
           }
         }),
       );
+  }
+
+  passwordRecovery(
+    payload: PasswordRecoveryRequest,
+  ): Observable<ApiResponse<AuthMessageResponse>> {
+    return this.api.post<AuthMessageResponse>('auth/password-recovery', payload, {
+      baseUrl: environment.authApiUrl,
+      bypassMock: true,
+    });
+  }
+
+  changePassword(payload: ChangePasswordRequest): Observable<ApiResponse<AuthMessageResponse>> {
+    return this.api.post<AuthMessageResponse>('auth/change-password', payload, {
+      baseUrl: environment.authApiUrl,
+      bypassMock: true,
+    });
   }
 
   saveSession(session: UserSession): void {
