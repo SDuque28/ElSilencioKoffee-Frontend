@@ -150,20 +150,22 @@ export class AuthService {
   }
 
   private toSession(response: AuthResponse): UserSession {
-    if (
-      !response ||
-      typeof response.token !== 'string' ||
-      typeof response.username !== 'string' ||
-      typeof response.email !== 'string' ||
-      !Array.isArray(response.roles)
-    ) {
+    if (!response || typeof response.token !== 'string') {
       throw new Error('La respuesta de autenticacion es invalida.');
     }
 
     const token = response.token.trim();
-    const username = response.username.trim();
-    const email = response.email.trim();
-    const roles = response.roles.filter((role): role is string => typeof role === 'string');
+    const username = this.normalizeText(response.username ?? response.user?.username);
+    const email = this.normalizeText(response.email ?? response.user?.email);
+    const rolesSource = response.roles ?? response.user?.roles ?? [];
+    const roles = rolesSource.filter((role): role is string => typeof role === 'string');
+    const userId =
+      this.normalizeUserId(
+        response.id ??
+          response.userId ??
+          response.user?.id ??
+          this.extractUserIdFromToken(token),
+      ) ?? username;
 
     if (!token || !username || !email) {
       throw new Error('La respuesta de autenticacion esta incompleta.');
@@ -175,7 +177,7 @@ export class AuthService {
       email,
       roles,
       user: {
-        id: username,
+        id: userId,
         username,
         name: username,
         email,
@@ -208,6 +210,7 @@ export class AuthService {
         username: parsedSession.username ?? parsedSession.user?.username,
         email: parsedSession.email ?? parsedSession.user?.email,
         roles: parsedSession.roles ?? parsedSession.user?.roles ?? [],
+        id: parsedSession.user?.id,
       });
 
       if (session.token !== rawToken) {
@@ -226,5 +229,54 @@ export class AuthService {
     localStorage.removeItem(SESSION_STORAGE_KEY);
     localStorage.removeItem(LEGACY_REFRESH_TOKEN_STORAGE_KEY);
     localStorage.removeItem(LEGACY_USER_STORAGE_KEY);
+  }
+
+  private normalizeText(value: unknown): string {
+    return typeof value === 'string' ? value.trim() : '';
+  }
+
+  private normalizeUserId(value: unknown): string | number | null {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.trim();
+      return normalized ? normalized : null;
+    }
+
+    return null;
+  }
+
+  private extractUserIdFromToken(token: string): string | number | null {
+    const tokenParts = token.split('.');
+
+    if (tokenParts.length < 2) {
+      return null;
+    }
+
+    try {
+      const payload = JSON.parse(this.decodeBase64Url(tokenParts[1])) as Record<string, unknown>;
+      const nestedUser =
+        typeof payload['user'] === 'object' && payload['user'] !== null
+          ? (payload['user'] as Record<string, unknown>)
+          : null;
+
+      return this.normalizeUserId(payload['userId'] ?? payload['id'] ?? nestedUser?.['id']);
+    } catch {
+      return null;
+    }
+  }
+
+  private decodeBase64Url(value: string): string {
+    const normalizedValue = value.replace(/-/g, '+').replace(/_/g, '/');
+    const paddedValue = normalizedValue.padEnd(Math.ceil(normalizedValue.length / 4) * 4, '=');
+    const decodedValue = atob(paddedValue);
+
+    return decodeURIComponent(
+      Array.from(decodedValue)
+        .map((character) => `%${character.charCodeAt(0).toString(16).padStart(2, '0')}`)
+        .join(''),
+    );
   }
 }

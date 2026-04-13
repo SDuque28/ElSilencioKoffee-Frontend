@@ -13,9 +13,17 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   token: string;
-  username: string;
-  email: string;
-  roles: string[];
+  username?: string;
+  email?: string;
+  roles?: string[];
+  id?: string | number;
+  userId?: string | number;
+  user?: {
+    id?: string | number;
+    username?: string;
+    email?: string;
+    roles?: string[];
+  };
 }
 
 export interface AuthMessageResponse {
@@ -36,7 +44,7 @@ export interface ChangePasswordRequest {
 }
 
 export interface SessionUser {
-  id: string;
+  id: string | number;
   username: string;
   name: string;
   email: string;
