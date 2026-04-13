@@ -17,6 +17,10 @@
         <input data-cy="login-password" class="{{ controlClasses }}" type="password" formControlName="password" />
       </app-form-field>
 
+      @if (serverError()) {
+        <p data-cy="login-error" class="text-sm text-danger">{{ serverError() }}</p>
+      }
+
       <app-button type="submit" className="w-full" dataCy="login-submit">Sign In</app-button>
     </form>
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, Input, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
   Coffee,
@@ -25,6 +25,7 @@ export class HeaderComponent {
   readonly authService = inject(AuthService);
   readonly cartState = inject(CartStateService);
   readonly mobileNavOpen = signal(false);
+  readonly accountNoteOpen = signal(false);
 
   protected readonly icons = {
     coffee: Coffee,
@@ -43,6 +44,25 @@ export class HeaderComponent {
     this.mobileNavOpen.set(false);
   }
 
+  toggleAccountNote(event?: MouseEvent): void {
+    event?.stopPropagation();
+    this.accountNoteOpen.update((value) => !value);
+  }
+
+  closeAccountNote(event?: MouseEvent): void {
+    event?.stopPropagation();
+    this.accountNoteOpen.set(false);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+
+    if (!target?.closest('[data-account-menu]')) {
+      this.closeAccountNote();
+    }
+  }
+
   openCart(): void {
     this.closeMobileNav();
     this.cartState.openDrawer();
@@ -50,6 +70,7 @@ export class HeaderComponent {
 
   logout(): void {
     this.closeMobileNav();
+    this.closeAccountNote();
     this.authService.logout();
   }
 

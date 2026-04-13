@@ -92,28 +92,64 @@
 
     <div class="hidden items-center gap-2 md:flex">
       @if (authService.isAuthenticated()) {
-        <span
-          class="rounded-full px-2.5 py-1 text-xs font-medium"
-          [class.bg-[#31231d]]="isAdminLayout"
-          [class.text-[#f4ede5]]="isAdminLayout"
-          [class.bg-[#efe1d1]]="!isAdminLayout"
-          [class.text-[#8b4f2a]]="!isAdminLayout"
-        >
-          {{ authService.currentUser()?.username ?? authService.currentUser()?.name ?? 'Signed in' }}
-        </span>
-        <a
-          data-cy="nav-change-password-link"
-          routerLink="/change-password"
-          class="inline-flex items-center rounded-md border px-3 py-2 text-xs font-semibold transition"
-          [class.border-[#2f2f34]]="isAdminLayout"
-          [class.text-[#f4ede5]]="isAdminLayout"
-          [class.hover:bg-[#1c1c20]]="isAdminLayout"
-          [class.border-[#e3d6c8]]="!isAdminLayout"
-          [class.text-[#2f2219]]="!isAdminLayout"
-          [class.hover:bg-[#f5ede4]]="!isAdminLayout"
-        >
-          Change Password
-        </a>
+        <div class="relative" data-account-menu>
+          <button
+            data-cy="nav-account-trigger"
+            type="button"
+            class="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-medium transition"
+            [class.border-[#2f2f34]]="isAdminLayout"
+            [class.bg-[#18181b]]="isAdminLayout"
+            [class.text-[#f4ede5]]="isAdminLayout"
+            [class.hover:bg-[#1f1f23]]="isAdminLayout"
+            [class.border-[#e3d6c8]]="!isAdminLayout"
+            [class.bg-[#f7efe5]]="!isAdminLayout"
+            [class.text-[#8b4f2a]]="!isAdminLayout"
+            [class.hover:bg-[#f2e6d8]]="!isAdminLayout"
+            (click)="toggleAccountNote($event)"
+          >
+            <lucide-icon [img]="icons.user" class="h-4 w-4"></lucide-icon>
+            <span>{{ authService.currentUser()?.username ?? authService.currentUser()?.name ?? 'Signed in' }}</span>
+          </button>
+
+          @if (accountNoteOpen()) {
+            <div
+              data-cy="nav-account-note"
+              class="absolute right-0 top-full z-50 mt-2 w-80"
+              (click)="$event.stopPropagation()"
+            >
+              <a
+                data-cy="nav-change-password-link"
+                routerLink="/change-password"
+                class="block rounded-2xl border p-4 shadow-[0_18px_40px_rgba(45,28,17,0.16)] transition"
+                [class.border-[#2f2f34]]="isAdminLayout"
+                [class.bg-[#16161a]]="isAdminLayout"
+                [class.text-[#f4ede5]]="isAdminLayout"
+                [class.hover:bg-[#1b1b20]]="isAdminLayout"
+                [class.border-[#eadbcc]]="!isAdminLayout"
+                [class.bg-[#fffaf4]]="!isAdminLayout"
+                [class.text-[#2f2219]]="!isAdminLayout"
+                [class.hover:bg-[#fcf5ec]]="!isAdminLayout"
+                (click)="closeAccountNote($event)"
+              >
+                <p
+                  class="text-[0.68rem] font-semibold uppercase tracking-[0.2em]"
+                  [class.text-[#b9a995]]="isAdminLayout"
+                  [class.text-[#9b6b46]]="!isAdminLayout"
+                >
+                  Account note
+                </p>
+                <p class="mt-2 text-sm font-semibold">Change password</p>
+                <p
+                  class="mt-1 text-sm leading-6"
+                  [class.text-[#d8d0c6]]="isAdminLayout"
+                  [class.text-[#6b5c4f]]="!isAdminLayout"
+                >
+                  Open the secure password form from your account badge.
+                </p>
+              </a>
+            </div>
+          }
+        </div>
         <button
           data-cy="nav-logout-button"
           type="button"

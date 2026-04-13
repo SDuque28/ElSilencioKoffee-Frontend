@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -21,6 +21,7 @@ export class LoginPageComponent {
   private readonly toastService = inject(ToastService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  readonly serverError = signal<string | null>(null);
 
   readonly form = this.formBuilder.nonNullable.group({
     username: ['', [Validators.required]],
@@ -36,14 +37,11 @@ export class LoginPageComponent {
       return;
     }
 
+    this.serverError.set(null);
     this.authFacade.login(this.form.getRawValue()).subscribe({
       next: (response) => {
         if (!isApiSuccessResponse(response)) {
-          this.toastService.show({
-            title: 'No fue posible iniciar sesion',
-            description: response.error,
-            variant: 'error',
-          });
+          this.serverError.set(this.getLoginErrorMessage(response.error, response.code));
           return;
         }
 
@@ -58,13 +56,25 @@ export class LoginPageComponent {
           (this.authFacade.isAdmin() ? '/dashboard' : '/products');
         void this.router.navigateByUrl(redirectTo);
       },
-      error: () => {
-        this.toastService.show({
-          title: 'No fue posible iniciar sesion',
-          description: 'No se pudo conectar con el servidor.',
-          variant: 'error',
-        });
+      error: (error: { error?: string; code?: number }) => {
+        this.serverError.set(this.getLoginErrorMessage(error.error, error.code));
       },
     });
+  }
+
+  private getLoginErrorMessage(errorMessage?: string, errorCode?: number): string {
+    if (errorCode === 401) {
+      return 'Incorrect username or password.';
+    }
+
+    if (
+      errorMessage?.includes('Http failure response') ||
+      errorMessage?.includes('401 Unauthorized') ||
+      errorMessage?.toLowerCase().includes('unauthorized')
+    ) {
+      return 'Incorrect username or password.';
+    }
+
+    return errorMessage ?? 'No se pudo conectar con el servidor.';
   }
 }

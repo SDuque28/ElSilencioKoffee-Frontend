@@ -60,37 +60,27 @@ export class AuthContainerComponent {
       .login(payload)
       .pipe(finalize(() => this.loginPending.set(false)))
       .subscribe({
-      next: (response) => {
-        if (!isApiSuccessResponse(response)) {
-          this.loginError.set(response.error);
+        next: (response) => {
+          if (!isApiSuccessResponse(response)) {
+            this.loginError.set(this.getLoginErrorMessage(response.error, response.code));
+            return;
+          }
+
           this.toastService.show({
-            title: 'No fue posible iniciar sesion',
-            description: response.error,
-            variant: 'error',
+            title: 'Bienvenido de nuevo',
+            description: 'La sesion se inicio correctamente.',
+            variant: 'success',
           });
-          return;
-        }
 
-        this.toastService.show({
-          title: 'Bienvenido de nuevo',
-          description: 'La sesion se inicio correctamente.',
-          variant: 'success',
-        });
-
-        const redirectTo =
-          this.route.snapshot.queryParamMap.get('redirectTo') ??
-          (this.authFacade.isAdmin() ? '/dashboard' : '/products');
-        void this.router.navigateByUrl(redirectTo);
-      },
-      error: () => {
-        this.loginError.set('No se pudo conectar con el servidor.');
-        this.toastService.show({
-          title: 'No fue posible iniciar sesion',
-          description: 'No se pudo conectar con el servidor.',
-          variant: 'error',
-        });
-      },
-    });
+          const redirectTo =
+            this.route.snapshot.queryParamMap.get('redirectTo') ??
+            (this.authFacade.isAdmin() ? '/dashboard' : '/products');
+          void this.router.navigateByUrl(redirectTo);
+        },
+        error: (error: { error?: string; code?: number }) => {
+          this.loginError.set(this.getLoginErrorMessage(error.error, error.code));
+        },
+      });
   }
 
   onRegister(payload: RegisterRequest): void {
@@ -101,34 +91,34 @@ export class AuthContainerComponent {
       .register(payload)
       .pipe(finalize(() => this.registerPending.set(false)))
       .subscribe({
-      next: (response) => {
-        if (!isApiSuccessResponse(response)) {
-          this.registerError.set(response.error);
+        next: (response) => {
+          if (!isApiSuccessResponse(response)) {
+            this.registerError.set(response.error);
+            this.toastService.show({
+              title: 'No fue posible crear la cuenta',
+              description: response.error,
+              variant: 'error',
+            });
+            return;
+          }
+
+          this.toastService.show({
+            title: 'Cuenta creada',
+            description: 'Tu usuario quedo autenticado correctamente.',
+            variant: 'success',
+          });
+
+          void this.router.navigateByUrl('/products');
+        },
+        error: () => {
+          this.registerError.set('No se pudo conectar con el servidor.');
           this.toastService.show({
             title: 'No fue posible crear la cuenta',
-            description: response.error,
+            description: 'No se pudo conectar con el servidor.',
             variant: 'error',
           });
-          return;
-        }
-
-        this.toastService.show({
-          title: 'Cuenta creada',
-          description: 'Tu usuario quedo autenticado correctamente.',
-          variant: 'success',
-        });
-
-        void this.router.navigateByUrl('/products');
-      },
-      error: () => {
-        this.registerError.set('No se pudo conectar con el servidor.');
-        this.toastService.show({
-          title: 'No fue posible crear la cuenta',
-          description: 'No se pudo conectar con el servidor.',
-          variant: 'error',
-        });
-      },
-    });
+        },
+      });
   }
 
   get loginVisualStyle(): string {
@@ -137,5 +127,21 @@ export class AuthContainerComponent {
 
   get registerVisualStyle(): string {
     return `linear-gradient(180deg, rgba(35, 23, 16, 0.18), rgba(35, 23, 16, 0.74)), url('${this.registerVisual}')`;
+  }
+
+  private getLoginErrorMessage(errorMessage?: string, errorCode?: number): string {
+    if (errorCode === 401) {
+      return 'Incorrect username or password.';
+    }
+
+    if (
+      errorMessage?.includes('Http failure response') ||
+      errorMessage?.includes('401 Unauthorized') ||
+      errorMessage?.toLowerCase().includes('unauthorized')
+    ) {
+      return 'Incorrect username or password.';
+    }
+
+    return errorMessage ?? 'No se pudo conectar con el servidor.';
   }
 }
