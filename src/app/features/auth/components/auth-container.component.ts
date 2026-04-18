@@ -7,7 +7,6 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-import { Coffee, LucideAngularModule } from 'lucide-angular';
 
 import type { LoginRequest, RegisterRequest } from '../../../core/models/auth.model';
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
@@ -20,7 +19,7 @@ type AuthMode = 'login' | 'register';
 
 @Component({
   selector: 'app-auth-container',
-  imports: [LoginFormComponent, RegisterFormComponent, LucideAngularModule, RouterLink],
+  imports: [LoginFormComponent, RegisterFormComponent, RouterLink],
   templateUrl: './auth-container.component.html',
   styleUrl: './auth-container.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -39,9 +38,6 @@ export class AuthContainerComponent {
   readonly registerPending = signal(false);
   readonly loginError = signal<string | null>(null);
   readonly registerError = signal<string | null>(null);
-  protected readonly icons = {
-    coffee: Coffee,
-  };
 
   readonly loginVisual =
     'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1400&q=80';

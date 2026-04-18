@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, HostListener, Input, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
-  Coffee,
   LayoutDashboard,
   LogOut,
   LucideAngularModule,
@@ -28,7 +27,6 @@ export class HeaderComponent {
   readonly accountNoteOpen = signal(false);
 
   protected readonly icons = {
-    coffee: Coffee,
     cart: ShoppingCart,
     dashboard: LayoutDashboard,
     menu: Menu,
