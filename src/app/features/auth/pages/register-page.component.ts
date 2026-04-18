@@ -22,9 +22,9 @@ export class RegisterPageComponent {
   private readonly router = inject(Router);
 
   readonly form = this.formBuilder.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(3)]],
+    username: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    password: ['', [Validators.required]],
   });
 
   readonly controlClasses =
@@ -40,7 +40,7 @@ export class RegisterPageComponent {
       next: (response) => {
         if (!isApiSuccessResponse(response)) {
           this.toastService.show({
-            title: 'Registration failed',
+            title: 'No fue posible crear la cuenta',
             description: response.error,
             variant: 'error',
           });
@@ -48,8 +48,8 @@ export class RegisterPageComponent {
         }
 
         this.toastService.show({
-          title: 'Account created',
-          description: 'Welcome to El Silencio Koffee.',
+          title: 'Cuenta creada',
+          description: 'Tu usuario quedo autenticado correctamente.',
           variant: 'success',
         });
 
@@ -57,8 +57,8 @@ export class RegisterPageComponent {
       },
       error: () => {
         this.toastService.show({
-          title: 'Registration failed',
-          description: 'Please verify your information and retry.',
+          title: 'No fue posible crear la cuenta',
+          description: 'No se pudo conectar con el servidor.',
           variant: 'error',
         });
       },

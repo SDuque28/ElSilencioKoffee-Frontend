@@ -1,8 +1,14 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ViewEncapsulation,
+  inject,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Coffee, LucideAngularModule } from 'lucide-angular';
+import { finalize } from 'rxjs';
 
-import type { LoginPayload, RegisterPayload } from '../../../core/models/auth.model';
+import type { LoginRequest, RegisterRequest } from '../../../core/models/auth.model';
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { AuthFacadeService } from '../services/auth-facade.service';
@@ -13,7 +19,7 @@ type AuthMode = 'login' | 'register';
 
 @Component({
   selector: 'app-auth-container',
-  imports: [LoginFormComponent, RegisterFormComponent, LucideAngularModule, RouterLink],
+  imports: [LoginFormComponent, RegisterFormComponent, RouterLink],
   templateUrl: './auth-container.component.html',
   styleUrl: './auth-container.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -28,9 +34,10 @@ export class AuthContainerComponent {
   readonly isLoginMode = signal(
     ((this.route.snapshot.data['mode'] as AuthMode | undefined) ?? 'login') === 'login',
   );
-  protected readonly icons = {
-    coffee: Coffee,
-  };
+  readonly loginPending = signal(false);
+  readonly registerPending = signal(false);
+  readonly loginError = signal<string | null>(null);
+  readonly registerError = signal<string | null>(null);
 
   readonly loginVisual =
     'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1400&q=80';
@@ -41,65 +48,73 @@ export class AuthContainerComponent {
     this.isLoginMode.set(mode === 'login');
   }
 
-  onLogin(payload: LoginPayload): void {
-    this.authFacade.login(payload).subscribe({
-      next: (response) => {
-        if (!isApiSuccessResponse(response)) {
+  onLogin(payload: LoginRequest): void {
+    this.loginError.set(null);
+    this.loginPending.set(true);
+
+    this.authFacade
+      .login(payload)
+      .pipe(finalize(() => this.loginPending.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (!isApiSuccessResponse(response)) {
+            this.loginError.set(this.getLoginErrorMessage(response.error, response.code));
+            return;
+          }
+
           this.toastService.show({
-            title: 'Authentication failed',
-            description: response.error,
-            variant: 'error',
+            title: 'Bienvenido de nuevo',
+            description: 'La sesion se inicio correctamente.',
+            variant: 'success',
           });
-          return;
-        }
 
-        this.toastService.show({
-          title: 'Welcome back',
-          description: 'Authentication completed successfully.',
-          variant: 'success',
-        });
-
-        const redirectTo = this.route.snapshot.queryParamMap.get('redirectTo') ?? '/products';
-        void this.router.navigateByUrl(redirectTo);
-      },
-      error: () => {
-        this.toastService.show({
-          title: 'Authentication failed',
-          description: 'Check your credentials and try again.',
-          variant: 'error',
-        });
-      },
-    });
+          const redirectTo =
+            this.route.snapshot.queryParamMap.get('redirectTo') ??
+            (this.authFacade.isAdmin() ? '/dashboard' : '/products');
+          void this.router.navigateByUrl(redirectTo);
+        },
+        error: (error: { error?: string; code?: number }) => {
+          this.loginError.set(this.getLoginErrorMessage(error.error, error.code));
+        },
+      });
   }
 
-  onRegister(payload: RegisterPayload): void {
-    this.authFacade.register(payload).subscribe({
-      next: (response) => {
-        if (!isApiSuccessResponse(response)) {
+  onRegister(payload: RegisterRequest): void {
+    this.registerError.set(null);
+    this.registerPending.set(true);
+
+    this.authFacade
+      .register(payload)
+      .pipe(finalize(() => this.registerPending.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (!isApiSuccessResponse(response)) {
+            this.registerError.set(response.error);
+            this.toastService.show({
+              title: 'No fue posible crear la cuenta',
+              description: response.error,
+              variant: 'error',
+            });
+            return;
+          }
+
           this.toastService.show({
-            title: 'Registration failed',
-            description: response.error,
+            title: 'Cuenta creada',
+            description: 'Tu usuario quedo autenticado correctamente.',
+            variant: 'success',
+          });
+
+          void this.router.navigateByUrl('/products');
+        },
+        error: () => {
+          this.registerError.set('No se pudo conectar con el servidor.');
+          this.toastService.show({
+            title: 'No fue posible crear la cuenta',
+            description: 'No se pudo conectar con el servidor.',
             variant: 'error',
           });
-          return;
-        }
-
-        this.toastService.show({
-          title: 'Account created',
-          description: 'Welcome to El Silencio Koffee.',
-          variant: 'success',
-        });
-
-        void this.router.navigateByUrl('/products');
-      },
-      error: () => {
-        this.toastService.show({
-          title: 'Registration failed',
-          description: 'Please verify your information and retry.',
-          variant: 'error',
-        });
-      },
-    });
+        },
+      });
   }
 
   get loginVisualStyle(): string {
@@ -108,5 +123,21 @@ export class AuthContainerComponent {
 
   get registerVisualStyle(): string {
     return `linear-gradient(180deg, rgba(35, 23, 16, 0.18), rgba(35, 23, 16, 0.74)), url('${this.registerVisual}')`;
+  }
+
+  private getLoginErrorMessage(errorMessage?: string, errorCode?: number): string {
+    if (errorCode === 401) {
+      return 'Incorrect username or password.';
+    }
+
+    if (
+      errorMessage?.includes('Http failure response') ||
+      errorMessage?.includes('401 Unauthorized') ||
+      errorMessage?.toLowerCase().includes('unauthorized')
+    ) {
+      return 'Incorrect username or password.';
+    }
+
+    return errorMessage ?? 'No se pudo conectar con el servidor.';
   }
 }

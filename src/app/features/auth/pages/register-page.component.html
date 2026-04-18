@@ -4,8 +4,13 @@
     <p class="mt-1 text-sm text-muted">Register to purchase coffee and access order history.</p>
 
     <form data-cy="register-form" class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
-      <app-form-field label="Full name">
-        <input data-cy="register-name" class="{{ controlClasses }}" type="text" formControlName="name" />
+      <app-form-field label="Username">
+        <input
+          data-cy="register-username"
+          class="{{ controlClasses }}"
+          type="text"
+          formControlName="username"
+        />
       </app-form-field>
 
       <app-form-field label="Email">

@@ -17,7 +17,7 @@ describe('Authentication flows', () => {
   it('registers a new account and redirects to products', () => {
     cy.fixture('users').then(({ register }) => {
       cy.visit('/register');
-      cy.getByCy('register-name').type(register.name);
+      cy.getByCy('register-username').type(register.username);
       cy.getByCy('register-email').type(register.email);
       cy.getByCy('register-password').type(register.password);
       cy.getByCy('register-submit').click();

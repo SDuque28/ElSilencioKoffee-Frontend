@@ -12,32 +12,7 @@ import type { Product } from '../../../core/models/product.model';
 import { ApiService } from '../../../core/services/api.service';
 import { OrdersService } from '../../orders/services/orders.service';
 
-const INITIAL_CART_ITEMS: CartItem[] = [
-  {
-    itemId: 'item-ethiopian-yirgacheffe',
-    productId: 'ethiopian-yirgacheffe',
-    name: 'Ethiopian Yirgacheffe',
-    category: 'Single Origin',
-    image:
-      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
-    selectionLabel: '250g',
-    quantity: 1,
-    unitPrice: 26,
-    subtotal: 26,
-  },
-  {
-    itemId: 'item-ceramic-mug',
-    productId: 'ceramic-mug',
-    name: 'Ceramic Mug',
-    category: 'Accessories',
-    image:
-      'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1200&q=80',
-    selectionLabel: '1 piece',
-    quantity: 2,
-    unitPrice: 16,
-    subtotal: 32,
-  },
-];
+const INITIAL_CART_ITEMS: CartItem[] = [];
 
 const FREE_SHIPPING = 0;
 

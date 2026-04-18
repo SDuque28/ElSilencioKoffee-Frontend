@@ -19,7 +19,7 @@ Authentication:
 
 ---
 
-# AUTHENTICATION
+# AUTHENTICATION - DONE
 
 | Method | Route                   | Description       | Auth | Response Codes |
 | ------ | ----------------------- | ----------------- | ---- | -------------- |
@@ -53,7 +53,7 @@ Authentication:
 
 ---
 
-# USERS
+# USERS 
 
 | Method | Route                  | Description | Auth  | Response Codes |
 | ------ | ---------------------- | ----------- | ----- | -------------- |
@@ -61,7 +61,7 @@ Authentication:
 | GET    | /users/{id}            | Get user    | ADMIN | 200, 404       |
 | PATCH  | /users/{id}            | Update user | ADMIN | 200, 400       |
 | DELETE | /users/{id}            | Soft delete | ADMIN | 204            |
-| GET    | /users/{id}/orders     | User orders | ADMIN | 200            |
+| GET    | /users/me/orders       | Current user orders | USER | 200  |
 
 ---
 
@@ -100,17 +100,18 @@ Authentication:
 
 ---
 
-# ORDERS
+# ORDERS - DONE 
 
 | Method | Route                   | Description   | Auth  | Response Codes |
 | ------ | ----------------------- | ------------- | ----- | -------------- |
 | POST   | /orders                 | Create order  | USER  | 201, 400       |
-| GET    | /orders?page=1&limit=10 | Get orders    | USER  | 200            |
-| GET    | /orders/{id}            | Get order     | USER  | 200, 404       |
+| GET    | /orders?page=1&limit=10 | Get all orders | ADMIN | 200            |
+| GET    | /orders/{id}            | Get order      | USER, ADMIN | 200, 404 |
 | PATCH  | /orders/{id}/status     | Update status | ADMIN | 200, 400       |
 
 ### Order Status
 
+* NON PAID
 * PENDING
 * PAID
 * SHIPPED
@@ -194,11 +195,11 @@ Authentication:
 
 ```json
 {
-  "id": "uuid",
-  "userId": "uuid",
-  "status": "PENDING | PAID | SHIPPED | DELIVERED | CANCELLED",
-  "total": "number",
-  "createdAt": "date"
+  "id": "number",
+  "userId": "number",
+  "status": "NON PAID | PENDING | PAID | SHIPPED | DELIVERED | CANCELLED",
+  "totalAmount": "number",
+  "orderDate": "date"
 }
 ```
 

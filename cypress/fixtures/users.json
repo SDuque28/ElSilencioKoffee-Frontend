@@ -1,14 +1,14 @@
 {
   "user": {
-    "email": "user@test.com",
+    "username": "user",
     "password": "123456"
   },
   "admin": {
-    "email": "admin@test.com",
+    "username": "admin",
     "password": "123456"
   },
   "register": {
-    "name": "Pablo Herrera",
+    "username": "Pablo",
     "email": "pablo.herrera@test.com",
     "password": "123456"
   }

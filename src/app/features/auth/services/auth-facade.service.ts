@@ -1,7 +1,14 @@
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
 
-import type { AuthSession, LoginPayload, RegisterPayload } from '../../../core/models/auth.model';
+import type {
+  AuthMessageResponse,
+  ChangePasswordRequest,
+  LoginRequest,
+  PasswordRecoveryRequest,
+  RegisterRequest,
+  UserSession,
+} from '../../../core/models/auth.model';
 import type { ApiResponse } from '../../../core/models/api-response.model';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -11,11 +18,25 @@ import { AuthService } from '../../../core/services/auth.service';
 export class AuthFacadeService {
   private readonly authService = inject(AuthService);
 
-  login(payload: LoginPayload): Observable<ApiResponse<AuthSession>> {
+  readonly currentUser = this.authService.currentUser;
+  readonly isAuthenticated = this.authService.isAuthenticated;
+  readonly isAdmin = this.authService.isAdmin;
+
+  login(payload: LoginRequest): Observable<ApiResponse<UserSession>> {
     return this.authService.login(payload);
   }
 
-  register(payload: RegisterPayload): Observable<ApiResponse<AuthSession>> {
+  register(payload: RegisterRequest): Observable<ApiResponse<UserSession>> {
     return this.authService.register(payload);
+  }
+
+  passwordRecovery(
+    payload: PasswordRecoveryRequest,
+  ): Observable<ApiResponse<AuthMessageResponse>> {
+    return this.authService.passwordRecovery(payload);
+  }
+
+  changePassword(payload: ChangePasswordRequest): Observable<ApiResponse<AuthMessageResponse>> {
+    return this.authService.changePassword(payload);
   }
 }
