@@ -49,6 +49,12 @@ __screenshots__/
 /cypress/artifacts/*
 !/cypress/artifacts/.gitkeep
 
+# Local environment files
+.env
+.env.*
+!.env.example
+/public/env.js
+
 # System files
 .DS_Store
 Thumbs.db
