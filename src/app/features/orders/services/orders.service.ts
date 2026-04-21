@@ -17,8 +17,13 @@ interface OrderApiResponse {
   userId: string | number;
 }
 
+interface OrderCreateApiItemRequest {
+  productId: number;
+  quantity: number;
+}
+
 interface OrderCreateApiRequest {
-  totalAmount: number;
+  items: OrderCreateApiItemRequest[];
 }
 
 interface OrdersPageApiResponse {
@@ -232,11 +237,10 @@ export class OrdersService {
 
   private toCreateOrderRequest(cart: Cart): OrderCreateApiRequest {
     return {
-      totalAmount: this.roundCurrencyAmount(cart.total),
+      items: cart.items.map((item) => ({
+        productId: item.backendProductId,
+        quantity: item.quantity,
+      })),
     };
-  }
-
-  private roundCurrencyAmount(amount: number): number {
-    return Math.round(amount * 100) / 100;
   }
 }

@@ -3,6 +3,7 @@ export const PRODUCT_IMAGE_FALLBACK =
 
 export interface Product {
   id: string;
+  backendId: number;
   name: string;
   price: number;
   image: string;
