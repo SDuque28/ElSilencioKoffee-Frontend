@@ -17,6 +17,15 @@ interface OrderApiResponse {
   userId: string | number;
 }
 
+interface OrderCreateApiItemRequest {
+  productId: number;
+  quantity: number;
+}
+
+interface OrderCreateApiRequest {
+  items: OrderCreateApiItemRequest[];
+}
+
 interface OrdersPageApiResponse {
   content: OrderApiResponse[];
   empty: boolean;
@@ -130,36 +139,20 @@ export class OrdersService {
       return of(errorResponse).pipe(delay(0));
     }
 
-    const currentUserId = this.getCurrentUserId() ?? 'current-user';
-    const order: Order = {
-      id: `order-${Date.now()}`,
-      userId: currentUserId,
-      status: 'NON PAID',
-      totalAmount: cart.total,
-      orderDate: new Date().toISOString(),
-    };
-
-    this._orders.update((orders) => [order, ...orders]);
-
     return this.api
-      .post<OrderApiResponse>(
-        'orders',
-        {
-          items: cart.items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-          })),
-        },
-        {
-          baseUrl: environment.authApiUrl,
-          mock: {
-            data: this.toOrderApiResponse(order),
-            delayMs: 0,
-            message: 'Mock order created successfully.',
-          },
-        },
-      )
-      .pipe(map((response) => this.toOrderResponse(response)));
+      .post<OrderApiResponse>('orders', this.toCreateOrderRequest(cart), {
+        baseUrl: environment.authApiUrl,
+        bypassMock: true,
+      })
+      .pipe(
+        map((response) => {
+          if (isApiSuccessResponse(response)) {
+            this._orders.update((orders) => [this.toOrder(response.data), ...orders]);
+          }
+
+          return this.toOrderResponse(response);
+        }),
+      );
   }
 
   private toOrdersListResultResponse(
@@ -242,19 +235,12 @@ export class OrdersService {
     };
   }
 
-  private getCurrentUserId(): string | null {
-    const rawUserId = this.authService.currentUser()?.id;
-
-    if (rawUserId === null || rawUserId === undefined) {
-      return null;
-    }
-
-    const normalizedUserId = String(rawUserId).trim();
-
-    if (!normalizedUserId) {
-      return null;
-    }
-
-    return normalizedUserId;
+  private toCreateOrderRequest(cart: Cart): OrderCreateApiRequest {
+    return {
+      items: cart.items.map((item) => ({
+        productId: item.backendProductId,
+        quantity: item.quantity,
+      })),
+    };
   }
 }

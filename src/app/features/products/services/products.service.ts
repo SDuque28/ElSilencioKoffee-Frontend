@@ -11,6 +11,7 @@ export interface ProductsListResponse {
 const MOCK_PRODUCTS: Product[] = [
   {
     id: 'ethiopian-yirgacheffe',
+    backendId: 1,
     name: 'Ethiopian Yirgacheffe',
     price: 26,
     image:
@@ -22,6 +23,7 @@ const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'colombian-geisha-reserve',
+    backendId: 2,
     name: 'Colombian Geisha Reserve',
     price: 34,
     image:
@@ -33,6 +35,7 @@ const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'premium-coffee-bag',
+    backendId: 3,
     name: 'Premium Coffee Bag',
     price: 22,
     image:
@@ -44,6 +47,7 @@ const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'espresso-capsules',
+    backendId: 4,
     name: 'Espresso Capsules',
     price: 18,
     image:
@@ -55,6 +59,7 @@ const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'barista-pro-grinder',
+    backendId: 5,
     name: 'Barista Pro Grinder',
     price: 189,
     image:
@@ -65,6 +70,7 @@ const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'pour-over-kit',
+    backendId: 6,
     name: 'Pour Over Kit',
     price: 74,
     image:
@@ -75,6 +81,7 @@ const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'ceramic-mug',
+    backendId: 7,
     name: 'Ceramic Mug',
     price: 16,
     image:
@@ -85,6 +92,7 @@ const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'cold-brew-bottle',
+    backendId: 8,
     name: 'Cold Brew Bottle',
     price: 28,
     image:
@@ -95,6 +103,7 @@ const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'travel-tumbler',
+    backendId: 9,
     name: 'Travel Tumbler',
     price: 25,
     image:
@@ -105,6 +114,7 @@ const MOCK_PRODUCTS: Product[] = [
   },
   {
     id: 'signature-house-blend',
+    backendId: 10,
     name: 'Signature House Blend',
     price: 21,
     image:

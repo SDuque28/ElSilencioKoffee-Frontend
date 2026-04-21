@@ -195,6 +195,7 @@ export class CartStateService {
     return {
       itemId: `item-${product.id}`,
       productId: product.id,
+      backendProductId: product.backendId,
       name: product.name,
       category: product.category,
       image: product.image,
