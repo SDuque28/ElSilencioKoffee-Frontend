@@ -2,7 +2,11 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
-import { PRODUCT_IMAGE_FALLBACK, type Product } from '../../../core/models/product.model';
+import {
+  PRODUCT_IMAGE_FALLBACK,
+  type Product,
+  type ProductAvailability,
+} from '../../../core/models/product.model';
 import { ApiService } from '../../../core/services/api.service';
 
 export interface ProductsListResponse {
@@ -17,6 +21,7 @@ interface BackendProductResponse {
   price: number;
   presentationId: number | null;
   productionId: number | null;
+  stockQuantity?: number | null;
 }
 
 @Injectable({
@@ -78,9 +83,29 @@ export class ProductsService {
       image: product.imageUrl?.trim() || PRODUCT_IMAGE_FALLBACK,
       category: this.resolveCategory(product.presentationId),
       description: null,
-      stock: null,
+      stock: this.resolveStock(product.stockQuantity),
+      availability: this.resolveAvailability(product.stockQuantity),
       featured,
     };
+  }
+
+  private resolveStock(stockQuantity: number | null | undefined): number {
+    const stock = Number(stockQuantity);
+    return Number.isFinite(stock) && stock > 0 ? Math.floor(stock) : 0;
+  }
+
+  private resolveAvailability(stockQuantity: number | null | undefined): ProductAvailability {
+    const stock = this.resolveStock(stockQuantity);
+
+    if (stock === 0) {
+      return 'OUT_OF_STOCK';
+    }
+
+    if (stock <= 5) {
+      return 'LOW_STOCK';
+    }
+
+    return 'IN_STOCK';
   }
 
   private resolveCategory(presentationId: number | null): string {

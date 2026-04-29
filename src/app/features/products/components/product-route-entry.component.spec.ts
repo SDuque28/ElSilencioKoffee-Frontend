@@ -57,7 +57,8 @@ describe('ProductRouteEntryComponent', () => {
       image: 'https://example.com/yirgacheffe.jpg',
       category: 'Coffee',
       description: null,
-      stock: null,
+      stock: 12,
+      availability: 'IN_STOCK',
     };
 
     const { navigateByUrl, open } = configureTestingModule(product);

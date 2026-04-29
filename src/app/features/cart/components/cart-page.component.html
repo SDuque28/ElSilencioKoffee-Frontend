@@ -16,7 +16,9 @@
           >
             <div>
               <p class="font-medium">{{ item.name }}</p>
-              <p class="text-xs text-muted">$ {{ item.unitPrice.toFixed(2) }} each</p>
+              <p class="text-xs text-muted">
+                $ {{ item.unitPrice.toFixed(2) }} each · Subtotal $ {{ item.subtotal.toFixed(2) }}
+              </p>
             </div>
 
             <div class="flex items-center gap-2">
@@ -46,10 +48,11 @@
       </div>
 
       <div class="mt-4 flex items-center justify-between border-t border-border pt-4">
-        <p class="text-sm font-medium">Total</p>
-        <p data-cy="cart-page-total" class="text-lg font-semibold text-primary">
-          $ {{ cartState.total().toFixed(2) }}
-        </p>
+        <div class="space-y-1 text-sm">
+          <p class="font-medium">Subtotal: $ {{ cartState.subtotal().toFixed(2) }}</p>
+          <p class="text-muted">Shipping: {{ cartState.shipping() === 0 ? 'FREE' : '$ ' + cartState.shipping().toFixed(2) }}</p>
+        </div>
+        <p data-cy="cart-page-total" class="text-lg font-semibold text-primary">$ {{ cartState.total().toFixed(2) }}</p>
       </div>
 
       <div class="mt-4 flex gap-2">

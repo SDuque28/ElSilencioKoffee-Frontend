@@ -7,17 +7,27 @@ import {
   type ApiResponse,
 } from '../../../core/models/api-response.model';
 import type { Cart } from '../../../core/models/cart.model';
-import type { Order, OrdersListResult } from '../../../core/models/order.model';
+import type { Order, OrderItem, OrdersListResult } from '../../../core/models/order.model';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { environment } from '../../../../environments/environment';
 
 interface OrderApiResponse {
   id: string | number;
+  items?: OrderItemApiResponse[];
   orderDate: string;
   status: string;
   totalAmount: number;
   userId: string | number;
+}
+
+interface OrderItemApiResponse {
+  detailId: string | number;
+  productId: string | number | null;
+  productName: string;
+  quantity: number;
+  subtotal: number;
+  unitPrice: number;
 }
 
 interface OrderCreateApiItemRequest {
@@ -67,6 +77,14 @@ export class OrdersService {
   getOrder(orderId: string | number): Observable<ApiResponse<Order>> {
     return this.api
       .get<OrderApiResponse>(`orders/${orderId}`, {
+        baseUrl: environment.authApiUrl,
+      })
+      .pipe(map((response) => this.toOrderResponse(response)));
+  }
+
+  payOrder(orderId: string | number): Observable<ApiResponse<Order>> {
+    return this.api
+      .post<OrderApiResponse>(`api/v1/orders/${orderId}/pay`, {}, {
         baseUrl: environment.authApiUrl,
       })
       .pipe(map((response) => this.toOrderResponse(response)));
@@ -157,6 +175,18 @@ export class OrdersService {
       status: order.status,
       totalAmount: order.totalAmount,
       userId: order.userId,
+      items: (order.items ?? []).map((item) => this.toOrderItem(item)),
+    };
+  }
+
+  private toOrderItem(item: OrderItemApiResponse): OrderItem {
+    return {
+      detailId: item.detailId,
+      productId: item.productId ?? null,
+      productName: item.productName,
+      quantity: Number(item.quantity),
+      unitPrice: Number(item.unitPrice),
+      subtotal: Number(item.subtotal),
     };
   }
 

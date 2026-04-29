@@ -40,6 +40,7 @@ describe('ProductsService', () => {
             price: 189,
             presentationId: 5,
             productionId: 4,
+            stockQuantity: 3,
           },
         ],
         message: 'ok',
@@ -59,7 +60,8 @@ describe('ProductsService', () => {
         image: PRODUCT_IMAGE_FALLBACK,
         category: 'Equipment',
         description: null,
-        stock: null,
+        stock: 3,
+        availability: 'LOW_STOCK',
         featured: true,
       },
     ]);
@@ -76,6 +78,7 @@ describe('ProductsService', () => {
           price: 26,
           presentationId: 1,
           productionId: 1,
+          stockQuantity: 20,
         },
         message: 'ok',
       } satisfies ApiResponse<unknown>),
@@ -87,6 +90,8 @@ describe('ProductsService', () => {
     expect(result?.id).toBe('1');
     expect(result?.category).toBe('Coffee');
     expect(result?.image).toBe('https://example.com/yirgacheffe.jpg');
+    expect(result?.stock).toBe(20);
+    expect(result?.availability).toBe('IN_STOCK');
   });
 
   it('returns undefined when the backend responds with an error for a missing product', async () => {

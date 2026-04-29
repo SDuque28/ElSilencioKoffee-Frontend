@@ -20,8 +20,8 @@
             }
             <div class="flex flex-wrap items-center gap-3">
               <h1 class="text-3xl font-semibold text-[#2f2219]">{{ currentProduct.name }}</h1>
-              <app-badge [variant]="stockVariant(currentProduct.stock)">
-                {{ stockLabel(currentProduct.stock) }}
+              <app-badge [variant]="stockVariant(currentProduct.availability)">
+                {{ stockLabel(currentProduct.availability) }}
               </app-badge>
             </div>
             @if (currentProduct.description) {
@@ -47,10 +47,10 @@
           <div class="flex flex-wrap gap-3">
             <app-button
               dataCy="product-detail-add-to-cart"
-              [disabled]="currentProduct.stock === 0"
+              [disabled]="currentProduct.availability === 'OUT_OF_STOCK'"
               (buttonClick)="addToCart(currentProduct)"
             >
-              Add to cart
+              {{ currentProduct.availability === 'OUT_OF_STOCK' ? 'Out of stock' : 'Add to cart' }}
             </app-button>
             <app-button dataCy="product-detail-back" variant="outline" routerLink="/products">
               Back to catalog

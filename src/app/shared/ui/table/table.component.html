@@ -34,7 +34,17 @@
                 [class.text-muted]="theme === 'default'"
                 [class.text-[#9ca3af]]="theme === 'admin'"
               >
-                {{ row[column.key] }}
+                @if (toLinkCell(row[column.key]); as linkCell) {
+                  <a
+                    [routerLink]="linkCell.routerLink"
+                    [attr.data-cy]="linkCell.dataCy ?? null"
+                    class="font-semibold text-[#b45f1e] underline-offset-4 hover:underline"
+                  >
+                    {{ linkCell.label }}
+                  </a>
+                } @else {
+                  {{ row[column.key] }}
+                }
               </td>
             }
           </tr>

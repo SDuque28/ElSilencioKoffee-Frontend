@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
@@ -15,6 +16,7 @@ import { CartStateService } from '../services/cart-state.service';
 })
 export class CartPageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
 
   readonly cartState = inject(CartStateService);
@@ -27,14 +29,34 @@ export class CartPageComponent implements OnInit {
     this.cartState
       .updateQuantity(itemId, currentQuantity + 1)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe();
+      .subscribe((response) => {
+        if (isApiSuccessResponse(response)) {
+          return;
+        }
+
+        this.toastService.show({
+          title: 'Unable to update quantity',
+          description: response.error,
+          variant: 'error',
+        });
+      });
   }
 
   decreaseQuantity(itemId: string, currentQuantity: number): void {
     this.cartState
       .updateQuantity(itemId, currentQuantity - 1)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe();
+      .subscribe((response) => {
+        if (isApiSuccessResponse(response)) {
+          return;
+        }
+
+        this.toastService.show({
+          title: 'Unable to update quantity',
+          description: response.error,
+          variant: 'error',
+        });
+      });
   }
 
   checkout(): void {
@@ -45,9 +67,10 @@ export class CartPageComponent implements OnInit {
         if (isApiSuccessResponse(response)) {
           this.toastService.show({
             title: 'Order created',
-            description: `Order ${response.data.id} generated and cart cleared.`,
+            description: `Order ${response.data.id} is ready. Review it and complete payment.`,
             variant: 'success',
           });
+          void this.router.navigate(['/orders', response.data.id]);
           return;
         }
 

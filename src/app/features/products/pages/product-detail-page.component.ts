@@ -10,7 +10,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
-import type { Product } from '../../../core/models/product.model';
+import type { Product, ProductAvailability } from '../../../core/models/product.model';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
@@ -78,39 +78,23 @@ export class ProductDetailPageComponent implements OnInit {
     return this.currencyFormatter.format(price);
   }
 
-  stockVariant(stock: number | null | undefined): 'success' | 'warning' | 'danger' {
-    if (stock == null) {
-      return 'warning';
-    }
-
-    if (stock > 15) {
+  stockVariant(availability: ProductAvailability): 'success' | 'warning' | 'danger' {
+    if (availability === 'IN_STOCK') {
       return 'success';
     }
 
-    if (stock > 0) {
+    if (availability === 'LOW_STOCK') {
       return 'warning';
     }
 
     return 'danger';
   }
 
-  stockLabel(stock: number | null | undefined): string {
-    if (stock == null) {
-      return 'Availability in store';
-    }
-
-    if (stock > 15) {
-      return 'In stock';
-    }
-
-    if (stock > 0) {
-      return `Only ${stock} left`;
-    }
-
-    return 'Sold out';
+  stockLabel(availability: ProductAvailability): string {
+    return availability;
   }
 
-  stockValueLabel(stock: number | null | undefined): string {
-    return stock == null ? 'Not published' : String(stock);
+  stockValueLabel(stock: number): string {
+    return String(stock);
   }
 }

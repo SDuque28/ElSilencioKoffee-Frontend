@@ -11,6 +11,9 @@ import { CartStateService } from './cart-state.service';
 
 describe('CartStateService', () => {
   let service: CartStateService;
+  let ordersService: {
+    createOrderFromCart: ReturnType<typeof vi.fn>;
+  };
   let apiService: {
     get: ReturnType<typeof vi.fn>;
     post: ReturnType<typeof vi.fn>;
@@ -29,7 +32,8 @@ describe('CartStateService', () => {
     image: 'https://example.com/yirgacheffe.jpg',
     category: 'Coffee',
     description: null,
-    stock: null,
+    stock: 8,
+    availability: 'IN_STOCK',
   };
 
   const backendCartResponse = {
@@ -62,6 +66,10 @@ describe('CartStateService', () => {
       isAuthenticated: vi.fn(() => true),
     };
 
+    ordersService = {
+      createOrderFromCart: vi.fn(),
+    };
+
     TestBed.configureTestingModule({
       providers: [
         CartStateService,
@@ -75,9 +83,7 @@ describe('CartStateService', () => {
         },
         {
           provide: OrdersService,
-          useValue: {
-            createOrderFromCart: vi.fn(),
-          },
+          useValue: ordersService,
         },
       ],
     });
@@ -214,5 +220,67 @@ describe('CartStateService', () => {
       error: 'Sign in to manage your cart.',
       code: 401,
     });
+  });
+
+  it('creates an order from the cart and clears the backend cart during checkout', async () => {
+    apiService.post.mockReturnValue(
+      of({
+        success: true,
+        data: backendCartResponse,
+        message: 'ok',
+      } satisfies ApiResponse<unknown>),
+    );
+    apiService.delete.mockReturnValue(
+      of({
+        success: true,
+        data: {
+          ...backendCartResponse,
+          totalAmount: 0,
+          items: [],
+        },
+        message: 'ok',
+      } satisfies ApiResponse<unknown>),
+    );
+    ordersService.createOrderFromCart.mockReturnValue(
+      of({
+        success: true,
+        data: {
+          id: 77,
+          orderDate: '2026-04-29T10:30:00Z',
+          status: 'PENDING',
+          totalAmount: 26,
+          userId: 2,
+          items: [
+            {
+              detailId: 1,
+              productId: 1,
+              productName: 'Ethiopian Yirgacheffe',
+              quantity: 1,
+              unitPrice: 26,
+              subtotal: 26,
+            },
+          ],
+        },
+        message: 'ok',
+      } satisfies ApiResponse<unknown>),
+    );
+
+    await firstValueFrom(service.addItem(sampleProduct));
+    const response = await firstValueFrom(service.checkout());
+
+    expect(ordersService.createOrderFromCart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        items: [
+          expect.objectContaining({
+            backendProductId: 1,
+            quantity: 1,
+          }),
+        ],
+        total: 26,
+      }),
+    );
+    expect(apiService.delete).toHaveBeenCalledWith('cart');
+    expect(response.success).toBe(true);
+    expect(service.items()).toEqual([]);
   });
 });

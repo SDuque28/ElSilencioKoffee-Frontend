@@ -1,10 +1,19 @@
 export type OrderStatus =
-  | 'NON PAID'
   | 'PENDING'
+  | 'NON PAID'
   | 'PAID'
   | 'SHIPPED'
   | 'DELIVERED'
   | 'CANCELLED';
+
+export interface OrderItem {
+  detailId: string | number;
+  productId: string | number | null;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+}
 
 export interface Order {
   id: string | number;
@@ -12,6 +21,7 @@ export interface Order {
   status: OrderStatus | string;
   totalAmount: number;
   userId: string | number;
+  items: OrderItem[];
 }
 
 export interface OrdersListResult {
