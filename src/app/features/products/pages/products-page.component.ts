@@ -33,24 +33,16 @@ export class ProductsPageComponent implements OnInit {
   isLoading = true;
 
   ngOnInit(): void {
-    console.log('[ProductsPageComponent] ngOnInit()');
-
     this.productsService
       .listProducts()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response: ProductsListResponse) => {
-          console.log('[ProductsPageComponent] products received', {
-            count: response.count,
-            products: response.products,
-          });
-
           this.products = Array.isArray(response.products) ? response.products : [];
           this.isLoading = false;
           this.cdr.markForCheck();
         },
         error: (error) => {
-          console.error('[ProductsPageComponent] listProducts() failed', error);
           this.products = [];
           this.isLoading = false;
           this.cdr.markForCheck();

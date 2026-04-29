@@ -18,8 +18,8 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain(
-      'Hello, el-silencio-koffee-frontend',
-    );
+    expect(compiled.querySelector('app-product-modal')).not.toBeNull();
+    expect(compiled.querySelector('app-cart-drawer')).not.toBeNull();
+    expect(compiled.querySelector('app-toast')).not.toBeNull();
   });
 });
