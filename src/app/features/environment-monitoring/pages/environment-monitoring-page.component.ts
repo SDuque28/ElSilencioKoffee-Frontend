@@ -51,7 +51,7 @@ export class EnvironmentMonitoringPageComponent implements OnInit {
     labels: [],
     datasets: [
       {
-        label: 'Temperature (°C)',
+        label: 'Temperature (C)',
         data: [],
         borderColor: '#ff7a00',
         backgroundColor: 'rgba(255, 122, 0, 0.22)',

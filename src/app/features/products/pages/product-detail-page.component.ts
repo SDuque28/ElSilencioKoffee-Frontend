@@ -47,7 +47,7 @@ export class ProductDetailPageComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((product) => {
         this.product = product ?? null;
-        this.loadError = product ? null : 'This mock product is not available.';
+        this.loadError = product ? null : 'This product is not available.';
         this.cdr.markForCheck();
       });
   }
@@ -78,7 +78,11 @@ export class ProductDetailPageComponent implements OnInit {
     return this.currencyFormatter.format(price);
   }
 
-  stockVariant(stock: number): 'success' | 'warning' | 'danger' {
+  stockVariant(stock: number | null | undefined): 'success' | 'warning' | 'danger' {
+    if (stock == null) {
+      return 'warning';
+    }
+
     if (stock > 15) {
       return 'success';
     }
@@ -90,7 +94,11 @@ export class ProductDetailPageComponent implements OnInit {
     return 'danger';
   }
 
-  stockLabel(stock: number): string {
+  stockLabel(stock: number | null | undefined): string {
+    if (stock == null) {
+      return 'Availability in store';
+    }
+
     if (stock > 15) {
       return 'In stock';
     }
@@ -100,5 +108,9 @@ export class ProductDetailPageComponent implements OnInit {
     }
 
     return 'Sold out';
+  }
+
+  stockValueLabel(stock: number | null | undefined): string {
+    return stock == null ? 'Not published' : String(stock);
   }
 }

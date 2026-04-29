@@ -30,17 +30,21 @@
 
     <div class="flex h-full flex-col gap-4 p-5" [class.p-4]="compact">
       <div class="space-y-2">
-        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-[#8c765f]">
-          {{ product.category }}
-        </p>
+        @if (product.category) {
+          <p class="text-xs font-semibold uppercase tracking-[0.3em] text-[#8c765f]">
+            {{ product.category }}
+          </p>
+        }
         <h3 class="line-clamp-2 text-xl font-semibold leading-snug text-[#2f2219]">
           {{ product.name }}
         </h3>
       </div>
 
-      <p class="line-clamp-2 text-sm leading-6 text-[#6b5c4f]">
-        {{ product.description }}
-      </p>
+      @if (product.description) {
+        <p class="line-clamp-2 text-sm leading-6 text-[#6b5c4f]">
+          {{ product.description }}
+        </p>
+      }
 
       <div class="mt-auto flex items-end justify-between gap-4">
         <p class="text-lg font-semibold text-[#2f2219]">
@@ -51,7 +55,7 @@
           size="sm"
           className="shrink-0 rounded-full px-4"
           [dataCy]="'product-card-add-' + product.id"
-          [disabled]="product.stock <= 0"
+          [disabled]="product.stock === 0"
           (buttonClick)="onAddToCart($event)"
         >
           <span class="inline-flex items-center gap-2">

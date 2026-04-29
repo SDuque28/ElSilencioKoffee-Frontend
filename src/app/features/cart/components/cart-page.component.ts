@@ -44,7 +44,7 @@ export class CartPageComponent implements OnInit {
       .subscribe((response) => {
         if (isApiSuccessResponse(response)) {
           this.toastService.show({
-            title: 'Mock order created',
+            title: 'Order created',
             description: `Order ${response.data.id} generated and cart cleared.`,
             variant: 'success',
           });
@@ -53,6 +53,28 @@ export class CartPageComponent implements OnInit {
 
         this.toastService.show({
           title: 'Unable to create order',
+          description: response.error,
+          variant: 'error',
+        });
+        });
+  }
+
+  clearCart(): void {
+    this.cartState
+      .clearCart()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => {
+        if (isApiSuccessResponse(response)) {
+          this.toastService.show({
+            title: 'Cart cleared',
+            description: 'Your cart was cleared successfully.',
+            variant: 'success',
+          });
+          return;
+        }
+
+        this.toastService.show({
+          title: 'Unable to clear cart',
           description: response.error,
           variant: 'error',
         });

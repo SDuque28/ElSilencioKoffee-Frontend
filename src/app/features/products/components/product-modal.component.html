@@ -38,14 +38,24 @@
 
         <div class="product-modal__content">
           <div class="space-y-3">
-            <p class="product-modal__category">{{ product.category }}</p>
+            @if (product.category) {
+              <p class="product-modal__category">{{ product.category }}</p>
+            }
             <div class="product-modal__heading">
               <h2 id="product-modal-title" class="product-modal__title">{{ product.name }}</h2>
-              <app-badge [variant]="product.stock > 0 ? 'success' : 'danger'">
-                {{ product.stock > 0 ? 'In stock' : 'Sold out' }}
+              <app-badge [variant]="product.stock === null ? 'warning' : product.stock > 0 ? 'success' : 'danger'">
+                {{
+                  product.stock === null
+                    ? 'Availability in store'
+                    : product.stock > 0
+                      ? 'In stock'
+                      : 'Sold out'
+                }}
               </app-badge>
             </div>
-            <p class="product-modal__description">{{ product.description }}</p>
+            @if (product.description) {
+              <p class="product-modal__description">{{ product.description }}</p>
+            }
           </div>
 
           <div class="product-modal__stats">
@@ -57,7 +67,7 @@
             </div>
             <div class="product-modal__stat">
               <h3 class="product-modal__stat-label">Stock</h3>
-              <p class="product-modal__stat-value">{{ product.stock }}</p>
+              <p class="product-modal__stat-value">{{ product.stock ?? 'Not published' }}</p>
             </div>
           </div>
 
@@ -65,7 +75,7 @@
             <app-button
               className="rounded-full px-5"
               dataCy="product-modal-add-to-cart"
-              [disabled]="product.stock <= 0"
+              [disabled]="product.stock === 0"
               (buttonClick)="addToCart(product)"
             >
               <span class="inline-flex items-center gap-2">

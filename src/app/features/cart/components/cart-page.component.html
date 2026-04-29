@@ -1,7 +1,7 @@
 <section data-cy="cart-page" class="space-y-6">
   <div>
     <h1 class="text-2xl font-semibold">Shopping Cart</h1>
-    <p class="text-sm text-muted">Mock-safe cart flow aligned with `/cart` and `/cart/items`.</p>
+    <p class="text-sm text-muted">Cart items are stored through the live backend session.</p>
   </div>
 
   <app-card>
@@ -53,8 +53,8 @@
       </div>
 
       <div class="mt-4 flex gap-2">
-        <app-button dataCy="cart-page-checkout" (buttonClick)="checkout()">Simulate purchase</app-button>
-        <app-button dataCy="cart-page-clear" variant="ghost" (buttonClick)="cartState.clear()">
+        <app-button dataCy="cart-page-checkout" (buttonClick)="checkout()">Complete purchase</app-button>
+        <app-button dataCy="cart-page-clear" variant="ghost" (buttonClick)="clearCart()">
           Clear
         </app-button>
       </div>

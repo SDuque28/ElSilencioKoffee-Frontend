@@ -74,6 +74,10 @@ export class ProductCardComponent {
   }
 
   get stockLabel(): string {
+    if (this.product.stock == null) {
+      return 'Availability in store';
+    }
+
     if (this.product.stock > 15) {
       return 'In stock';
     }
@@ -86,6 +90,10 @@ export class ProductCardComponent {
   }
 
   get stockVariant(): 'success' | 'warning' | 'danger' {
+    if (this.product.stock == null) {
+      return 'warning';
+    }
+
     if (this.product.stock > 15) {
       return 'success';
     }

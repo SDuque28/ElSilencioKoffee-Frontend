@@ -7,8 +7,8 @@ export interface Product {
   name: string;
   price: number;
   image: string;
-  category: string;
-  description: string;
-  stock: number;
+  category: string | null;
+  description: string | null;
+  stock: number | null;
   featured?: boolean;
 }

@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { of, tap, type Observable } from 'rxjs';
+import { map, of, switchMap, tap, type Observable } from 'rxjs';
 
 import {
   isApiSuccessResponse,
@@ -10,17 +10,36 @@ import type { Cart, CartItem } from '../../../core/models/cart.model';
 import type { Order } from '../../../core/models/order.model';
 import type { Product } from '../../../core/models/product.model';
 import { ApiService } from '../../../core/services/api.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { OrdersService } from '../../orders/services/orders.service';
 
 const INITIAL_CART_ITEMS: CartItem[] = [];
-
 const FREE_SHIPPING = 0;
+
+interface BackendCartItemResponse {
+  id: number;
+  productId: number;
+  productName: string;
+  imageUrl: string | null;
+  unitPrice: number;
+  quantity: number;
+  subtotal: number;
+}
+
+interface BackendCartResponse {
+  id: number;
+  userId: number;
+  totalItems: number;
+  totalAmount: number;
+  items: BackendCartItemResponse[];
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class CartStateService {
   private readonly api = inject(ApiService);
+  private readonly authService = inject(AuthService);
   private readonly ordersService = inject(OrdersService);
   private readonly _cart = signal<Cart>(this.buildCart(INITIAL_CART_ITEMS));
   private readonly _isDrawerOpen = signal(false);
@@ -36,14 +55,19 @@ export class CartStateService {
   readonly total = computed(() => this._cart().total);
 
   loadCart(): Observable<ApiResponse<Cart>> {
+    if (!this.authService.isAuthenticated()) {
+      const emptyCart = this.buildCart([]);
+      this._cart.set(emptyCart);
+      return of({
+        success: true,
+        data: emptyCart,
+        message: 'Cart requires an authenticated session.',
+      });
+    }
+
     return this.api
-      .get<Cart>('cart', {
-        mock: {
-          data: this._cart(),
-          delayMs: 0,
-          message: 'Mock cart loaded successfully.',
-        },
-      })
+      .get<BackendCartResponse>('cart')
+      .pipe(map((response) => this.toCartResponse(response)))
       .pipe(tap((response) => this.syncCartState(response)));
   }
 
@@ -60,103 +84,61 @@ export class CartStateService {
   }
 
   addItem(product: Product, quantity = 1): Observable<ApiResponse<Cart>> {
+    const unauthorized = this.requireAuthenticatedCartAction();
+    if (unauthorized) {
+      return of(unauthorized);
+    }
+
     const normalizedQuantity = Math.max(1, Math.floor(quantity));
     const currentCart = this._cart();
-    const existingItem = currentCart.items.find((item) => item.productId === product.id);
-    const nextItems = existingItem
-      ? currentCart.items.map((item) =>
-          item.productId === product.id
-            ? {
-                ...item,
-                quantity: item.quantity + normalizedQuantity,
-                subtotal: item.unitPrice * (item.quantity + normalizedQuantity),
-              }
-            : item,
-        )
-      : [...currentCart.items, this.createCartItem(product, normalizedQuantity)];
-    const nextCart = this.buildCart(nextItems);
-
-    this._cart.set(nextCart);
     this.openDrawer();
 
     return this.api
-      .post<Cart>(
-        'cart/items',
-        {
-          productId: product.id,
-          quantity: normalizedQuantity,
-        },
-        {
-          mock: {
-            data: nextCart,
-            delayMs: 0,
-            message: 'Mock cart item added successfully.',
-          },
-        },
-      )
+      .post<BackendCartResponse>('cart/items', {
+        productId: product.backendId,
+        quantity: normalizedQuantity,
+      })
+      .pipe(map((response) => this.toCartResponse(response)))
       .pipe(tap((response) => this.syncCartState(response, currentCart)));
   }
 
   updateQuantity(itemId: string, quantity: number): Observable<ApiResponse<Cart>> {
+    const unauthorized = this.requireAuthenticatedCartAction();
+    if (unauthorized) {
+      return of(unauthorized);
+    }
+
     const currentCart = this._cart();
     const currentItem = currentCart.items.find((item) => item.itemId === itemId);
 
     if (!currentItem) {
-      const errorResponse: ApiErrorResponse = {
+      return of({
         success: false,
         error: 'Cart item not found.',
         code: 404,
-      };
-
-      return of(errorResponse);
+      });
     }
 
     if (quantity <= 0) {
       return this.removeItem(itemId);
     }
 
-    const nextItems = currentCart.items.map((item) =>
-      item.itemId === itemId
-        ? {
-            ...item,
-            quantity,
-            subtotal: item.unitPrice * quantity,
-          }
-        : item,
-    );
-
-    const nextCart = this.buildCart(nextItems);
-    this._cart.set(nextCart);
-
     return this.api
-      .patch<Cart>(
-        `cart/items/${itemId}`,
-        { quantity },
-        {
-          mock: {
-            data: nextCart,
-            delayMs: 0,
-            message: 'Mock cart item quantity updated successfully.',
-          },
-        },
-      )
+      .put<BackendCartResponse>(`cart/items/${itemId}`, { quantity })
+      .pipe(map((response) => this.toCartResponse(response)))
       .pipe(tap((response) => this.syncCartState(response, currentCart)));
   }
 
   removeItem(itemId: string): Observable<ApiResponse<Cart>> {
+    const unauthorized = this.requireAuthenticatedCartAction();
+    if (unauthorized) {
+      return of(unauthorized);
+    }
+
     const currentCart = this._cart();
-    const nextCart = this.buildCart(currentCart.items.filter((item) => item.itemId !== itemId));
-
-    this._cart.set(nextCart);
-
     return this.api
-      .delete<Cart>(`cart/items/${itemId}`, {
-        mock: {
-          data: nextCart,
-          delayMs: 0,
-          message: 'Mock cart item removed successfully.',
-        },
-      })
+      .delete<BackendCartResponse>(`cart/items/${itemId}`)
+      .pipe(map((response) => this.toCartResponse(response)))
       .pipe(tap((response) => this.syncCartState(response, currentCart)));
   }
 
@@ -164,13 +146,39 @@ export class CartStateService {
     this._cart.set(this.buildCart([]));
   }
 
+  clearCart(): Observable<ApiResponse<Cart>> {
+    const unauthorized = this.requireAuthenticatedCartAction();
+    if (unauthorized) {
+      this.clear();
+      return of(unauthorized);
+    }
+
+    const currentCart = this._cart();
+    return this.api
+      .delete<BackendCartResponse>('cart')
+      .pipe(map((response) => this.toCartResponse(response)))
+      .pipe(tap((response) => this.syncCartState(response, currentCart)));
+  }
+
   checkout(): Observable<ApiResponse<Order>> {
+    const unauthorized = this.requireAuthenticatedCartAction();
+    if (unauthorized) {
+      return of(unauthorized as ApiResponse<Order>);
+    }
+
     return this.ordersService.createOrderFromCart(this._cart()).pipe(
-      tap((response) => {
-        if (isApiSuccessResponse(response)) {
-          this.clear();
-          this.closeDrawer();
+      switchMap((response) => {
+        if (!isApiSuccessResponse(response)) {
+          return of(response);
         }
+
+        return this.clearCart().pipe(
+          map(() => {
+            this.clear();
+            this.closeDrawer();
+            return response;
+          }),
+        );
       }),
     );
   }
@@ -191,47 +199,47 @@ export class CartStateService {
     };
   }
 
-  private createCartItem(product: Product, quantity: number): CartItem {
+  private requireAuthenticatedCartAction(): ApiErrorResponse | null {
+    if (this.authService.isAuthenticated()) {
+      return null;
+    }
+
     return {
-      itemId: `item-${product.id}`,
-      productId: product.id,
-      backendProductId: product.backendId,
-      name: product.name,
-      category: product.category,
-      image: product.image,
-      selectionLabel: this.getSelectionLabel(product),
-      quantity,
-      unitPrice: product.price,
-      subtotal: product.price * quantity,
+      success: false,
+      error: 'Sign in to manage your cart.',
+      code: 401,
     };
   }
 
-  private getSelectionLabel(product: Product): string {
-    const normalizedCategory = product.category.toLowerCase();
-
-    if (
-      ['single origin', 'premium beans', 'house blend', 'blend'].includes(normalizedCategory)
-    ) {
-      return '250g';
+  private toCartResponse(response: ApiResponse<BackendCartResponse>): ApiResponse<Cart> {
+    if (!isApiSuccessResponse(response)) {
+      return response;
     }
 
-    if (normalizedCategory.includes('capsule')) {
-      return '10 capsules';
-    }
+    return {
+      ...response,
+      data: this.toCart(response.data),
+    };
+  }
 
-    if (normalizedCategory.includes('kit')) {
-      return 'Complete kit';
-    }
-
-    if (normalizedCategory.includes('equipment')) {
-      return '1 unit';
-    }
-
-    if (normalizedCategory.includes('accessories')) {
-      return '1 piece';
-    }
-
-    return '1 unit';
+  private toCart(cart: BackendCartResponse): Cart {
+    return {
+      items: cart.items.map((item) => ({
+        itemId: String(item.id),
+        productId: String(item.productId),
+        backendProductId: item.productId,
+        name: item.productName,
+        category: 'Product',
+        image: item.imageUrl ?? '',
+        selectionLabel: 'Selected item',
+        quantity: item.quantity,
+        unitPrice: Number(item.unitPrice),
+        subtotal: Number(item.subtotal),
+      })),
+      subtotal: Number(cart.totalAmount),
+      shipping: FREE_SHIPPING,
+      total: Number(cart.totalAmount) + FREE_SHIPPING,
+    };
   }
 
   private syncCartState(response: ApiResponse<Cart>, fallbackCart?: Cart): void {
