@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  type OnInit,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { ChartConfiguration, ChartData } from 'chart.js';
 
@@ -14,6 +21,7 @@ import { EnvironmentMonitoringService } from '../services/environment-monitoring
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EnvironmentMonitoringPageComponent implements OnInit {
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly environmentService = inject(EnvironmentMonitoringService);
 
@@ -47,6 +55,8 @@ export class EnvironmentMonitoringPageComponent implements OnInit {
     },
   };
 
+  loading = true;
+  errorMessage: string | null = null;
   temperatureData: ChartData<'line'> = {
     labels: [],
     datasets: [
@@ -75,36 +85,70 @@ export class EnvironmentMonitoringPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.environmentService
-      .listReadings()
+      .getChartSeries()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
+        this.loading = false;
+
         if (!isApiSuccessResponse(response)) {
+          this.errorMessage = response.error;
+          this.temperatureData = this.createEmptyTemperatureData();
+          this.humidityData = this.createEmptyHumidityData();
+          this.cdr.markForCheck();
           return;
         }
 
-        const labels = response.data.map((reading) => reading.timestamp.slice(11, 16));
-
+        this.errorMessage = null;
         this.temperatureData = {
           ...this.temperatureData,
-          labels,
+          labels: response.data.labels,
           datasets: [
             {
               ...this.temperatureData.datasets[0],
-              data: response.data.map((reading) => reading.temperature),
+              data: response.data.temperatureValues,
             },
           ],
         };
 
         this.humidityData = {
           ...this.humidityData,
-          labels,
+          labels: response.data.labels,
           datasets: [
             {
               ...this.humidityData.datasets[0],
-              data: response.data.map((reading) => reading.humidity),
+              data: response.data.humidityValues,
             },
           ],
         };
+        this.cdr.markForCheck();
       });
+  }
+
+  get hasChartData(): boolean {
+    return Array.isArray(this.temperatureData.labels) && this.temperatureData.labels.length > 0;
+  }
+
+  private createEmptyTemperatureData(): ChartData<'line'> {
+    return {
+      labels: [],
+      datasets: [
+        {
+          ...this.temperatureData.datasets[0],
+          data: [],
+        },
+      ],
+    };
+  }
+
+  private createEmptyHumidityData(): ChartData<'line'> {
+    return {
+      labels: [],
+      datasets: [
+        {
+          ...this.humidityData.datasets[0],
+          data: [],
+        },
+      ],
+    };
   }
 }

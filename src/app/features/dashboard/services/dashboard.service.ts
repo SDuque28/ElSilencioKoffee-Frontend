@@ -1,9 +1,26 @@
 import { inject, Injectable } from '@angular/core';
-import type { Observable } from 'rxjs';
+import { forkJoin, map, type Observable } from 'rxjs';
 
-import type { ApiResponse } from '../../../core/models/api-response.model';
-import type { DashboardMetric, SalesMetric, TopBuyer } from '../../../core/models/dashboard.model';
+import { isApiSuccessResponse, type ApiResponse } from '../../../core/models/api-response.model';
+import type {
+  ChartSeries,
+  DashboardOverview,
+  TopBuyer,
+} from '../../../core/models/dashboard.model';
 import { ApiService } from '../../../core/services/api.service';
+import { environment } from '../../../../environments/environment';
+import {
+  buildDashboardOverview,
+  buildTopBuyers,
+  createDefaultDashboardDateRange,
+  buildOrderVolumeSeries,
+  normalizeOrdersResponse,
+  normalizeUsersResponse,
+  type DashboardOrderApiResponse,
+  type DashboardOrdersPageApiResponse,
+  type DashboardUserApiResponse,
+  type DashboardUsersPageApiResponse,
+} from './dashboard.mappers';
 
 @Injectable({
   providedIn: 'root',
@@ -11,20 +28,110 @@ import { ApiService } from '../../../core/services/api.service';
 export class DashboardService {
   private readonly api = inject(ApiService);
 
-  getMetrics(): Observable<ApiResponse<DashboardMetric[]>> {
-    return this.api.get<DashboardMetric[]>('dashboard/metrics');
+  getOverview(startDate?: string, endDate?: string): Observable<ApiResponse<DashboardOverview>> {
+    const range = this.resolveDateRange(startDate, endDate);
+
+    return this.listOrders().pipe(
+      map((response) => {
+        if (!isApiSuccessResponse(response)) {
+          return response;
+        }
+
+        return {
+          ...response,
+          data: buildDashboardOverview(response.data, range),
+        };
+      }),
+    );
   }
 
-  getSalesMetrics(
-    startDate = '2026-03-01',
-    endDate = '2026-03-31',
-  ): Observable<ApiResponse<SalesMetric[]>> {
-    return this.api.get<SalesMetric[]>('dashboard/sales', {
-      params: { startDate, endDate },
-    });
+  getOrderVolumeSeries(startDate?: string, endDate?: string): Observable<ApiResponse<ChartSeries>> {
+    const range = this.resolveDateRange(startDate, endDate);
+
+    return this.listOrders().pipe(
+      map((response) => {
+        if (!isApiSuccessResponse(response)) {
+          return response;
+        }
+
+        return {
+          ...response,
+          data: buildOrderVolumeSeries(response.data, range),
+        };
+      }),
+    );
   }
 
   getTopBuyers(): Observable<ApiResponse<TopBuyer[]>> {
-    return this.api.get<TopBuyer[]>('dashboard/top-buyers');
+    return forkJoin({
+      ordersResponse: this.listOrders(),
+      usersResponse: this.listUsers(),
+    }).pipe(
+      map(({ ordersResponse, usersResponse }) => {
+        if (!isApiSuccessResponse(ordersResponse)) {
+          return ordersResponse;
+        }
+
+        const users = isApiSuccessResponse(usersResponse) ? usersResponse.data : [];
+
+        return {
+          success: true,
+          data: buildTopBuyers(ordersResponse.data, users),
+          message: ordersResponse.message,
+        };
+      }),
+    );
+  }
+
+  private listOrders(): Observable<ApiResponse<DashboardOrderApiResponse[]>> {
+    return this.api
+      .get<DashboardOrderApiResponse[] | DashboardOrdersPageApiResponse>('orders', {
+        baseUrl: environment.authApiUrl,
+      })
+      .pipe(
+        map((response) => {
+          if (!isApiSuccessResponse(response)) {
+            return response;
+          }
+
+          return {
+            ...response,
+            data: normalizeOrdersResponse(response.data),
+          };
+        }),
+      );
+  }
+
+  private listUsers(): Observable<ApiResponse<DashboardUserApiResponse[]>> {
+    return this.api
+      .get<DashboardUserApiResponse[] | DashboardUsersPageApiResponse>('users', {
+        baseUrl: environment.authApiUrl,
+      })
+      .pipe(
+        map((response) => {
+          if (!isApiSuccessResponse(response)) {
+            return response;
+          }
+
+          return {
+            ...response,
+            data: normalizeUsersResponse(response.data),
+          };
+        }),
+      );
+  }
+
+  private resolveDateRange(
+    startDate?: string,
+    endDate?: string,
+  ): {
+    startDate: string;
+    endDate: string;
+  } {
+    if (startDate && endDate) {
+      return { startDate, endDate };
+    }
+
+    return createDefaultDashboardDateRange();
   }
 }

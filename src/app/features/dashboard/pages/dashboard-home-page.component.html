@@ -6,22 +6,43 @@
     </p>
   </div>
 
-  <div class="grid gap-4 md:grid-cols-3">
-    @for (kpi of kpiCards; track kpi.label) {
-      <app-card className="border-[#2a2a2e] bg-[#1a1a1d] text-[#e5e5e5] shadow-none">
-        <p class="text-xs uppercase tracking-wide text-[#9ca3af]">{{ kpi.label }}</p>
-        <p class="mt-2 text-2xl font-semibold text-[#ff7a00]">{{ kpi.value }}</p>
-      </app-card>
-    }
-  </div>
+  @if (loading) {
+    <app-card className="border-[#2a2a2e] bg-[#1a1a1d] p-6 text-sm text-[#9ca3af] shadow-none">
+      <p data-cy="dashboard-home-loading">Loading dashboard overview...</p>
+    </app-card>
+  } @else if (errorMessage) {
+    <app-card
+      className="border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900 shadow-none"
+    >
+      <p data-cy="dashboard-home-error">{{ errorMessage }}</p>
+    </app-card>
+  } @else {
+    <div class="grid gap-4 md:grid-cols-3">
+      @for (kpi of kpiCards; track kpi.label) {
+        <app-card className="border-[#2a2a2e] bg-[#1a1a1d] text-[#e5e5e5] shadow-none">
+          <p class="text-xs uppercase tracking-wide text-[#9ca3af]">{{ kpi.label }}</p>
+          <p class="mt-2 text-2xl font-semibold text-[#ff7a00]">{{ kpi.value }}</p>
+        </app-card>
+      }
+    </div>
 
-  <app-card className="border-[#2a2a2e] bg-[#1a1a1d] text-[#e5e5e5] shadow-none">
-    <h2 class="mb-4 text-lg font-semibold text-[#f3f4f6]">Revenue trend</h2>
-    <app-chart-container
-      dataCy="dashboard-home-revenue-chart"
-      type="line"
-      [data]="chartData"
-      [options]="chartOptions"
-    />
-  </app-card>
+    <app-card className="border-[#2a2a2e] bg-[#1a1a1d] text-[#e5e5e5] shadow-none">
+      <h2 class="mb-4 text-lg font-semibold text-[#f3f4f6]">Revenue trend</h2>
+      @if (hasRevenueData) {
+        <app-chart-container
+          dataCy="dashboard-home-revenue-chart"
+          type="line"
+          [data]="chartData"
+          [options]="chartOptions"
+        />
+      } @else {
+        <p
+          data-cy="dashboard-home-empty"
+          class="rounded-xl border border-dashed border-[#2a2a2e] bg-[#141416] px-4 py-8 text-center text-sm text-[#9ca3af]"
+        >
+          No order revenue is available for the selected period.
+        </p>
+      }
+    </app-card>
+  }
 </section>

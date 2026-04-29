@@ -13,11 +13,22 @@ interface BackendEnvironmentMetricResponse {
   measuredAt: string;
 }
 
+export interface EnvironmentChartSeries {
+  humidityValues: number[];
+  labels: string[];
+  temperatureValues: number[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class EnvironmentMonitoringService {
   private readonly api = inject(ApiService);
+  private readonly timeFormatter = new Intl.DateTimeFormat('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
 
   listReadings(page = 1, limit = 10): Observable<ApiResponse<EnvironmentReading[]>> {
     return this.api.get<BackendEnvironmentMetricResponse[]>('environment-metrics').pipe(
@@ -60,6 +71,29 @@ export class EnvironmentMonitoringService {
     );
   }
 
+  getChartSeries(page = 1, limit = 10): Observable<ApiResponse<EnvironmentChartSeries>> {
+    return this.listReadings(page, limit).pipe(
+      map((response) => {
+        if (!isApiSuccessResponse(response)) {
+          return response;
+        }
+
+        return {
+          ...response,
+          data: {
+            labels: response.data.map((reading) => this.formatTimeLabel(reading.timestamp)),
+            temperatureValues: response.data.map((reading) =>
+              Number.isFinite(reading.temperature) ? reading.temperature : 0,
+            ),
+            humidityValues: response.data.map((reading) =>
+              Number.isFinite(reading.humidity) ? reading.humidity : 0,
+            ),
+          },
+        };
+      }),
+    );
+  }
+
   private toReadings(metrics: BackendEnvironmentMetricResponse[]): EnvironmentReading[] {
     const groupedReadings = new Map<
       string,
@@ -90,5 +124,15 @@ export class EnvironmentMonitoringService {
           typeof reading.temperature === 'number' && typeof reading.humidity === 'number',
       )
       .sort((left, right) => left.timestamp.localeCompare(right.timestamp));
+  }
+
+  private formatTimeLabel(value: string): string {
+    const parsedDate = new Date(value);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return value.slice(11, 16);
+    }
+
+    return this.timeFormatter.format(parsedDate);
   }
 }

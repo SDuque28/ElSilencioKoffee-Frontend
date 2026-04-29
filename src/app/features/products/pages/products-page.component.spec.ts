@@ -37,6 +37,7 @@ describe('ProductsPageComponent', () => {
           provide: CartStateService,
           useValue: {
             addItem: vi.fn(),
+            closeDrawer: vi.fn(),
           },
         },
         {
@@ -49,6 +50,7 @@ describe('ProductsPageComponent', () => {
           provide: ProductModalService,
           useValue: {
             open: vi.fn(),
+            close: vi.fn(),
           },
         },
       ],
