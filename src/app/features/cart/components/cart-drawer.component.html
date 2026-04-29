@@ -1,21 +1,20 @@
-<div data-cy="cart-drawer" class="cart-drawer" [class.cart-drawer--open]="cartState.isDrawerOpen()">
-  <button
-    data-cy="cart-drawer-overlay"
-    type="button"
-    class="cart-drawer__overlay"
-    (click)="close()"
-    [attr.tabindex]="cartState.isDrawerOpen() ? 0 : -1"
-    [attr.aria-hidden]="!cartState.isDrawerOpen()"
-    aria-label="Close cart drawer"
-  ></button>
+@if (cartState.isDrawerOpen()) {
+  <div data-cy="cart-drawer" class="cart-drawer cart-drawer--open">
+    <button
+      data-cy="cart-drawer-overlay"
+      type="button"
+      class="cart-drawer__overlay"
+      (click)="close()"
+      tabindex="0"
+      aria-label="Close cart drawer"
+    ></button>
 
-  <aside
-    class="cart-drawer__panel"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="cart-drawer-title"
-    [attr.aria-hidden]="!cartState.isDrawerOpen()"
-  >
+    <aside
+      class="cart-drawer__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cart-drawer-title"
+    >
     <header class="cart-drawer__header">
       <div class="cart-drawer__header-copy">
         <p class="cart-drawer__eyebrow">Curated cart</p>
@@ -147,5 +146,6 @@
         Continue to Checkout
       </app-button>
     </footer>
-  </aside>
-</div>
+    </aside>
+  </div>
+}

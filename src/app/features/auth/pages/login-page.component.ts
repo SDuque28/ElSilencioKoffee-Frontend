@@ -3,6 +3,8 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
+import { CartStateService } from '../../cart/services/cart-state.service';
+import { ProductModalService } from '../../products/services/product-modal.service';
 import { AuthFacadeService } from '../services/auth-facade.service';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
@@ -21,6 +23,8 @@ export class LoginPageComponent {
   private readonly toastService = inject(ToastService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly cartState = inject(CartStateService);
+  private readonly productModal = inject(ProductModalService);
   readonly serverError = signal<string | null>(null);
 
   readonly form = this.formBuilder.nonNullable.group({
@@ -30,6 +34,11 @@ export class LoginPageComponent {
 
   readonly controlClasses =
     'h-10 w-full rounded-md border border-border bg-white px-3 text-sm text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20';
+
+  constructor() {
+    this.cartState.closeDrawer();
+    this.productModal.close();
+  }
 
   submit(): void {
     if (this.form.invalid) {
@@ -50,6 +59,9 @@ export class LoginPageComponent {
           description: 'La sesion se inicio correctamente.',
           variant: 'success',
         });
+
+        this.cartState.closeDrawer();
+        this.productModal.close();
 
         const redirectTo =
           this.route.snapshot.queryParamMap.get('redirectTo') ??

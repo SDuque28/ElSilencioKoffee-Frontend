@@ -1,15 +1,14 @@
-<div data-cy="product-modal" class="product-modal" [class.product-modal--open]="modalState.isOpen()">
-  <button
-    data-cy="product-modal-overlay"
-    type="button"
-    class="product-modal__overlay"
-    (click)="close()"
-    [attr.tabindex]="modalState.isOpen() ? 0 : -1"
-    [attr.aria-hidden]="!modalState.isOpen()"
-    aria-label="Close product modal"
-  ></button>
+@if (modalState.isOpen() && modalState.product(); as product) {
+  <div data-cy="product-modal" class="product-modal product-modal--open">
+    <button
+      data-cy="product-modal-overlay"
+      type="button"
+      class="product-modal__overlay"
+      (click)="close()"
+      tabindex="0"
+      aria-label="Close product modal"
+    ></button>
 
-  @if (modalState.product(); as product) {
     <section
       class="product-modal__dialog"
       role="dialog"
@@ -101,5 +100,5 @@
         </div>
       </div>
     </section>
-  }
-</div>
+  </div>
+}

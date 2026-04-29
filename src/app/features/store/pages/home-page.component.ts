@@ -17,6 +17,7 @@ import type { Product } from '../../../core/models/product.model';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { CartStateService } from '../../cart/services/cart-state.service';
 import { ProductCardComponent } from '../../products/components/product-card.component';
+import { ProductModalService } from '../../products/services/product-modal.service';
 import { ProductsService } from '../../products/services/products.service';
 
 @Component({
@@ -31,6 +32,7 @@ export class HomePageComponent implements OnInit {
   private readonly productsService = inject(ProductsService);
   private readonly toastService = inject(ToastService);
   private readonly cartState = inject(CartStateService);
+  private readonly productModal = inject(ProductModalService);
   readonly collectionTrack = viewChild<ElementRef<HTMLElement>>('collectionTrack');
 
   readonly heroImage =
@@ -44,6 +46,9 @@ export class HomePageComponent implements OnInit {
   collectionProducts: Product[] = [];
 
   ngOnInit(): void {
+    this.cartState.closeDrawer();
+    this.productModal.close();
+
     this.productsService
       .listFeaturedProducts()
       .pipe(takeUntilDestroyed(this.destroyRef))

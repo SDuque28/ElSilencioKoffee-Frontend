@@ -8,7 +8,7 @@ import {
 } from '../../../core/models/api-response.model';
 import type { Cart, CartItem } from '../../../core/models/cart.model';
 import type { Order } from '../../../core/models/order.model';
-import type { Product } from '../../../core/models/product.model';
+import { PRODUCT_IMAGE_FALLBACK, type Product } from '../../../core/models/product.model';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { OrdersService } from '../../orders/services/orders.service';
@@ -223,23 +223,41 @@ export class CartStateService {
   }
 
   private toCart(cart: BackendCartResponse): Cart {
-    return {
-      items: cart.items.map((item) => ({
+    const items = cart.items.map((item) => {
+      const unitPrice = this.toNumber(item.unitPrice);
+      const quantity = Math.max(0, Math.floor(this.toNumber(item.quantity)));
+      const subtotal = this.toNumber(item.subtotal, unitPrice * quantity);
+
+      return {
         itemId: String(item.id),
         productId: String(item.productId),
         backendProductId: item.productId,
         name: item.productName,
         category: 'Product',
-        image: item.imageUrl ?? '',
+        image: item.imageUrl?.trim() || PRODUCT_IMAGE_FALLBACK,
         selectionLabel: 'Selected item',
-        quantity: item.quantity,
-        unitPrice: Number(item.unitPrice),
-        subtotal: Number(item.subtotal),
-      })),
-      subtotal: Number(cart.totalAmount),
+        quantity,
+        unitPrice,
+        subtotal,
+      };
+    });
+
+    const subtotal = this.toNumber(
+      cart.totalAmount,
+      items.reduce((sum, item) => sum + item.subtotal, 0),
+    );
+
+    return {
+      items,
+      subtotal,
       shipping: FREE_SHIPPING,
-      total: Number(cart.totalAmount) + FREE_SHIPPING,
+      total: subtotal + FREE_SHIPPING,
     };
+  }
+
+  private toNumber(value: unknown, fallback = 0): number {
+    const parsedValue = Number(value);
+    return Number.isFinite(parsedValue) ? parsedValue : fallback;
   }
 
   private syncCartState(response: ApiResponse<Cart>, fallbackCart?: Cart): void {

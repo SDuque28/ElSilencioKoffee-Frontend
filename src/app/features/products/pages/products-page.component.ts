@@ -14,6 +14,7 @@ import type { Product } from '../../../core/models/product.model';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { CartStateService } from '../../cart/services/cart-state.service';
 import { ProductCardComponent } from '../components/product-card.component';
+import { ProductModalService } from '../services/product-modal.service';
 import { ProductsService, type ProductsListResponse } from '../services/products.service';
 
 @Component({
@@ -28,11 +29,15 @@ export class ProductsPageComponent implements OnInit {
   private readonly productsService = inject(ProductsService);
   private readonly toastService = inject(ToastService);
   private readonly cartState = inject(CartStateService);
+  private readonly productModal = inject(ProductModalService);
 
   products: Product[] = [];
   isLoading = true;
 
   ngOnInit(): void {
+    this.cartState.closeDrawer();
+    this.productModal.close();
+
     this.productsService
       .listProducts()
       .pipe(takeUntilDestroyed(this.destroyRef))

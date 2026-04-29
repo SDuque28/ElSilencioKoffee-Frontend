@@ -56,7 +56,7 @@ export class CartPageComponent implements OnInit {
           description: response.error,
           variant: 'error',
         });
-        });
+      });
   }
 
   clearCart(): void {
