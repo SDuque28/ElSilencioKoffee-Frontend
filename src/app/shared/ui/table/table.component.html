@@ -23,10 +23,22 @@
       </thead>
       <tbody>
         @for (row of rows; track $index) {
+          @let rowLink = getRowLink(row);
           <tr
+            [attr.data-cy]="getRowDataCy(row)"
+            [attr.role]="rowLink ? 'link' : null"
+            [attr.tabindex]="rowLink ? 0 : null"
             [class.border-t]="true"
             [class.border-border]="theme === 'default'"
             [class.border-[#2a2a2e]]="theme === 'admin'"
+            [class.cursor-pointer]="!!rowLink"
+            [class.hover:bg-amber-50/40]="theme === 'default' && !!rowLink"
+            [class.hover:bg-[#1b1b1f]]="theme === 'admin' && !!rowLink"
+            [class.focus-visible:outline-none]="!!rowLink"
+            [class.focus-visible:ring-2]="!!rowLink"
+            [class.focus-visible:ring-[#b45f1e]/30]="!!rowLink"
+            (click)="onRowClick(row)"
+            (keydown)="onRowKeydown($event, row)"
           >
             @for (column of columns; track column.key) {
               <td

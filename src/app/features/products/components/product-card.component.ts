@@ -11,6 +11,7 @@ import { LucideAngularModule, ShoppingCart } from 'lucide-angular';
 
 import {
   PRODUCT_IMAGE_FALLBACK,
+  getProductAvailabilityLabel,
   type Product,
   type ProductAvailability,
 } from '../../../core/models/product.model';
@@ -78,7 +79,7 @@ export class ProductCardComponent {
   }
 
   get stockLabel(): string {
-    return this.product.availability;
+    return getProductAvailabilityLabel(this.product.availability);
   }
 
   get stockVariant(): 'success' | 'warning' | 'danger' {
@@ -95,14 +96,14 @@ export class ProductCardComponent {
 
   get stockDescription(): string {
     if (this.product.availability === 'LOW_STOCK') {
-      return `${this.product.stock} units available`;
+      return `Only ${this.product.stock} left from this batch`;
     }
 
     if (this.product.availability === 'IN_STOCK') {
-      return `${this.product.stock} units available`;
+      return `${this.product.stock} units ready for your next brew`;
     }
 
-    return 'Currently unavailable';
+    return 'Fresh stock is on the way';
   }
 
   get isOutOfStock(): boolean {

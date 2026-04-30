@@ -145,10 +145,13 @@ export class OrdersPageComponent implements OnInit {
   }
 
   private toRow(order: Order): Record<string, unknown> {
+    const orderLink = `/orders/${order.id}`;
     const baseRow: Record<string, unknown> = {
+      __rowLink: orderLink,
+      __rowDataCy: `orders-row-${order.id}`,
       id: {
         label: `#${order.id}`,
-        routerLink: `/orders/${order.id}`,
+        routerLink: orderLink,
         dataCy: `orders-link-${order.id}`,
       } satisfies TableLinkCell,
       date: this.formatOrderDate(order.orderDate),

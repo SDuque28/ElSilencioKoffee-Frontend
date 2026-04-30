@@ -43,7 +43,7 @@
             <div class="product-modal__heading">
               <h2 id="product-modal-title" class="product-modal__title">{{ product.name }}</h2>
               <app-badge [variant]="product.availability === 'IN_STOCK' ? 'success' : product.availability === 'LOW_STOCK' ? 'warning' : 'danger'">
-                {{ product.availability }}
+                {{ stockLabel(product.availability) }}
               </app-badge>
             </div>
             @if (product.description) {
@@ -73,7 +73,7 @@
             >
               <span class="inline-flex items-center gap-2">
                 <lucide-icon [img]="icons.cart" class="h-4 w-4"></lucide-icon>
-                {{ product.availability === 'OUT_OF_STOCK' ? 'Out of stock' : 'Add to cart' }}
+                {{ product.availability === 'OUT_OF_STOCK' ? 'Back soon' : 'Add to cart' }}
               </span>
             </app-button>
 

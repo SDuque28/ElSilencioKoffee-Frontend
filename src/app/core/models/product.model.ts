@@ -3,6 +3,18 @@ export const PRODUCT_IMAGE_FALLBACK =
 
 export type ProductAvailability = 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
 
+export function getProductAvailabilityLabel(availability: ProductAvailability): string {
+  switch (availability) {
+    case 'IN_STOCK':
+      return 'Ready to brew';
+    case 'LOW_STOCK':
+      return 'Almost gone';
+    case 'OUT_OF_STOCK':
+    default:
+      return 'Back soon';
+  }
+}
+
 export interface Product {
   id: string;
   backendId: number;

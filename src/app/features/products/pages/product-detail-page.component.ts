@@ -10,7 +10,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
-import type { Product, ProductAvailability } from '../../../core/models/product.model';
+import {
+  getProductAvailabilityLabel,
+  type Product,
+  type ProductAvailability,
+} from '../../../core/models/product.model';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
@@ -91,7 +95,7 @@ export class ProductDetailPageComponent implements OnInit {
   }
 
   stockLabel(availability: ProductAvailability): string {
-    return availability;
+    return getProductAvailabilityLabel(availability);
   }
 
   stockValueLabel(stock: number): string {
