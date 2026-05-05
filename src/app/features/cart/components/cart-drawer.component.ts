@@ -8,8 +8,10 @@ import {
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { LucideAngularModule, Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-angular';
 
+import { AuthService } from '../../../core/services/auth.service';
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
@@ -26,8 +28,10 @@ import { CartStateService } from '../services/cart-state.service';
 export class CartDrawerComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
   private readonly productModal = inject(ProductModalService);
+  private readonly authService = inject(AuthService);
 
   readonly cartState = inject(CartStateService);
 
@@ -67,14 +71,34 @@ export class CartDrawerComponent {
     this.cartState
       .updateQuantity(itemId, currentQuantity - 1)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe();
+      .subscribe((response) => {
+        if (isApiSuccessResponse(response)) {
+          return;
+        }
+
+        this.toastService.show({
+          title: 'Unable to update quantity',
+          description: response.error,
+          variant: 'error',
+        });
+      });
   }
 
   increaseQuantity(itemId: string, currentQuantity: number): void {
     this.cartState
       .updateQuantity(itemId, currentQuantity + 1)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe();
+      .subscribe((response) => {
+        if (isApiSuccessResponse(response)) {
+          return;
+        }
+
+        this.toastService.show({
+          title: 'Unable to update quantity',
+          description: response.error,
+          variant: 'error',
+        });
+      });
   }
 
   removeItem(itemId: string): void {
@@ -86,24 +110,19 @@ export class CartDrawerComponent {
       return;
     }
 
-    this.cartState
-      .checkout()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((response) => {
-        if (isApiSuccessResponse(response)) {
-          this.toastService.show({
-            title: 'Checkout complete',
-            description: `Order ${response.data.id} generated from your selection.`,
-            variant: 'success',
-          });
-          return;
-        }
-
-        this.toastService.show({
-          title: 'Unable to continue',
-          description: response.error,
-          variant: 'error',
-        });
+    if (!this.authService.isAuthenticated()) {
+      this.toastService.show({
+        title: 'Sign in required',
+        description: 'Create an account or sign in to continue to checkout.',
+        variant: 'error',
       });
+      void this.router.navigate(['/login'], {
+        queryParams: { redirectTo: '/checkout' },
+      });
+      return;
+    }
+
+    this.close();
+    void this.router.navigate(['/checkout']);
   }
 }

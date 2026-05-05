@@ -9,7 +9,12 @@ import {
 } from '@angular/core';
 import { LucideAngularModule, ShoppingCart } from 'lucide-angular';
 
-import { PRODUCT_IMAGE_FALLBACK, type Product } from '../../../core/models/product.model';
+import {
+  PRODUCT_IMAGE_FALLBACK,
+  getProductAvailabilityLabel,
+  type Product,
+  type ProductAvailability,
+} from '../../../core/models/product.model';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
@@ -74,26 +79,34 @@ export class ProductCardComponent {
   }
 
   get stockLabel(): string {
-    if (this.product.stock > 15) {
-      return 'In stock';
-    }
-
-    if (this.product.stock > 0) {
-      return `Only ${this.product.stock} left`;
-    }
-
-    return 'Sold out';
+    return getProductAvailabilityLabel(this.product.availability);
   }
 
   get stockVariant(): 'success' | 'warning' | 'danger' {
-    if (this.product.stock > 15) {
+    if (this.product.availability === 'IN_STOCK') {
       return 'success';
     }
 
-    if (this.product.stock > 0) {
+    if (this.product.availability === 'LOW_STOCK') {
       return 'warning';
     }
 
     return 'danger';
+  }
+
+  get stockDescription(): string {
+    if (this.product.availability === 'LOW_STOCK') {
+      return `Only ${this.product.stock} left from this batch`;
+    }
+
+    if (this.product.availability === 'IN_STOCK') {
+      return `${this.product.stock} units ready for your next brew`;
+    }
+
+    return 'Fresh stock is on the way';
+  }
+
+  get isOutOfStock(): boolean {
+    return this.product.availability === 'OUT_OF_STOCK';
   }
 }

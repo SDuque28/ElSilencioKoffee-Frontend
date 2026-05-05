@@ -35,6 +35,8 @@ export class DashboardUsersPageComponent implements OnInit {
     { key: 'spend', label: 'Total Spend' },
   ];
 
+  loading = true;
+  errorMessage: string | null = null;
   rows: Record<string, unknown>[] = [];
 
   ngOnInit(): void {
@@ -42,6 +44,7 @@ export class DashboardUsersPageComponent implements OnInit {
       .getTopBuyers()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
+        this.loading = false;
         this.rows = isApiSuccessResponse(response)
           ? response.data.map((buyer) => ({
               name: buyer.name,
@@ -49,6 +52,7 @@ export class DashboardUsersPageComponent implements OnInit {
               spend: this.currencyFormatter.format(buyer.totalSpend),
             }))
           : [];
+        this.errorMessage = isApiSuccessResponse(response) ? null : response.error;
         this.cdr.markForCheck();
       });
   }

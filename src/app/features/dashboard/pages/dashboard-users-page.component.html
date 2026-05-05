@@ -2,11 +2,31 @@
   <div>
     <h1 class="text-2xl font-semibold text-[#f3f4f6]">Top Buyers</h1>
     <p class="text-sm text-[#9ca3af]">
-      Customer ranking will map to `/dashboard/top-buyers` API endpoints.
+      Customer ranking is calculated from live orders and user records.
     </p>
   </div>
 
   <app-card className="border-[#2a2a2e] bg-[#1a1a1d] text-[#e5e5e5] shadow-none">
-    <app-table dataCy="dashboard-users-table" [columns]="columns" [rows]="rows" theme="admin" />
+    @if (loading) {
+      <p data-cy="dashboard-users-loading" class="p-6 text-sm text-[#9ca3af]">
+        Loading buyer ranking...
+      </p>
+    } @else if (errorMessage) {
+      <p
+        data-cy="dashboard-users-error"
+        class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900"
+      >
+        {{ errorMessage }}
+      </p>
+    } @else if (rows.length === 0) {
+      <p
+        data-cy="dashboard-users-empty"
+        class="rounded-xl border border-dashed border-[#2a2a2e] bg-[#141416] px-4 py-8 text-center text-sm text-[#9ca3af]"
+      >
+        No buyer activity is available yet.
+      </p>
+    } @else {
+      <app-table dataCy="dashboard-users-table" [columns]="columns" [rows]="rows" theme="admin" />
+    }
   </app-card>
 </section>

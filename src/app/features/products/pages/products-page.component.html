@@ -5,26 +5,26 @@
       Coffee essentials and signature gear
     </h1>
     <p class="max-w-2xl text-sm leading-6 text-[#6b5c4f]">
-      Explore the complete mock catalog with beans, brewing equipment, and accessories prepared for
-      the ecommerce experience.
+      Explore the live catalog with beans, brewing equipment, and accessories connected to the
+      current backend data.
     </p>
   </div>
 
   <div
-    *ngIf="isLoading"
-    data-cy="products-loading"
-    class="rounded-2xl border border-[#ebe3da] bg-white p-6 text-sm text-[#6b5c4f]"
-  >
-    Loading mock products...
-  </div>
+  *ngIf="isLoading"
+  data-cy="products-loading"
+  class="rounded-2xl border border-[#ebe3da] bg-white p-6 text-sm text-[#6b5c4f]"
+>
+    Loading products...
+</div>
 
   <div
-    *ngIf="!isLoading && products.length === 0"
-    data-cy="products-empty"
-    class="rounded-2xl border border-[#ebe3da] bg-white p-6 text-sm text-[#6b5c4f]"
-  >
-    No mock products available.
-  </div>
+  *ngIf="!isLoading && products.length === 0"
+  data-cy="products-empty"
+  class="rounded-2xl border border-[#ebe3da] bg-white p-6 text-sm text-[#6b5c4f]"
+>
+    No products are available right now.
+</div>
 
   <div
     *ngIf="!isLoading && products.length > 0"

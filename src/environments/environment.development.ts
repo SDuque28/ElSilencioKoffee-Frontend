@@ -3,9 +3,9 @@ import { resolveRuntimeEnv } from './runtime-env';
 export const environment = {
   production: false,
   ...resolveRuntimeEnv({
-    apiUrl: 'https://elsilenciokofee.com/api/v1',
+    apiUrl: '/api-auth',
     authApiUrl: '/api-auth',
-    isMockMode: true,
+    isMockMode: false,
     debugApiLogging: true,
   }),
 };

@@ -14,6 +14,7 @@ import type { Product } from '../../../core/models/product.model';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { CartStateService } from '../../cart/services/cart-state.service';
 import { ProductCardComponent } from '../components/product-card.component';
+import { ProductModalService } from '../services/product-modal.service';
 import { ProductsService, type ProductsListResponse } from '../services/products.service';
 
 @Component({
@@ -28,29 +29,25 @@ export class ProductsPageComponent implements OnInit {
   private readonly productsService = inject(ProductsService);
   private readonly toastService = inject(ToastService);
   private readonly cartState = inject(CartStateService);
+  private readonly productModal = inject(ProductModalService);
 
   products: Product[] = [];
   isLoading = true;
 
   ngOnInit(): void {
-    console.log('[ProductsPageComponent] ngOnInit()');
+    this.cartState.closeDrawer();
+    this.productModal.close();
 
     this.productsService
       .listProducts()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response: ProductsListResponse) => {
-          console.log('[ProductsPageComponent] products received', {
-            count: response.count,
-            products: response.products,
-          });
-
           this.products = Array.isArray(response.products) ? response.products : [];
           this.isLoading = false;
           this.cdr.markForCheck();
         },
         error: (error) => {
-          console.error('[ProductsPageComponent] listProducts() failed', error);
           this.products = [];
           this.isLoading = false;
           this.cdr.markForCheck();

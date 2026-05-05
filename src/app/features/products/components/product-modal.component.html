@@ -1,15 +1,14 @@
-<div data-cy="product-modal" class="product-modal" [class.product-modal--open]="modalState.isOpen()">
-  <button
-    data-cy="product-modal-overlay"
-    type="button"
-    class="product-modal__overlay"
-    (click)="close()"
-    [attr.tabindex]="modalState.isOpen() ? 0 : -1"
-    [attr.aria-hidden]="!modalState.isOpen()"
-    aria-label="Close product modal"
-  ></button>
+@if (modalState.isOpen() && modalState.product(); as product) {
+  <div data-cy="product-modal" class="product-modal product-modal--open">
+    <button
+      data-cy="product-modal-overlay"
+      type="button"
+      class="product-modal__overlay"
+      (click)="close()"
+      tabindex="0"
+      aria-label="Close product modal"
+    ></button>
 
-  @if (modalState.product(); as product) {
     <section
       class="product-modal__dialog"
       role="dialog"
@@ -38,14 +37,18 @@
 
         <div class="product-modal__content">
           <div class="space-y-3">
-            <p class="product-modal__category">{{ product.category }}</p>
+            @if (product.category) {
+              <p class="product-modal__category">{{ product.category }}</p>
+            }
             <div class="product-modal__heading">
               <h2 id="product-modal-title" class="product-modal__title">{{ product.name }}</h2>
-              <app-badge [variant]="product.stock > 0 ? 'success' : 'danger'">
-                {{ product.stock > 0 ? 'In stock' : 'Sold out' }}
+              <app-badge [variant]="product.availability === 'IN_STOCK' ? 'success' : product.availability === 'LOW_STOCK' ? 'warning' : 'danger'">
+                {{ stockLabel(product.availability) }}
               </app-badge>
             </div>
-            <p class="product-modal__description">{{ product.description }}</p>
+            @if (product.description) {
+              <p class="product-modal__description">{{ product.description }}</p>
+            }
           </div>
 
           <div class="product-modal__stats">
@@ -65,12 +68,12 @@
             <app-button
               className="rounded-full px-5"
               dataCy="product-modal-add-to-cart"
-              [disabled]="product.stock <= 0"
+              [disabled]="product.availability === 'OUT_OF_STOCK'"
               (buttonClick)="addToCart(product)"
             >
               <span class="inline-flex items-center gap-2">
                 <lucide-icon [img]="icons.cart" class="h-4 w-4"></lucide-icon>
-                Add to cart
+                {{ product.availability === 'OUT_OF_STOCK' ? 'Back soon' : 'Add to cart' }}
               </span>
             </app-button>
 
@@ -91,5 +94,5 @@
         </div>
       </div>
     </section>
-  }
-</div>
+  </div>
+}

@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  type OnInit,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { ChartConfiguration, ChartData } from 'chart.js';
 
@@ -14,6 +21,7 @@ import { ProductionService } from '../services/production.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductionPageComponent implements OnInit {
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly productionService = inject(ProductionService);
 
@@ -47,6 +55,8 @@ export class ProductionPageComponent implements OnInit {
     },
   };
 
+  loading = true;
+  errorMessage: string | null = null;
   productionData: ChartData<'bar'> = {
     labels: [],
     datasets: [
@@ -60,23 +70,46 @@ export class ProductionPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.productionService
-      .listProduction()
+      .getProductionChartSeries()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
+        this.loading = false;
+
         if (!isApiSuccessResponse(response)) {
+          this.errorMessage = response.error;
+          this.productionData = this.createEmptyChartData();
+          this.cdr.markForCheck();
           return;
         }
 
+        this.errorMessage = null;
         this.productionData = {
           ...this.productionData,
-          labels: response.data.map((record) => record.date),
+          labels: response.data.labels,
           datasets: [
             {
               ...this.productionData.datasets[0],
-              data: response.data.map((record) => record.quantity),
+              data: response.data.quantities,
             },
           ],
         };
+        this.cdr.markForCheck();
       });
+  }
+
+  get hasChartData(): boolean {
+    return Array.isArray(this.productionData.labels) && this.productionData.labels.length > 0;
+  }
+
+  private createEmptyChartData(): ChartData<'bar'> {
+    return {
+      labels: [],
+      datasets: [
+        {
+          ...this.productionData.datasets[0],
+          data: [],
+        },
+      ],
+    };
   }
 }

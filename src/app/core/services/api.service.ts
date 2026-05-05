@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { catchError, delay, map, of, tap, type Observable } from 'rxjs';
+import { catchError, map, of, tap, type Observable } from 'rxjs';
 
 import {
   type ApiErrorResponse,
@@ -9,19 +9,11 @@ import {
 } from '../models/api-response.model';
 import { environment } from '../../../environments/environment';
 
-type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-export interface MockOptions<T> {
-  data: T | (() => T);
-  delayMs?: number;
-  message?: string;
-}
-
-export interface RequestOptions<T = unknown> {
+export interface RequestOptions {
   params?: Record<string, string | number | boolean | null | undefined>;
-  mock?: MockOptions<T>;
   baseUrl?: string;
-  bypassMock?: boolean;
 }
 
 @Injectable({
@@ -30,27 +22,27 @@ export interface RequestOptions<T = unknown> {
 export class ApiService {
   private readonly http = inject(HttpClient);
 
-  get<T>(endpoint: string, options?: RequestOptions<T>): Observable<ApiResponse<T>> {
+  get<T>(endpoint: string, options?: RequestOptions): Observable<ApiResponse<T>> {
     return this.request<T>('GET', endpoint, undefined, options);
   }
 
-  post<T>(
-    endpoint: string,
-    body: unknown,
-    options?: RequestOptions<T>,
-  ): Observable<ApiResponse<T>> {
+  post<T>(endpoint: string, body: unknown, options?: RequestOptions): Observable<ApiResponse<T>> {
     return this.request<T>('POST', endpoint, body, options);
   }
 
   patch<T>(
     endpoint: string,
     body: unknown,
-    options?: RequestOptions<T>,
+    options?: RequestOptions,
   ): Observable<ApiResponse<T>> {
     return this.request<T>('PATCH', endpoint, body, options);
   }
 
-  delete<T>(endpoint: string, options?: RequestOptions<T>): Observable<ApiResponse<T>> {
+  put<T>(endpoint: string, body: unknown, options?: RequestOptions): Observable<ApiResponse<T>> {
+    return this.request<T>('PUT', endpoint, body, options);
+  }
+
+  delete<T>(endpoint: string, options?: RequestOptions): Observable<ApiResponse<T>> {
     return this.request<T>('DELETE', endpoint, undefined, options);
   }
 
@@ -58,14 +50,10 @@ export class ApiService {
     method: HttpMethod,
     endpoint: string,
     body?: unknown,
-    options?: RequestOptions<T>,
+    options?: RequestOptions,
   ): Observable<ApiResponse<T>> {
     const url = this.buildUrl(endpoint, options?.baseUrl);
     this.logRequest(method, url, options?.params, body);
-
-    if (environment.isMockMode && !options?.bypassMock) {
-      return this.mockRequest<T>(method, endpoint, options?.mock, options?.baseUrl);
-    }
 
     return this.http
       .request<unknown>(method, url, {
@@ -90,38 +78,6 @@ export class ApiService {
 
     const normalizedEndpoint = endpoint.replace(/^\/+/, '');
     return `${baseUrl.replace(/\/+$/, '')}/${normalizedEndpoint}`;
-  }
-
-  private mockRequest<T>(
-    method: HttpMethod,
-    endpoint: string,
-    mock?: MockOptions<T>,
-    baseUrl?: string,
-  ): Observable<ApiResponse<T>> {
-    const url = this.buildUrl(endpoint, baseUrl);
-
-    if (!mock) {
-      const errorResponse: ApiErrorResponse = {
-        success: false,
-        error: `Mock no configurado para ${method} ${endpoint}`,
-        code: 501,
-      };
-
-      this.logError(method, url, errorResponse);
-      return of(errorResponse);
-    }
-
-    const data = typeof mock.data === 'function' ? (mock.data as () => T)() : mock.data;
-    const response: ApiSuccessResponse<T> = {
-      success: true,
-      data,
-      message: mock.message ?? 'Mock response generated successfully.',
-    };
-
-    return of(response).pipe(
-      delay(mock.delayMs ?? 120),
-      tap((result) => this.logResponse(method, url, result)),
-    );
   }
 
   private toHttpParams(params?: RequestOptions['params']): HttpParams | undefined {
@@ -236,7 +192,7 @@ export class ApiService {
       return;
     }
 
-    console.info(`[API ${environment.isMockMode ? 'MOCK' : 'REAL'}] ${method} ${url}`, {
+    console.info(`[API] ${method} ${url}`, {
       params,
       body,
     });

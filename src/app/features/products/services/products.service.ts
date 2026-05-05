@@ -1,187 +1,129 @@
-import { Injectable } from '@angular/core';
-import { delay, of, tap, type Observable } from 'rxjs';
+import { inject, Injectable } from '@angular/core';
+import { map, type Observable } from 'rxjs';
 
-import type { Product } from '../../../core/models/product.model';
+import { isApiSuccessResponse } from '../../../core/models/api-response.model';
+import {
+  PRODUCT_IMAGE_FALLBACK,
+  type Product,
+  type ProductAvailability,
+} from '../../../core/models/product.model';
+import { ApiService } from '../../../core/services/api.service';
 
 export interface ProductsListResponse {
   count: number;
   products: Product[];
 }
 
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: 'ethiopian-yirgacheffe',
-    backendId: 1,
-    name: 'Ethiopian Yirgacheffe',
-    price: 26,
-    image:
-      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
-    category: 'Single Origin',
-    description: 'Floral cup with citrus brightness and a delicate tea-like finish.',
-    stock: 24,
-    featured: true,
-  },
-  {
-    id: 'colombian-geisha-reserve',
-    backendId: 2,
-    name: 'Colombian Geisha Reserve',
-    price: 34,
-    image:
-      'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=1200&q=80',
-    category: 'Premium Beans',
-    description: 'Elegant micro-lot with panela sweetness, peach notes, and silky body.',
-    stock: 12,
-    featured: true,
-  },
-  {
-    id: 'premium-coffee-bag',
-    backendId: 3,
-    name: 'Premium Coffee Bag',
-    price: 22,
-    image:
-      'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1200&q=80',
-    category: 'House Blend',
-    description: 'Balanced everyday roast crafted for espresso and filtered brewing.',
-    stock: 34,
-    featured: true,
-  },
-  {
-    id: 'espresso-capsules',
-    backendId: 4,
-    name: 'Espresso Capsules',
-    price: 18,
-    image:
-      'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1200&q=80',
-    category: 'Capsules',
-    description: 'Rich crema, dark chocolate profile, and quick convenience for busy mornings.',
-    stock: 46,
-    featured: true,
-  },
-  {
-    id: 'barista-pro-grinder',
-    backendId: 5,
-    name: 'Barista Pro Grinder',
-    price: 189,
-    image:
-      'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1200&q=80',
-    category: 'Equipment',
-    description: 'Precision burr grinder with stepped adjustment for espresso and pour over.',
-    stock: 8,
-  },
-  {
-    id: 'pour-over-kit',
-    backendId: 6,
-    name: 'Pour Over Kit',
-    price: 74,
-    image:
-      'https://images.unsplash.com/photo-1459755486867-b55449bb39ff?auto=format&fit=crop&w=1200&q=80',
-    category: 'Brewing Kit',
-    description: 'Glass dripper, server, and filters curated for a bright extraction.',
-    stock: 15,
-  },
-  {
-    id: 'ceramic-mug',
-    backendId: 7,
-    name: 'Ceramic Mug',
-    price: 16,
-    image:
-      'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1200&q=80',
-    category: 'Accessories',
-    description: 'Hand-finished ceramic mug designed to keep your brew warm and stylish.',
-    stock: 26,
-  },
-  {
-    id: 'cold-brew-bottle',
-    backendId: 8,
-    name: 'Cold Brew Bottle',
-    price: 28,
-    image:
-      'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=1200&q=80',
-    category: 'Accessories',
-    description: 'Minimal glass bottle with stainless filter for smooth cold brew at home.',
-    stock: 19,
-  },
-  {
-    id: 'travel-tumbler',
-    backendId: 9,
-    name: 'Travel Tumbler',
-    price: 25,
-    image:
-      'https://images.unsplash.com/photo-1507914995485-5f7b7b1b2c14?auto=format&fit=crop&w=1200&q=80',
-    category: 'Accessories',
-    description: 'Double-wall insulated tumbler with leak-proof lid for coffee on the move.',
-    stock: 21,
-  },
-  {
-    id: 'signature-house-blend',
-    backendId: 10,
-    name: 'Signature House Blend',
-    price: 21,
-    image:
-      'https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=1200&q=80',
-    category: 'Blend',
-    description: 'Comforting roast with cocoa sweetness, caramel finish, and medium body.',
-    stock: 29,
-  },
-];
+interface BackendProductResponse {
+  id: number;
+  name: string;
+  imageUrl: string | null;
+  price: number;
+  presentationId: number | null;
+  productionId: number | null;
+  stockQuantity?: number | null;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProductsService {
+  private readonly api = inject(ApiService);
+
   listProducts(): Observable<ProductsListResponse> {
-    console.log('[ProductsService] listProducts() called');
+    return this.api.get<BackendProductResponse[]>('products').pipe(
+      map((response) => {
+        if (!isApiSuccessResponse(response)) {
+          return { count: 0, products: [] };
+        }
 
-    const response: ProductsListResponse = {
-      count: MOCK_PRODUCTS.length,
-      products: MOCK_PRODUCTS.map((product) => ({ ...product })),
-    };
-
-    return this.withLatency(response).pipe(
-      tap((result) => {
-        console.log('[ProductsService] listProducts() resolved', {
-          count: result.count,
-          ids: result.products.map((product) => product.id),
-        });
+        const products = response.data.map((product, index) => this.toProduct(product, index < 4));
+        return {
+          count: products.length,
+          products,
+        };
       }),
     );
   }
 
   listFeaturedProducts(): Observable<Product[]> {
-    return this.withLatency(
-      MOCK_PRODUCTS.filter((product) => product.featured).map((product) => ({ ...product })),
-    );
+    return this.listProducts().pipe(map((response) => response.products.filter((product) => product.featured)));
   }
 
   listCollectionProducts(): Observable<Product[]> {
-    return this.withLatency(
-      MOCK_PRODUCTS.filter((product) =>
-        ['Equipment', 'Brewing Kit', 'Accessories'].includes(product.category),
-      )
-        .slice(0, 4)
-        .map((product) => ({ ...product })),
+    return this.listProducts().pipe(
+      map((response) =>
+        response.products
+          .filter((product) =>
+            ['Equipment', 'Brewing Kit', 'Accessories'].includes(product.category ?? ''),
+          )
+          .slice(0, 4),
+      ),
     );
   }
 
   getProduct(productId: string): Observable<Product | undefined> {
-    console.log('[ProductsService] getProduct() called', { productId });
+    return this.api.get<BackendProductResponse>(`products/${productId}`).pipe(
+      map((response) => {
+        if (!isApiSuccessResponse(response)) {
+          return undefined;
+        }
 
-    const product = MOCK_PRODUCTS.find((item) => item.id === productId);
-    return this.withLatency(product ? { ...product } : undefined).pipe(
-      tap((result) => {
-        console.log('[ProductsService] getProduct() resolved', {
-          productId,
-          found: Boolean(result),
-        });
+        return this.toProduct(response.data);
       }),
     );
   }
 
-  private withLatency<T>(data: T): Observable<T> {
-    return of(data).pipe(delay(this.randomLatency()));
+  private toProduct(product: BackendProductResponse, featured = false): Product {
+    return {
+      id: String(product.id),
+      backendId: product.id,
+      name: product.name,
+      price: Number(product.price),
+      image: product.imageUrl?.trim() || PRODUCT_IMAGE_FALLBACK,
+      category: this.resolveCategory(product.presentationId),
+      description: null,
+      stock: this.resolveStock(product.stockQuantity),
+      availability: this.resolveAvailability(product.stockQuantity),
+      featured,
+    };
   }
 
-  private randomLatency(): number {
-    return 100 + Math.floor(Math.random() * 201);
+  private resolveStock(stockQuantity: number | null | undefined): number {
+    const stock = Number(stockQuantity);
+    return Number.isFinite(stock) && stock > 0 ? Math.floor(stock) : 0;
+  }
+
+  private resolveAvailability(stockQuantity: number | null | undefined): ProductAvailability {
+    const stock = this.resolveStock(stockQuantity);
+
+    if (stock === 0) {
+      return 'OUT_OF_STOCK';
+    }
+
+    if (stock <= 5) {
+      return 'LOW_STOCK';
+    }
+
+    return 'IN_STOCK';
+  }
+
+  private resolveCategory(presentationId: number | null): string {
+    switch (presentationId) {
+      case 4:
+        return 'Capsules';
+      case 5:
+        return 'Equipment';
+      case 6:
+        return 'Brewing Kit';
+      case 7:
+      case 8:
+      case 9:
+        return 'Accessories';
+      case 10:
+        return 'Blend';
+      default:
+        return 'Coffee';
+    }
   }
 }

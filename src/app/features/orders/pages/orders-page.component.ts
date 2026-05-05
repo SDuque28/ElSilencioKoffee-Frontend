@@ -13,7 +13,11 @@ import { AuthService } from '../../../core/services/auth.service';
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import type { Order } from '../../../core/models/order.model';
 import { CardComponent } from '../../../shared/ui/card/card.component';
-import { TableComponent, type TableColumn } from '../../../shared/ui/table/table.component';
+import {
+  TableComponent,
+  type TableColumn,
+  type TableLinkCell,
+} from '../../../shared/ui/table/table.component';
 import { OrdersService } from '../services/orders.service';
 import type { OrdersUserSummary } from '../services/users.service';
 import { UsersService } from '../services/users.service';
@@ -141,8 +145,15 @@ export class OrdersPageComponent implements OnInit {
   }
 
   private toRow(order: Order): Record<string, unknown> {
+    const orderLink = `/orders/${order.id}`;
     const baseRow: Record<string, unknown> = {
-      id: order.id,
+      __rowLink: orderLink,
+      __rowDataCy: `orders-row-${order.id}`,
+      id: {
+        label: `#${order.id}`,
+        routerLink: orderLink,
+        dataCy: `orders-link-${order.id}`,
+      } satisfies TableLinkCell,
       date: this.formatOrderDate(order.orderDate),
       total: this.currencyFormatter.format(order.totalAmount),
       status: order.status,

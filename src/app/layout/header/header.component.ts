@@ -70,6 +70,7 @@ export class HeaderComponent {
     this.closeMobileNav();
     this.closeAccountNote();
     this.authService.logout();
+    this.cartState.restoreCartState();
   }
 
   get isAdminLayout(): boolean {
