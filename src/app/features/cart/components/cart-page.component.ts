@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } f
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
+import { AuthService } from '../../../core/services/auth.service';
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
@@ -18,6 +19,7 @@ export class CartPageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
+  private readonly authService = inject(AuthService);
 
   readonly cartState = inject(CartStateService);
 
@@ -60,26 +62,19 @@ export class CartPageComponent implements OnInit {
   }
 
   checkout(): void {
-    this.cartState
-      .checkout()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((response) => {
-        if (isApiSuccessResponse(response)) {
-          this.toastService.show({
-            title: 'Order created',
-            description: `Order ${response.data.id} is ready. Review it and complete payment.`,
-            variant: 'success',
-          });
-          void this.router.navigate(['/orders', response.data.id]);
-          return;
-        }
-
-        this.toastService.show({
-          title: 'Unable to create order',
-          description: response.error,
-          variant: 'error',
-        });
+    if (!this.authService.isAuthenticated()) {
+      this.toastService.show({
+        title: 'Sign in required',
+        description: 'Create an account or sign in to continue to checkout.',
+        variant: 'error',
       });
+      void this.router.navigate(['/login'], {
+        queryParams: { redirectTo: '/checkout' },
+      });
+      return;
+    }
+
+    void this.router.navigate(['/checkout']);
   }
 
   clearCart(): void {

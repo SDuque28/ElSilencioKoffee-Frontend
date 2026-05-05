@@ -1,19 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, of } from 'rxjs';
 
-import { type ApiResponse } from '../../../core/models/api-response.model';
+import type { ApiResponse } from '../../../core/models/api-response.model';
 import type { Product } from '../../../core/models/product.model';
 import { PRODUCT_IMAGE_FALLBACK } from '../../../core/models/product.model';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { OrdersService } from '../../orders/services/orders.service';
 import { CartStateService } from './cart-state.service';
 
 describe('CartStateService', () => {
   let service: CartStateService;
-  let ordersService: {
-    createOrderFromCart: ReturnType<typeof vi.fn>;
-  };
   let apiService: {
     get: ReturnType<typeof vi.fn>;
     post: ReturnType<typeof vi.fn>;
@@ -22,6 +18,7 @@ describe('CartStateService', () => {
   };
   let authService: {
     isAuthenticated: ReturnType<typeof vi.fn>;
+    clearSession: ReturnType<typeof vi.fn>;
   };
 
   const sampleProduct: Product = {
@@ -55,8 +52,22 @@ describe('CartStateService', () => {
   };
 
   beforeEach(() => {
+    localStorage.clear();
+
     apiService = {
-      get: vi.fn(),
+      get: vi.fn(() =>
+        of({
+          success: true,
+          data: {
+            id: 0,
+            userId: 0,
+            totalItems: 0,
+            totalAmount: 0,
+            items: [],
+          },
+          message: 'ok',
+        } satisfies ApiResponse<unknown>),
+      ),
       post: vi.fn(),
       put: vi.fn(),
       delete: vi.fn(),
@@ -64,10 +75,7 @@ describe('CartStateService', () => {
 
     authService = {
       isAuthenticated: vi.fn(() => true),
-    };
-
-    ordersService = {
-      createOrderFromCart: vi.fn(),
+      clearSession: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -80,10 +88,6 @@ describe('CartStateService', () => {
         {
           provide: AuthService,
           useValue: authService,
-        },
-        {
-          provide: OrdersService,
-          useValue: ordersService,
         },
       ],
     });
@@ -115,17 +119,73 @@ describe('CartStateService', () => {
     });
   });
 
-  it('returns an empty cart without calling the API when unauthenticated', async () => {
+  it('stores guest cart items locally when there is no authenticated session', async () => {
     authService.isAuthenticated.mockReturnValue(false);
+    apiService.get.mockClear();
+
+    const response = await firstValueFrom(service.addItem(sampleProduct, 2));
+
+    expect(apiService.post).not.toHaveBeenCalled();
+    expect(response.success).toBe(true);
+    expect(service.items()).toHaveLength(1);
+    expect(service.items()[0]).toMatchObject({
+      itemId: 'guest-1',
+      backendProductId: 1,
+      quantity: 2,
+      subtotal: 52,
+    });
+    expect(JSON.parse(localStorage.getItem('esk.guest-cart') ?? '[]')).toHaveLength(1);
+  });
+
+  it('restores the guest cart from local storage when unauthenticated', async () => {
+    authService.isAuthenticated.mockReturnValue(false);
+    apiService.get.mockClear();
+    localStorage.setItem(
+      'esk.guest-cart',
+      JSON.stringify([
+        {
+          itemId: 'guest-1',
+          productId: '1',
+          backendProductId: 1,
+          name: 'Ethiopian Yirgacheffe',
+          category: 'Coffee',
+          image: 'https://example.com/yirgacheffe.jpg',
+          selectionLabel: 'Selected item',
+          quantity: 2,
+          unitPrice: 26,
+          subtotal: 52,
+        },
+      ]),
+    );
 
     const response = await firstValueFrom(service.loadCart());
 
     expect(apiService.get).not.toHaveBeenCalled();
     expect(response.success).toBe(true);
-    expect(service.items()).toEqual([]);
+    expect(service.items()[0]?.quantity).toBe(2);
+    expect(service.total()).toBe(52);
   });
 
-  it('adds a product through the backend cart items endpoint', async () => {
+  it('merges guest cart items into the backend cart after authentication', async () => {
+    authService.isAuthenticated.mockReturnValue(true);
+    apiService.get.mockClear();
+    localStorage.setItem(
+      'esk.guest-cart',
+      JSON.stringify([
+        {
+          itemId: 'guest-1',
+          productId: '1',
+          backendProductId: 1,
+          name: 'Ethiopian Yirgacheffe',
+          category: 'Coffee',
+          image: 'https://example.com/yirgacheffe.jpg',
+          selectionLabel: 'Selected item',
+          quantity: 2,
+          unitPrice: 26,
+          subtotal: 52,
+        },
+      ]),
+    );
     apiService.post.mockReturnValue(
       of({
         success: true,
@@ -133,17 +193,82 @@ describe('CartStateService', () => {
         message: 'ok',
       } satisfies ApiResponse<unknown>),
     );
+    apiService.get.mockReturnValue(
+      of({
+        success: true,
+        data: {
+          ...backendCartResponse,
+          totalItems: 2,
+          totalAmount: 52,
+          items: [
+            {
+              ...backendCartResponse.items[0],
+              quantity: 2,
+              subtotal: 52,
+            },
+          ],
+        },
+        message: 'ok',
+      } satisfies ApiResponse<unknown>),
+    );
 
-    const response = await firstValueFrom(service.addItem(sampleProduct, 2));
+    const response = await firstValueFrom(service.loadCart());
 
     expect(apiService.post).toHaveBeenCalledWith('cart/items', {
       productId: 1,
       quantity: 2,
     });
+    expect(apiService.get).toHaveBeenCalledWith('cart');
     expect(response.success).toBe(true);
+    expect(service.items()[0]?.itemId).toBe('55');
+    expect(localStorage.getItem('esk.guest-cart')).toBeNull();
   });
 
-  it('updates quantity and removes items through backend endpoints', async () => {
+  it('updates and removes guest cart items without backend calls', async () => {
+    authService.isAuthenticated.mockReturnValue(false);
+    apiService.get.mockClear();
+    await firstValueFrom(service.addItem(sampleProduct, 2));
+
+    await firstValueFrom(service.updateQuantity('guest-1', 3));
+    expect(service.items()[0]?.quantity).toBe(3);
+
+    await firstValueFrom(service.removeItem('guest-1'));
+    expect(service.items()).toEqual([]);
+    expect(localStorage.getItem('esk.guest-cart')).toBeNull();
+  });
+
+  it('removes guest items locally even if the user is authenticated', async () => {
+    authService.isAuthenticated.mockReturnValue(false);
+    apiService.get.mockClear();
+    await firstValueFrom(service.addItem(sampleProduct, 2));
+    authService.isAuthenticated.mockReturnValue(true);
+    const response = await firstValueFrom(service.removeItem('guest-1'));
+
+    expect(apiService.delete).not.toHaveBeenCalled();
+    expect(response.success).toBe(true);
+    expect(service.items()).toEqual([]);
+  });
+
+  it('updates guest items locally even if the user is authenticated', async () => {
+    authService.isAuthenticated.mockReturnValue(false);
+    apiService.get.mockClear();
+    await firstValueFrom(service.addItem(sampleProduct, 2));
+    authService.isAuthenticated.mockReturnValue(true);
+
+    const response = await firstValueFrom(service.updateQuantity('guest-1', 4));
+
+    expect(apiService.put).not.toHaveBeenCalled();
+    expect(response.success).toBe(true);
+    expect(service.items()[0]?.quantity).toBe(4);
+    expect(JSON.parse(localStorage.getItem('esk.guest-cart') ?? '[]')).toMatchObject([
+      expect.objectContaining({
+        itemId: 'guest-1',
+        quantity: 4,
+      }),
+    ]);
+  });
+
+  it('updates quantity and removes persisted items through backend endpoints', async () => {
     apiService.get.mockReturnValue(
       of({
         success: true,
@@ -189,7 +314,19 @@ describe('CartStateService', () => {
     expect(service.items()).toEqual([]);
   });
 
-  it('clears the cart through the backend endpoint', async () => {
+  it('clears the guest cart locally when unauthenticated', async () => {
+    authService.isAuthenticated.mockReturnValue(false);
+    apiService.get.mockClear();
+    await firstValueFrom(service.addItem(sampleProduct, 1));
+
+    const response = await firstValueFrom(service.clearCart());
+
+    expect(response.success).toBe(true);
+    expect(service.items()).toEqual([]);
+    expect(localStorage.getItem('esk.guest-cart')).toBeNull();
+  });
+
+  it('clears the authenticated cart through the backend endpoint', async () => {
     apiService.delete.mockReturnValue(
       of({
         success: true,
@@ -209,78 +346,19 @@ describe('CartStateService', () => {
     expect(service.items()).toEqual([]);
   });
 
-  it('rejects cart mutations when there is no authenticated session', async () => {
-    authService.isAuthenticated.mockReturnValue(false);
-
-    const response = await firstValueFrom(service.addItem(sampleProduct));
-
-    expect(apiService.post).not.toHaveBeenCalled();
-    expect(response).toEqual({
-      success: false,
-      error: 'Sign in to manage your cart.',
-      code: 401,
-    });
-  });
-
-  it('creates an order from the cart and clears the backend cart during checkout', async () => {
-    apiService.post.mockReturnValue(
+  it('clears the session and falls back safely when the persisted cart returns 401', async () => {
+    apiService.get.mockReturnValue(
       of({
-        success: true,
-        data: backendCartResponse,
-        message: 'ok',
-      } satisfies ApiResponse<unknown>),
-    );
-    apiService.delete.mockReturnValue(
-      of({
-        success: true,
-        data: {
-          ...backendCartResponse,
-          totalAmount: 0,
-          items: [],
-        },
-        message: 'ok',
-      } satisfies ApiResponse<unknown>),
-    );
-    ordersService.createOrderFromCart.mockReturnValue(
-      of({
-        success: true,
-        data: {
-          id: 77,
-          orderDate: '2026-04-29T10:30:00Z',
-          status: 'PENDING',
-          totalAmount: 26,
-          userId: 2,
-          items: [
-            {
-              detailId: 1,
-              productId: 1,
-              productName: 'Ethiopian Yirgacheffe',
-              quantity: 1,
-              unitPrice: 26,
-              subtotal: 26,
-            },
-          ],
-        },
-        message: 'ok',
+        success: false,
+        error: 'Unauthorized',
+        code: 401,
       } satisfies ApiResponse<unknown>),
     );
 
-    await firstValueFrom(service.addItem(sampleProduct));
-    const response = await firstValueFrom(service.checkout());
+    const response = await firstValueFrom(service.loadCart());
 
-    expect(ordersService.createOrderFromCart).toHaveBeenCalledWith(
-      expect.objectContaining({
-        items: [
-          expect.objectContaining({
-            backendProductId: 1,
-            quantity: 1,
-          }),
-        ],
-        total: 26,
-      }),
-    );
-    expect(apiService.delete).toHaveBeenCalledWith('cart');
-    expect(response.success).toBe(true);
+    expect(authService.clearSession).toHaveBeenCalled();
+    expect(response.success).toBe(false);
     expect(service.items()).toEqual([]);
   });
 });

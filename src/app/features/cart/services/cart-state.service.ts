@@ -1,18 +1,16 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { map, of, switchMap, tap, type Observable } from 'rxjs';
+import { finalize, map, of, shareReplay, switchMap, tap, type Observable } from 'rxjs';
 
 import {
   isApiSuccessResponse,
-  type ApiErrorResponse,
   type ApiResponse,
 } from '../../../core/models/api-response.model';
 import type { Cart, CartItem } from '../../../core/models/cart.model';
-import type { Order } from '../../../core/models/order.model';
 import { PRODUCT_IMAGE_FALLBACK, type Product } from '../../../core/models/product.model';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { OrdersService } from '../../orders/services/orders.service';
 
+const GUEST_CART_STORAGE_KEY = 'esk.guest-cart';
 const INITIAL_CART_ITEMS: CartItem[] = [];
 const FREE_SHIPPING = 0;
 
@@ -40,9 +38,10 @@ interface BackendCartResponse {
 export class CartStateService {
   private readonly api = inject(ApiService);
   private readonly authService = inject(AuthService);
-  private readonly ordersService = inject(OrdersService);
+
   private readonly _cart = signal<Cart>(this.buildCart(INITIAL_CART_ITEMS));
   private readonly _isDrawerOpen = signal(false);
+  private pendingCartLoad$: Observable<ApiResponse<Cart>> | null = null;
 
   readonly cart = this._cart.asReadonly();
   readonly isDrawerOpen = this._isDrawerOpen.asReadonly();
@@ -54,21 +53,88 @@ export class CartStateService {
   readonly shipping = computed(() => this._cart().shipping);
   readonly total = computed(() => this._cart().total);
 
+  constructor() {
+    this.restoreCartState();
+  }
+
   loadCart(): Observable<ApiResponse<Cart>> {
-    if (!this.authService.isAuthenticated()) {
-      const emptyCart = this.buildCart([]);
-      this._cart.set(emptyCart);
-      return of({
-        success: true,
-        data: emptyCart,
-        message: 'Cart requires an authenticated session.',
-      });
+    if (this.pendingCartLoad$) {
+      return this.pendingCartLoad$;
     }
 
+    const request$ = this.createCartLoadRequest().pipe(
+      finalize(() => {
+        this.pendingCartLoad$ = null;
+      }),
+      shareReplay(1),
+    );
+
+    this.pendingCartLoad$ = request$;
+    return request$;
+  }
+
+  restoreCartState(): void {
+    this.loadCart().subscribe({
+      error: () => {
+        this._cart.set(this.buildCart([]));
+      },
+    });
+  }
+
+  private createCartLoadRequest(): Observable<ApiResponse<Cart>> {
+    if (!this.authService.isAuthenticated()) {
+      const localCart = this.readGuestCart();
+      this._cart.set(localCart);
+      return of(this.successResponse(localCart, 'Guest cart restored from local storage.'));
+    }
+
+    const guestCart = this.readGuestCart();
+    if (guestCart.items.length > 0) {
+      return this.mergeGuestCartIntoBackend(guestCart);
+    }
+
+    return this.loadPersistedCart();
+  }
+
+  private loadPersistedCart(): Observable<ApiResponse<Cart>> {
     return this.api
       .get<BackendCartResponse>('cart')
       .pipe(map((response) => this.toCartResponse(response)))
       .pipe(tap((response) => this.syncCartState(response)));
+  }
+
+  private mergeGuestCartIntoBackend(guestCart: Cart): Observable<ApiResponse<Cart>> {
+    let mergeRequest$: Observable<ApiResponse<Cart>> = of(
+      this.successResponse(this._cart(), 'Guest cart merge initialized.'),
+    );
+
+    for (const item of guestCart.items) {
+      mergeRequest$ = mergeRequest$.pipe(
+        switchMap((previousResponse) => {
+          if (!isApiSuccessResponse(previousResponse)) {
+            return of(previousResponse);
+          }
+
+          return this.api
+            .post<BackendCartResponse>('cart/items', {
+              productId: item.backendProductId,
+              quantity: item.quantity,
+            })
+            .pipe(map((response) => this.toCartResponse(response)));
+        }),
+      );
+    }
+
+    return mergeRequest$.pipe(
+      switchMap((response) => {
+        if (!isApiSuccessResponse(response)) {
+          return of(response);
+        }
+
+        localStorage.removeItem(GUEST_CART_STORAGE_KEY);
+        return this.loadPersistedCart();
+      }),
+    );
   }
 
   openDrawer(): void {
@@ -84,9 +150,8 @@ export class CartStateService {
   }
 
   addItem(product: Product, quantity = 1): Observable<ApiResponse<Cart>> {
-    const unauthorized = this.requireAuthenticatedCartAction();
-    if (unauthorized) {
-      return of(unauthorized);
+    if (!this.authService.isAuthenticated()) {
+      return of(this.addGuestItem(product, quantity));
     }
 
     const normalizedQuantity = Math.max(1, Math.floor(quantity));
@@ -103,9 +168,12 @@ export class CartStateService {
   }
 
   updateQuantity(itemId: string, quantity: number): Observable<ApiResponse<Cart>> {
-    const unauthorized = this.requireAuthenticatedCartAction();
-    if (unauthorized) {
-      return of(unauthorized);
+    if (this.isGuestItemId(itemId)) {
+      return of(this.updateGuestItemQuantity(itemId, quantity));
+    }
+
+    if (!this.authService.isAuthenticated()) {
+      return of(this.updateGuestItemQuantity(itemId, quantity));
     }
 
     const currentCart = this._cart();
@@ -130,9 +198,12 @@ export class CartStateService {
   }
 
   removeItem(itemId: string): Observable<ApiResponse<Cart>> {
-    const unauthorized = this.requireAuthenticatedCartAction();
-    if (unauthorized) {
-      return of(unauthorized);
+    if (this.isGuestItemId(itemId)) {
+      return of(this.removeGuestItem(itemId));
+    }
+
+    if (!this.authService.isAuthenticated()) {
+      return of(this.removeGuestItem(itemId));
     }
 
     const currentCart = this._cart();
@@ -143,14 +214,17 @@ export class CartStateService {
   }
 
   clear(): void {
-    this._cart.set(this.buildCart([]));
+    const emptyCart = this.buildCart([]);
+    this._cart.set(emptyCart);
+    if (!this.authService.isAuthenticated()) {
+      localStorage.removeItem(GUEST_CART_STORAGE_KEY);
+    }
   }
 
   clearCart(): Observable<ApiResponse<Cart>> {
-    const unauthorized = this.requireAuthenticatedCartAction();
-    if (unauthorized) {
+    if (!this.authService.isAuthenticated()) {
       this.clear();
-      return of(unauthorized);
+      return of(this.successResponse(this._cart(), 'Guest cart cleared.'));
     }
 
     const currentCart = this._cart();
@@ -160,27 +234,119 @@ export class CartStateService {
       .pipe(tap((response) => this.syncCartState(response, currentCart)));
   }
 
-  checkout(): Observable<ApiResponse<Order>> {
-    const unauthorized = this.requireAuthenticatedCartAction();
-    if (unauthorized) {
-      return of(unauthorized as ApiResponse<Order>);
+  private addGuestItem(product: Product, quantity: number): ApiResponse<Cart> {
+    if (product.availability === 'OUT_OF_STOCK' || product.stock <= 0) {
+      return {
+        success: false,
+        error: 'This product is currently out of stock.',
+        code: 400,
+      };
     }
 
-    return this.ordersService.createOrderFromCart(this._cart()).pipe(
-      switchMap((response) => {
-        if (!isApiSuccessResponse(response)) {
-          return of(response);
-        }
-
-        return this.clearCart().pipe(
-          map(() => {
-            this.clear();
-            this.closeDrawer();
-            return response;
-          }),
-        );
-      }),
+    const normalizedQuantity = Math.max(1, Math.floor(quantity));
+    const currentItems = [...this._cart().items];
+    const existingIndex = currentItems.findIndex(
+      (item) => item.backendProductId === product.backendId,
     );
+
+    if (existingIndex >= 0) {
+      const existingItem = currentItems[existingIndex];
+      currentItems[existingIndex] = {
+        ...existingItem,
+        quantity: existingItem.quantity + normalizedQuantity,
+        subtotal: existingItem.unitPrice * (existingItem.quantity + normalizedQuantity),
+      };
+    } else {
+      currentItems.push(this.toGuestCartItem(product, normalizedQuantity));
+    }
+
+    const nextCart = this.buildCart(currentItems);
+    this.persistGuestCart(nextCart);
+    this._cart.set(nextCart);
+    this.openDrawer();
+
+    return this.successResponse(nextCart, 'Product added to guest cart.');
+  }
+
+  private updateGuestItemQuantity(itemId: string, quantity: number): ApiResponse<Cart> {
+    const currentItems = [...this._cart().items];
+    const itemIndex = currentItems.findIndex((item) => item.itemId === itemId);
+
+    if (itemIndex < 0) {
+      return {
+        success: false,
+        error: 'Cart item not found.',
+        code: 404,
+      };
+    }
+
+    if (quantity <= 0) {
+      return this.removeGuestItem(itemId);
+    }
+
+    const currentItem = currentItems[itemIndex];
+    currentItems[itemIndex] = {
+      ...currentItem,
+      quantity,
+      subtotal: currentItem.unitPrice * quantity,
+    };
+
+    const nextCart = this.buildCart(currentItems);
+    this.persistGuestCart(nextCart);
+    this._cart.set(nextCart);
+    return this.successResponse(nextCart, 'Guest cart updated.');
+  }
+
+  private removeGuestItem(itemId: string): ApiResponse<Cart> {
+    const nextCart = this.buildCart(this._cart().items.filter((item) => item.itemId !== itemId));
+    this.persistGuestCart(nextCart);
+    this._cart.set(nextCart);
+    return this.successResponse(nextCart, 'Item removed from guest cart.');
+  }
+
+  private toGuestCartItem(product: Product, quantity: number): CartItem {
+    return {
+      itemId: `guest-${product.backendId}`,
+      productId: String(product.id),
+      backendProductId: product.backendId,
+      name: product.name,
+      category: product.category ?? 'Product',
+      image: product.image?.trim() || PRODUCT_IMAGE_FALLBACK,
+      selectionLabel: 'Selected item',
+      quantity,
+      unitPrice: product.price,
+      subtotal: product.price * quantity,
+    };
+  }
+
+  private readGuestCart(): Cart {
+    const rawValue = localStorage.getItem(GUEST_CART_STORAGE_KEY);
+    if (!rawValue) {
+      return this.buildCart([]);
+    }
+
+    try {
+      const parsedItems = JSON.parse(rawValue) as CartItem[];
+      if (!Array.isArray(parsedItems)) {
+        return this.buildCart([]);
+      }
+
+      return this.buildCart(parsedItems);
+    } catch {
+      localStorage.removeItem(GUEST_CART_STORAGE_KEY);
+      return this.buildCart([]);
+    }
+  }
+
+  private persistGuestCart(cart: Cart): void {
+    const guestItems = cart.items.filter((item) => this.isGuestItemId(item.itemId));
+
+    if (guestItems.length === 0) {
+      localStorage.removeItem(GUEST_CART_STORAGE_KEY);
+      return;
+    }
+
+    localStorage.setItem(GUEST_CART_STORAGE_KEY, JSON.stringify(guestItems));
   }
 
   private buildCart(items: CartItem[]): Cart {
@@ -196,18 +362,6 @@ export class CartStateService {
       total:
         normalizedItems.reduce((sum, item) => sum + item.subtotal, 0) +
         (normalizedItems.length > 0 ? FREE_SHIPPING : 0),
-    };
-  }
-
-  private requireAuthenticatedCartAction(): ApiErrorResponse | null {
-    if (this.authService.isAuthenticated()) {
-      return null;
-    }
-
-    return {
-      success: false,
-      error: 'Sign in to manage your cart.',
-      code: 401,
     };
   }
 
@@ -266,8 +420,27 @@ export class CartStateService {
       return;
     }
 
+    if (response.code === 401 && this.authService.isAuthenticated()) {
+      this.authService.clearSession();
+      const guestCart = this.readGuestCart();
+      this._cart.set(guestCart);
+      return;
+    }
+
     if (fallbackCart) {
       this._cart.set(fallbackCart);
     }
+  }
+
+  private isGuestItemId(itemId: string): boolean {
+    return itemId.startsWith('guest-');
+  }
+
+  private successResponse(data: Cart, message: string): ApiResponse<Cart> {
+    return {
+      success: true,
+      data,
+      message,
+    };
   }
 }

@@ -66,7 +66,15 @@ export class LoginPageComponent {
         const redirectTo =
           this.route.snapshot.queryParamMap.get('redirectTo') ??
           (this.authFacade.isAdmin() ? '/dashboard' : '/products');
-        void this.router.navigateByUrl(redirectTo);
+
+        this.cartState.loadCart().subscribe({
+          next: () => {
+            void this.router.navigateByUrl(redirectTo);
+          },
+          error: () => {
+            void this.router.navigateByUrl(redirectTo);
+          },
+        });
       },
       error: (error: { error?: string; code?: number }) => {
         this.serverError.set(this.getLoginErrorMessage(error.error, error.code));

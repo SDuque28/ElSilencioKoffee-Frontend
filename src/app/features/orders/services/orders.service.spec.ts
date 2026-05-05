@@ -43,17 +43,38 @@ describe('OrdersService', () => {
     service = TestBed.inject(OrdersService);
   });
 
-  it('maps user order history with detail lines from the backend', async () => {
+  it('maps user order history with full purchase details from the backend', async () => {
     apiService.get.mockReturnValue(
       of({
         success: true,
         data: [
           {
             id: 77,
-            orderDate: '2026-04-29T10:30:00Z',
-            status: 'PENDING',
+            orderDate: '2026-05-04T10:30:00Z',
+            status: 'PAID',
             totalAmount: 52,
             userId: 9,
+            notes: 'Handle carefully.',
+            shippingInformation: {
+              address: 'Street 123',
+              country: 'Colombia',
+              city: 'Bogota',
+              neighborhood: 'Usaquen',
+              referenceDetails: 'Blue door',
+            },
+            payment: {
+              paymentMethod: 'CREDIT_CARD',
+              maskedCardNumber: '**** **** **** 4242',
+              status: 'APPROVED',
+              transactionReference: 'SIM-ORDER000077',
+              paidAt: '2026-05-04T10:35:00Z',
+            },
+            deliveryOrder: {
+              id: 14,
+              status: 'OUT_FOR_SHIPMENT',
+              createdAt: '2026-05-04T10:36:00Z',
+              updatedAt: '2026-05-04T10:36:00Z',
+            },
             items: [
               {
                 detailId: 1,
@@ -79,90 +100,58 @@ describe('OrdersService', () => {
     if (!response.success) {
       throw new Error('Expected success response');
     }
-    expect(response.data.orders[0]).toEqual({
-      id: 77,
-      orderDate: '2026-04-29T10:30:00Z',
-      status: 'PENDING',
-      totalAmount: 52,
-      userId: 9,
-      items: [
-        {
-          detailId: 1,
-          productId: 5,
-          productName: 'Barista Pro Grinder',
-          quantity: 2,
-          unitPrice: 26,
-          subtotal: 52,
-        },
-      ],
-    });
+    expect(response.data.orders[0]?.payment?.maskedCardNumber).toBe('**** **** **** 4242');
+    expect(response.data.orders[0]?.deliveryOrder?.status).toBe('OUT_FOR_SHIPMENT');
+    expect(response.data.orders[0]?.shippingInformation?.city).toBe('Bogota');
   });
 
-  it('posts the backend cart lines to create an order', async () => {
-    apiService.post.mockReturnValue(
+  it('uses the admin orders endpoint for administrators', async () => {
+    authService.isAdmin.mockReturnValue(true);
+    apiService.get.mockReturnValue(
       of({
         success: true,
-        data: {
-          id: 88,
-          orderDate: '2026-04-29T10:45:00Z',
-          status: 'PENDING',
-          totalAmount: 52,
-          userId: 9,
-          items: [],
-        },
+        data: [],
         message: 'ok',
       } satisfies ApiResponse<unknown>),
     );
 
-    const response = await firstValueFrom(
-      service.createOrderFromCart({
-        items: [
-          {
-            itemId: '55',
-            productId: '5',
-            backendProductId: 5,
-            name: 'Barista Pro Grinder',
-            category: 'Equipment',
-            image: 'https://example.com/grinder.jpg',
-            selectionLabel: 'Selected item',
-            quantity: 2,
-            unitPrice: 26,
-            subtotal: 52,
-          },
-        ],
-        subtotal: 52,
-        shipping: 0,
-        total: 52,
-      }),
-    );
+    await firstValueFrom(service.listOrders());
 
-    expect(apiService.post).toHaveBeenCalledWith(
-      'orders',
-      {
-        items: [
-          {
-            productId: 5,
-            quantity: 2,
-          },
-        ],
-      },
-      {
-        baseUrl: '/api-auth',
-      },
-    );
-    expect(response.success).toBe(true);
+    expect(apiService.get).toHaveBeenCalledWith('api/v1/admin/orders', {
+      baseUrl: '/api-auth',
+    });
   });
 
-  it('calls the payment endpoint and maps the updated order', async () => {
+  it('posts the checkout payload and maps the confirmation response', async () => {
     apiService.post.mockReturnValue(
       of({
         success: true,
         data: {
-          id: 77,
-          orderDate: '2026-04-29T10:30:00Z',
-          status: 'PAID',
+          orderId: 88,
+          orderDate: '2026-05-04T10:45:00Z',
+          orderStatus: 'PAID',
           totalAmount: 52,
-          userId: 9,
+          notes: 'Call on arrival.',
+          shippingInformation: {
+            address: 'Street 123',
+            country: 'Colombia',
+            city: 'Bogota',
+            neighborhood: 'Usaquen',
+            referenceDetails: 'Blue door',
+          },
+          payment: {
+            paymentMethod: 'CREDIT_CARD',
+            maskedCardNumber: '**** **** **** 4242',
+            status: 'APPROVED',
+            transactionReference: 'SIM-ORDER000088',
+            paidAt: '2026-05-04T10:45:00Z',
+          },
+          deliveryOrder: {
+            id: 18,
+            status: 'OUT_FOR_SHIPMENT',
+            createdAt: '2026-05-04T10:46:00Z',
+            updatedAt: '2026-05-04T10:46:00Z',
+          },
           items: [
             {
               detailId: 1,
@@ -178,11 +167,36 @@ describe('OrdersService', () => {
       } satisfies ApiResponse<unknown>),
     );
 
-    const response = await firstValueFrom(service.payOrder(77));
+    const response = await firstValueFrom(
+      service.checkout({
+        shippingInformation: {
+          address: 'Street 123',
+          country: 'Colombia',
+          city: 'Bogota',
+          neighborhood: 'Usaquen',
+          referenceDetails: 'Blue door',
+        },
+        payment: {
+          paymentMethod: 'CREDIT_CARD',
+          cardholderName: 'Test Buyer',
+          cardNumber: '4242424242424242',
+          expirationDate: '12/29',
+          cvv: '123',
+        },
+        notes: 'Call on arrival.',
+      }),
+    );
 
     expect(apiService.post).toHaveBeenCalledWith(
-      'api/v1/orders/77/pay',
-      {},
+      'api/v1/checkout',
+      expect.objectContaining({
+        shippingInformation: expect.objectContaining({
+          city: 'Bogota',
+        }),
+        payment: expect.objectContaining({
+          cardNumber: '4242424242424242',
+        }),
+      }),
       {
         baseUrl: '/api-auth',
       },
@@ -191,7 +205,7 @@ describe('OrdersService', () => {
     if (!response.success) {
       throw new Error('Expected success response');
     }
-    expect(response.data.status).toBe('PAID');
-    expect(response.data.items[0]?.subtotal).toBe(52);
+    expect(response.data.payment.maskedCardNumber).toBe('**** **** **** 4242');
+    expect(response.data.deliveryOrder.status).toBe('OUT_FOR_SHIPMENT');
   });
 });

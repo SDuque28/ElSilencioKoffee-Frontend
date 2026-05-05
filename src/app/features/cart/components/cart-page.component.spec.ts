@@ -1,13 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
+import { provideRouter, Router } from '@angular/router';
 
-import { CartPageComponent } from './cart-page.component';
-import { CartStateService } from '../services/cart-state.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
+import { CartStateService } from '../services/cart-state.service';
+import { CartPageComponent } from './cart-page.component';
 
 describe('CartPageComponent', () => {
-  it('renders cart items returned by the API-backed cart service', async () => {
+  it('renders cart items returned by the cart service', async () => {
     const items = signal([
       {
         itemId: '55',
@@ -39,17 +41,23 @@ describe('CartPageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [CartPageComponent],
       providers: [
+        provideRouter([]),
         {
           provide: CartStateService,
           useValue: {
             loadCart,
             updateQuantity: vi.fn(),
-            checkout: vi.fn(),
             clearCart: vi.fn(),
             items,
             subtotal: signal(26),
             shipping: signal(0),
             total: signal(26),
+          },
+        },
+        {
+          provide: AuthService,
+          useValue: {
+            isAuthenticated: vi.fn(() => true),
           },
         },
         {
@@ -73,10 +81,11 @@ describe('CartPageComponent', () => {
     expect(compiled.querySelector('[data-cy="cart-page-total"]')?.textContent).toContain('26.00');
   });
 
-  it('renders the empty cart state safely', async () => {
+  it('redirects authenticated users to the checkout page', async () => {
     await TestBed.configureTestingModule({
       imports: [CartPageComponent],
       providers: [
+        provideRouter([]),
         {
           provide: CartStateService,
           useValue: {
@@ -92,12 +101,17 @@ describe('CartPageComponent', () => {
                 message: 'ok',
               }),
             updateQuantity: vi.fn(),
-            checkout: vi.fn(),
             clearCart: vi.fn(),
             items: signal([]),
             subtotal: signal(0),
             shipping: signal(0),
             total: signal(0),
+          },
+        },
+        {
+          provide: AuthService,
+          useValue: {
+            isAuthenticated: vi.fn(() => true),
           },
         },
         {
@@ -110,12 +124,11 @@ describe('CartPageComponent', () => {
     }).compileComponents();
 
     const fixture = TestBed.createComponent(CartPageComponent);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-    const compiled = fixture.nativeElement as HTMLElement;
+    fixture.componentInstance.checkout();
 
-    expect(compiled.textContent).toContain('Your cart is empty.');
+    expect(navigateSpy).toHaveBeenCalledWith(['/checkout']);
   });
 });
