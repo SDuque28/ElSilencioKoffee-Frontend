@@ -18,26 +18,28 @@
     <div class="rounded-lg border border-rose-500/30 bg-rose-500/10 p-6 text-sm text-rose-200">{{ errorMessage }}</div>
   } @else if (summary) {
     <div class="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_auto_auto]">
-      <select [(ngModel)]="categoryFilter" class="h-10 rounded-md border border-white/10 bg-[#1b1b1d] px-3 text-sm text-white [color-scheme:dark]">
-        <option value="ALL" class="bg-[#1b1b1d] text-white">All Categories</option>
-        @for (option of summary.presentationOptions; track option.value) {
-          <option [value]="option.label" class="bg-[#1b1b1d] text-white">{{ option.label }}</option>
-        }
-      </select>
-      <select [(ngModel)]="stockFilter" class="h-10 rounded-md border border-white/10 bg-[#1b1b1d] px-3 text-sm text-white [color-scheme:dark]">
-        <option value="ALL" class="bg-[#1b1b1d] text-white">Stock Status</option>
-        <option value="ACTIVE" class="bg-[#1b1b1d] text-white">Active</option>
-        <option value="LOW" class="bg-[#1b1b1d] text-white">Low Stock</option>
-        <option value="DRAFT" class="bg-[#1b1b1d] text-white">Draft</option>
-      </select>
-      <button type="button" class="rounded-md border border-white/10 bg-white/[0.05] px-3 text-sm text-zinc-400">
-        Price Range
+      <app-admin-filter-select [(value)]="categoryFilter" [options]="categoryOptions" />
+      <app-admin-filter-select [(value)]="stockFilter" [options]="stockOptions" />
+      <app-admin-filter-select [(value)]="priceRangeFilter" [options]="priceRangeOptions" />
+      <div
+        class="flex h-10 items-center justify-between gap-3 rounded-md border border-white/10 bg-white/[0.05] px-3 text-sm text-zinc-400 opacity-70"
+        title="Featured filter is not available because the current admin snapshot does not expose featured product data."
+      >
+        <span>Featured</span>
+        <span class="grid h-4 w-4 place-items-center rounded border border-white/15 bg-black/20">
+          <span class="h-1.5 w-1.5 rounded-sm bg-zinc-500/60"></span>
+        </span>
+      </div>
+      <button
+        type="button"
+        class="rounded-md px-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:text-zinc-600"
+        [class.text-[#f97316]]="hasActiveFilters"
+        [class.hover:text-[#fb923c]]="hasActiveFilters"
+        [disabled]="!hasActiveFilters"
+        (click)="clearFilters()"
+      >
+        Clear All Filters
       </button>
-      <label class="flex h-10 items-center gap-2 rounded-md border border-white/10 bg-white/[0.05] px-3 text-sm text-zinc-400">
-        Featured
-        <input type="checkbox" disabled />
-      </label>
-      <button type="button" class="text-sm font-semibold text-[#f97316]" (click)="clearFilters()">Clear All Filters</button>
     </div>
 
     <app-admin-data-table class="mt-4">

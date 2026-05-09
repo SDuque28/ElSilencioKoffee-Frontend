@@ -11,6 +11,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import { AdminDataTableComponent } from '../components/admin-data-table.component';
+import {
+  AdminFilterSelectComponent,
+  type AdminFilterSelectOption,
+} from '../components/admin-filter-select.component';
 import { AdminMetricCardComponent } from '../components/admin-metric-card.component';
 import { AdminStatusBadgeComponent } from '../components/admin-status-badge.component';
 import { OrderDetailDrawerComponent } from '../components/order-detail-drawer.component';
@@ -23,6 +27,7 @@ import { AdminDataService } from '../services/admin-data.service';
   imports: [
     FormsModule,
     AdminDataTableComponent,
+    AdminFilterSelectComponent,
     AdminMetricCardComponent,
     AdminStatusBadgeComponent,
     OrderDetailDrawerComponent,
@@ -41,6 +46,13 @@ export class DashboardOrdersPageComponent implements OnInit {
   detailErrorMessage: string | null = null;
   searchTerm = '';
   statusFilter = 'ALL';
+  readonly statusOptions: AdminFilterSelectOption[] = [
+    { value: 'ALL', label: 'All Statuses' },
+    { value: 'Processing', label: 'Processing' },
+    { value: 'Shipped', label: 'Shipped' },
+    { value: 'Delivered', label: 'Delivered' },
+    { value: 'Pending', label: 'Pending' },
+  ];
   rows: AdminOrderRow[] = [];
   metrics: AdminMetric[] = [];
   selectedOrder: AdminOrderDetail | null = null;

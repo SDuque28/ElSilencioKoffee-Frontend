@@ -12,6 +12,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import { AdminDataTableComponent } from '../components/admin-data-table.component';
+import {
+  AdminFilterSelectComponent,
+  type AdminFilterSelectOption,
+} from '../components/admin-filter-select.component';
 import { AdminMetricCardComponent } from '../components/admin-metric-card.component';
 import { AdminStatusBadgeComponent } from '../components/admin-status-badge.component';
 import { ProductModalComponent } from '../components/product-modal.component';
@@ -25,6 +29,7 @@ import { AdminDataService } from '../services/admin-data.service';
   imports: [
     FormsModule,
     AdminDataTableComponent,
+    AdminFilterSelectComponent,
     AdminMetricCardComponent,
     AdminStatusBadgeComponent,
     ProductModalComponent,
@@ -45,6 +50,20 @@ export class DashboardProductsPageComponent implements OnInit {
   modalErrorMessage: string | null = null;
   categoryFilter = 'ALL';
   stockFilter = 'ALL';
+  priceRangeFilter = 'ALL';
+  readonly stockOptions: AdminFilterSelectOption[] = [
+    { value: 'ALL', label: 'Stock Status' },
+    { value: 'ACTIVE', label: 'Active' },
+    { value: 'LOW', label: 'Low Stock' },
+    { value: 'DRAFT', label: 'Draft' },
+  ];
+  readonly priceRangeOptions: AdminFilterSelectOption[] = [
+    { value: 'ALL', label: 'Price Range' },
+    { value: 'UNDER_25', label: 'Under $25' },
+    { value: 'BETWEEN_25_50', label: '$25 - $50' },
+    { value: 'BETWEEN_50_100', label: '$50 - $100' },
+    { value: 'ABOVE_100', label: '$100+' },
+  ];
   modalOpen = false;
   summary: AdminProductSummary | null = null;
 
@@ -61,8 +80,28 @@ export class DashboardProductsPageComponent implements OnInit {
         (this.stockFilter === 'ACTIVE' && product.statusLabel === 'Active') ||
         (this.stockFilter === 'LOW' && product.statusLabel === 'Low Stock') ||
         (this.stockFilter === 'DRAFT' && product.statusLabel === 'Draft');
-      return matchesCategory && matchesStock;
+      const matchesPriceRange = this.matchesPriceRange(product.priceValue);
+
+      return matchesCategory && matchesStock && matchesPriceRange;
     });
+  }
+
+  get hasActiveFilters(): boolean {
+    return (
+      this.categoryFilter !== 'ALL' ||
+      this.stockFilter !== 'ALL' ||
+      this.priceRangeFilter !== 'ALL'
+    );
+  }
+
+  get categoryOptions(): AdminFilterSelectOption[] {
+    return [
+      { value: 'ALL', label: 'All Categories' },
+      ...((this.summary?.presentationOptions ?? []).map((option) => ({
+        value: option.label,
+        label: option.label,
+      })) as AdminFilterSelectOption[]),
+    ];
   }
 
   openModal(): void {
@@ -96,6 +135,7 @@ export class DashboardProductsPageComponent implements OnInit {
   clearFilters(): void {
     this.categoryFilter = 'ALL';
     this.stockFilter = 'ALL';
+    this.priceRangeFilter = 'ALL';
   }
 
   private loadProducts(markLoading = true): void {
@@ -118,5 +158,20 @@ export class DashboardProductsPageComponent implements OnInit {
         this.summary = buildProductSummary(response.data.products, response.data.production);
         this.cdr.markForCheck();
       });
+  }
+
+  private matchesPriceRange(price: number): boolean {
+    switch (this.priceRangeFilter) {
+      case 'UNDER_25':
+        return price < 25;
+      case 'BETWEEN_25_50':
+        return price >= 25 && price <= 50;
+      case 'BETWEEN_50_100':
+        return price > 50 && price <= 100;
+      case 'ABOVE_100':
+        return price > 100;
+      default:
+        return true;
+    }
   }
 }

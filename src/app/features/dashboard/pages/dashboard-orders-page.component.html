@@ -19,13 +19,7 @@
       placeholder="Search order ID, customer name, email..."
       class="h-10 rounded-md border border-white/10 bg-white/[0.05] px-3 text-sm text-white placeholder:text-zinc-600"
     />
-    <select [(ngModel)]="statusFilter" class="h-10 rounded-md border border-white/10 bg-[#1b1b1d] px-3 text-sm text-white [color-scheme:dark]">
-      <option value="ALL" class="bg-[#1b1b1d] text-white">All Statuses</option>
-      <option value="Processing" class="bg-[#1b1b1d] text-white">Processing</option>
-      <option value="Shipped" class="bg-[#1b1b1d] text-white">Shipped</option>
-      <option value="Delivered" class="bg-[#1b1b1d] text-white">Delivered</option>
-      <option value="Pending" class="bg-[#1b1b1d] text-white">Pending</option>
-    </select>
+    <app-admin-filter-select [(value)]="statusFilter" [options]="statusOptions" />
     <button type="button" class="rounded-md border border-white/10 bg-white/[0.05] px-3 text-sm text-zinc-300">
       Last 30 days
     </button>

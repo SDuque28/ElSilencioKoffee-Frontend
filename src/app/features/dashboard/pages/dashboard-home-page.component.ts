@@ -7,6 +7,7 @@ import {
   type OnInit,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import type { ChartConfiguration, ChartData } from 'chart.js';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
@@ -40,6 +41,7 @@ import { AdminProjectReportService } from '../services/admin-project-report.serv
 export class DashboardHomePageComponent implements OnInit {
   private readonly adminData = inject(AdminDataService);
   private readonly reportService = inject(AdminProjectReportService);
+  private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -136,6 +138,10 @@ export class DashboardHomePageComponent implements OnInit {
       this.exporting = false;
       this.cdr.markForCheck();
     }
+  }
+
+  async viewAllOrders(): Promise<void> {
+    await this.router.navigateByUrl('/dashboard/orders');
   }
 
   private toLineChart(series: AdminChartSeries): ChartData<'line'> {

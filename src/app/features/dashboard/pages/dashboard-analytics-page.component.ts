@@ -7,6 +7,7 @@ import {
   type OnInit,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import type { ChartConfiguration, ChartData } from 'chart.js';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
@@ -33,6 +34,7 @@ export class DashboardAnalyticsPageComponent implements OnInit {
   private readonly adminData = inject(AdminDataService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
 
   readonly revenueChartOptions: ChartConfiguration['options'] = {
     responsive: true,
@@ -113,6 +115,10 @@ export class DashboardAnalyticsPageComponent implements OnInit {
         this.statusChart = this.toStatusChart(this.analytics.statusSeries);
         this.cdr.markForCheck();
       });
+  }
+
+  async viewAllOrders(): Promise<void> {
+    await this.router.navigateByUrl('/dashboard/orders');
   }
 
   private toRevenueChart(series: AdminChartSeries): ChartData<'line'> {

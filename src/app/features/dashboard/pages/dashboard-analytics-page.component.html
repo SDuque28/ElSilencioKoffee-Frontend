@@ -70,7 +70,11 @@
       [options]="statusChartOptions"
     />
 
-    <app-admin-data-table title="Recent Orders" actionLabel="View All Orders">
+    <app-admin-data-table
+      title="Recent Orders"
+      actionLabel="View All Orders"
+      (actionClicked)="viewAllOrders()"
+    >
       <table class="min-w-full text-left text-sm">
         <thead class="bg-white/[0.03] text-[11px] uppercase text-zinc-500">
           <tr>

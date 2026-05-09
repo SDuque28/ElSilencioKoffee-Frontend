@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
   selector: 'app-admin-data-table',
@@ -16,7 +16,11 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
             }
           </div>
           @if (actionLabel) {
-            <button type="button" class="text-xs font-semibold text-[#f97316]">
+            <button
+              type="button"
+              class="text-xs font-semibold text-[#f97316]"
+              (click)="actionClicked.emit()"
+            >
               {{ actionLabel }}
             </button>
           }
@@ -33,4 +37,5 @@ export class AdminDataTableComponent {
   @Input() title = '';
   @Input() subtitle = '';
   @Input() actionLabel = '';
+  @Output() readonly actionClicked = new EventEmitter<void>();
 }

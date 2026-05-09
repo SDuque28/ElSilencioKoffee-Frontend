@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import type { ApiResponse } from '../../../core/models/api-response.model';
@@ -72,6 +73,9 @@ describe('DashboardHomePageComponent', () => {
     const reportService = {
       exportCompleteProjectReport: vi.fn().mockResolvedValue(undefined),
     };
+    const router = {
+      navigateByUrl: vi.fn().mockResolvedValue(true),
+    };
     const toastService = {
       show: vi.fn(),
       messages: signal([]),
@@ -94,6 +98,10 @@ describe('DashboardHomePageComponent', () => {
           provide: ToastService,
           useValue: toastService,
         },
+        {
+          provide: Router,
+          useValue: router,
+        },
       ],
     })
       .overrideComponent(DashboardHomePageComponent, {
@@ -105,6 +113,9 @@ describe('DashboardHomePageComponent', () => {
             </button>
             <button data-cy="dashboard-home-export-report" type="button" (click)="exportResults()">
               Export
+            </button>
+            <button data-cy="dashboard-home-view-all-orders" type="button" (click)="viewAllOrders()">
+              View All Orders
             </button>
             <div data-cy="dashboard-home-active-filter">{{ overview?.activeFilter?.label }}</div>
             <div data-cy="dashboard-home-order-metric">{{ overview?.metrics?.[1]?.label }}</div>
@@ -124,6 +135,9 @@ describe('DashboardHomePageComponent', () => {
     ) as HTMLButtonElement;
     const exportButton = nativeElement.querySelector(
       '[data-cy="dashboard-home-export-report"]',
+    ) as HTMLButtonElement;
+    const viewAllOrdersButton = nativeElement.querySelector(
+      '[data-cy="dashboard-home-view-all-orders"]',
     ) as HTMLButtonElement;
 
     expect(
@@ -155,5 +169,10 @@ describe('DashboardHomePageComponent', () => {
       }),
     );
     expect(toastService.show).toHaveBeenCalled();
+
+    viewAllOrdersButton.click();
+    await fixture.whenStable();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard/orders');
   });
 });
