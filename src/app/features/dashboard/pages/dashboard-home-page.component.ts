@@ -10,110 +10,88 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { ChartConfiguration, ChartData } from 'chart.js';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
-import { CardComponent } from '../../../shared/ui/card/card.component';
-import { ChartContainerComponent } from '../../../shared/ui/chart/chart-container.component';
-import { DashboardService } from '../services/dashboard.service';
+import { AdminChartCardComponent } from '../components/admin-chart-card.component';
+import { AdminDataTableComponent } from '../components/admin-data-table.component';
+import { AdminMetricCardComponent } from '../components/admin-metric-card.component';
+import { AdminStatusBadgeComponent } from '../components/admin-status-badge.component';
+import type { AdminChartSeries, AdminOverview } from '../models/admin-view.model';
+import { buildOverview } from '../services/admin-calculations';
+import { AdminDataService } from '../services/admin-data.service';
 
 @Component({
   selector: 'app-dashboard-home-page',
-  imports: [CardComponent, ChartContainerComponent],
+  imports: [
+    AdminChartCardComponent,
+    AdminDataTableComponent,
+    AdminMetricCardComponent,
+    AdminStatusBadgeComponent,
+  ],
   templateUrl: './dashboard-home-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardHomePageComponent implements OnInit {
+  private readonly adminData = inject(AdminDataService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly dashboardService = inject(DashboardService);
 
   readonly chartOptions: ChartConfiguration['options'] = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        labels: {
-          color: '#e5e5e5',
-        },
-      },
+      legend: { display: false },
     },
     scales: {
       x: {
-        ticks: {
-          color: '#9ca3af',
-        },
-        grid: {
-          color: 'rgba(255,255,255,0.08)',
-        },
+        ticks: { color: '#71717a' },
+        grid: { display: false },
       },
       y: {
-        ticks: {
-          color: '#9ca3af',
-        },
-        grid: {
-          color: 'rgba(255,255,255,0.08)',
-        },
+        ticks: { color: '#71717a' },
+        grid: { color: 'rgba(255,255,255,0.06)' },
       },
     },
   };
 
   loading = true;
   errorMessage: string | null = null;
-  kpiCards: { label: string; value: string }[] = [];
-  chartData: ChartData<'line'> = {
-    labels: [],
-    datasets: [
-      {
-        label: 'Revenue (Orders)',
-        data: [],
-        borderColor: '#ff7a00',
-        backgroundColor: 'rgba(255, 122, 0, 0.22)',
-        fill: true,
-        tension: 0.35,
-      },
-    ],
-  };
+  overview: AdminOverview | null = null;
+  revenueChart: ChartData<'line'> = this.toLineChart({ labels: [], values: [] });
 
   ngOnInit(): void {
-    this.dashboardService
-      .getOverview()
+    this.adminData
+      .getSnapshot()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
         this.loading = false;
 
         if (!isApiSuccessResponse(response)) {
           this.errorMessage = response.error;
-          this.kpiCards = [];
-          this.chartData = this.createEmptyChartData();
+          this.overview = null;
+          this.revenueChart = this.toLineChart({ labels: [], values: [] });
           this.cdr.markForCheck();
           return;
         }
 
         this.errorMessage = null;
-        this.kpiCards = response.data.metrics;
-        this.chartData = {
-          ...this.chartData,
-          labels: response.data.revenueSeries.labels,
-          datasets: [
-            {
-              ...this.chartData.datasets[0],
-              data: response.data.revenueSeries.values,
-            },
-          ],
-        };
+        this.overview = buildOverview(response.data);
+        this.revenueChart = this.toLineChart(this.overview.revenueSeries);
         this.cdr.markForCheck();
       });
   }
 
-  get hasRevenueData(): boolean {
-    return Array.isArray(this.chartData.labels) && this.chartData.labels.length > 0;
-  }
-
-  private createEmptyChartData(): ChartData<'line'> {
+  private toLineChart(series: AdminChartSeries): ChartData<'line'> {
     return {
-      labels: [],
+      labels: series.labels,
       datasets: [
         {
-          ...this.chartData.datasets[0],
-          data: [],
+          label: 'Revenue',
+          data: series.values,
+          borderColor: '#f97316',
+          backgroundColor: 'rgba(249, 115, 22, 0.18)',
+          pointBackgroundColor: '#f97316',
+          pointRadius: 2,
+          fill: true,
+          tension: 0.45,
         },
       ],
     };
