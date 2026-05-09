@@ -10,6 +10,8 @@ import type {
   AdminAnalytics,
   AdminBadgeTone,
   AdminChartSeries,
+  AdminDashboardReportData,
+  AdminDashboardDateFilterState,
   AdminMetric,
   AdminMonitoringMetric,
   AdminOrderDetail,
@@ -50,27 +52,85 @@ const shortDateFormatter = new Intl.DateTimeFormat('en-US', {
   day: '2-digit',
 });
 
-export function buildOverview(snapshot: AdminSnapshotApi): AdminOverview {
+export function buildOverview(
+  snapshot: AdminSnapshotApi,
+  options: {
+    filter?: AdminDashboardDateFilterState;
+    notes?: string[];
+  } = {},
+): AdminOverview {
   const paidOrders = snapshot.orders.filter((order) => order.status === 'PAID');
   const recentOrders = toRecentOrders(snapshot.orders, 5);
   const totalRevenue = sumOrders(paidOrders);
-  const todayOrders = countOrdersOnLatestSeedDay(snapshot.orders);
-  const activeUsers = snapshot.users.filter((user) => user.activo).length;
+  const activeFilter = options.filter ?? {
+    key: 'all-time',
+    label: 'All Time',
+    description: 'All available dashboard data',
+    isRangeFiltered: false,
+    rangeStart: null,
+    rangeEnd: null,
+  };
+  const orderMetricLabel = activeFilter.isRangeFiltered ? 'Orders in Range' : 'Orders Today';
+  const orderMetricValue = activeFilter.isRangeFiltered
+    ? snapshot.orders.length
+    : countOrdersOnLatestSeedDay(snapshot.orders);
+  const activeUsers = activeFilter.isRangeFiltered
+    ? countActiveUsersInOrders(snapshot.orders, snapshot.users)
+    : snapshot.users.filter((user) => user.activo).length;
   const lowStock = snapshot.products.filter(
     (product) => toNumber(product.stockQuantity) <= LOW_STOCK_THRESHOLD,
   ).length;
+  const revenueSeries = buildRevenueSeries(snapshot.orders);
+  const orderSeries = buildOrderSeries(snapshot.orders);
+  const monitoring = buildMonitoring(snapshot.environmentMetrics);
+  const metrics = [
+    metric(
+      'Total Sales',
+      formatCurrency(totalRevenue),
+      activeFilter.isRangeFiltered ? activeFilter.description : '+12.5%',
+      'success',
+    ),
+    metric(
+      orderMetricLabel,
+      String(orderMetricValue),
+      activeFilter.isRangeFiltered ? activeFilter.label : '+5.3%',
+      'success',
+    ),
+    metric(
+      'Active Users',
+      String(activeUsers),
+      activeFilter.isRangeFiltered ? 'Users with orders in the active range' : 'Live',
+      'info',
+    ),
+    metric(
+      'Low Stock',
+      `${lowStock} Items`,
+      activeFilter.isRangeFiltered
+        ? 'Inventory snapshot'
+        : lowStock > 0
+          ? 'Action Required'
+          : 'Stable',
+      lowStock > 0 ? 'warning' : 'success',
+    ),
+  ];
 
   return {
-    metrics: [
-      metric('Total Sales', formatCurrency(totalRevenue), '+12.5%', 'success'),
-      metric('Orders Today', String(todayOrders), '+5.3%', 'success'),
-      metric('Active Users', String(activeUsers), 'Live', 'info'),
-      metric('Low Stock', `${lowStock} Items`, lowStock > 0 ? 'Action Required' : 'Stable', lowStock > 0 ? 'warning' : 'success'),
-    ],
-    revenueSeries: buildRevenueSeries(snapshot.orders),
-    orderSeries: buildOrderSeries(snapshot.orders),
-    monitoring: buildMonitoring(snapshot.environmentMetrics),
+    metrics,
+    revenueSeries,
+    orderSeries,
+    monitoring,
     recentOrders,
+    activeFilter,
+    report: buildOverviewReport({
+      metrics,
+      revenueSeries,
+      monitoring,
+      recentOrders,
+      activeFilter,
+      notes: options.notes ?? [],
+      orderCount: snapshot.orders.length,
+      totalRevenue,
+    }),
   };
 }
 
@@ -348,6 +408,15 @@ function sumOrders(orders: AdminOrderApi[]): number {
   return orders.reduce((sum, order) => sum + toNumber(order.totalAmount), 0);
 }
 
+function countActiveUsersInOrders(orders: AdminOrderApi[], users: AdminUserApi[]): number {
+  const activeUserIds = new Set(
+    users.filter((user) => user.activo).map((user) => String(user.id)),
+  );
+  const usersInOrders = new Set(orders.map((order) => String(order.userId)));
+
+  return Array.from(usersInOrders).filter((userId) => activeUserIds.has(userId)).length;
+}
+
 function countOrdersOnLatestSeedDay(orders: AdminOrderApi[]): number {
   const keys = orders.map((order) => toDateKey(order.orderDate)).filter((key): key is string => !!key);
   const latest = keys.sort().at(-1);
@@ -358,6 +427,94 @@ function uniqueSortedDateKeys(orders: AdminOrderApi[]): string[] {
   return Array.from(
     new Set(orders.map((order) => toDateKey(order.orderDate)).filter((key): key is string => !!key)),
   ).sort((left, right) => left.localeCompare(right));
+}
+
+function buildOverviewReport({
+  metrics,
+  revenueSeries,
+  monitoring,
+  recentOrders,
+  activeFilter,
+  notes,
+  orderCount,
+  totalRevenue,
+}: {
+  metrics: AdminMetric[];
+  revenueSeries: AdminChartSeries;
+  monitoring: AdminMonitoringMetric[];
+  recentOrders: AdminOrderRow[];
+  activeFilter: AdminDashboardDateFilterState;
+  notes: string[];
+  orderCount: number;
+  totalRevenue: number;
+}): AdminDashboardReportData {
+  const peakPoint = revenueSeries.values.reduce<{ label: string; value: number } | null>(
+    (current, value, index) => {
+      if (!current || value > current.value) {
+        return {
+          label: revenueSeries.labels[index] ?? 'N/A',
+          value,
+        };
+      }
+      return current;
+    },
+    null,
+  );
+
+  return {
+    title: 'Admin Dashboard Report',
+    filterLabel: activeFilter.label,
+    filterDescription: activeFilter.description,
+    metrics,
+    chartSummaries: [
+      {
+        title: 'Sales Analytics',
+        subtitle: 'Structured chart summary generated from the same filtered dashboard data.',
+        series: revenueSeries,
+        summary: [
+          {
+            label: 'Date points',
+            value: String(revenueSeries.labels.length),
+          },
+          {
+            label: 'Filtered orders',
+            value: String(orderCount),
+          },
+          {
+            label: 'Filtered paid revenue',
+            value: formatCurrency(totalRevenue),
+          },
+          {
+            label: 'Peak revenue date',
+            value: peakPoint ? `${peakPoint.label} (${formatCurrency(peakPoint.value)})` : 'No data',
+          },
+        ],
+        imageDataUrl: null,
+      },
+    ],
+    tables: [
+      {
+        title: 'Roastery Monitoring',
+        columns: ['Metric', 'Value', 'Status'],
+        rows: monitoring.map((metric) => [metric.label, metric.value, metric.status]),
+      },
+      {
+        title: 'Recent Orders',
+        columns: ['Order ID', 'Customer', 'Date', 'Total', 'Status'],
+        rows: recentOrders.map((order) => [
+          order.orderCode,
+          order.customer,
+          order.date,
+          order.total,
+          order.statusLabel,
+        ]),
+      },
+    ],
+    notes: uniqueNotes([
+      'Chart image export is not enabled yet; this PDF includes structured chart data so visual chart capture can be added later.',
+      ...notes,
+    ]),
+  };
 }
 
 function countByDate(
@@ -486,4 +643,8 @@ function toDateKey(value: string): string | null {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function uniqueNotes(notes: string[]): string[] {
+  return Array.from(new Set(notes.filter((note) => note.trim().length > 0)));
 }

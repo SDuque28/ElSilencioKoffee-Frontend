@@ -6,12 +6,22 @@ import type {
 } from './admin-api.model';
 
 export type AdminBadgeTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
+export type AdminDashboardDateFilterKey = 'all-time' | 'last-7-days';
 
 export interface AdminMetric {
   label: string;
   value: string;
   change?: string;
   tone?: AdminBadgeTone;
+}
+
+export interface AdminDashboardDateFilterState {
+  key: AdminDashboardDateFilterKey;
+  label: string;
+  description: string;
+  isRangeFiltered: boolean;
+  rangeStart: string | null;
+  rangeEnd: string | null;
 }
 
 export interface AdminChartSeries {
@@ -33,6 +43,8 @@ export interface AdminOverview {
   orderSeries: AdminChartSeries;
   monitoring: AdminMonitoringMetric[];
   recentOrders: AdminOrderRow[];
+  activeFilter: AdminDashboardDateFilterState;
+  report: AdminDashboardReportData;
 }
 
 export interface AdminAnalytics {
@@ -132,4 +144,63 @@ export interface AdminUsersSummary {
 export interface AdminSelectOption {
   value: number;
   label: string;
+}
+
+export interface AdminDashboardReportSummaryItem {
+  label: string;
+  value: string;
+}
+
+export interface AdminDashboardChartReport {
+  title: string;
+  subtitle: string;
+  series: AdminChartSeries;
+  summary: AdminDashboardReportSummaryItem[];
+  imageDataUrl?: string | null;
+}
+
+export interface AdminDashboardTableReport {
+  title: string;
+  columns: string[];
+  rows: string[][];
+  emptyMessage?: string;
+}
+
+export interface AdminDashboardReportSection {
+  title: string;
+  description?: string;
+  metrics?: AdminMetric[];
+  chartSummaries?: AdminDashboardChartReport[];
+  tables?: AdminDashboardTableReport[];
+  availabilityMessage?: string;
+}
+
+export interface AdminDashboardReportData {
+  title: string;
+  filterLabel: string;
+  filterDescription: string;
+  metrics: AdminMetric[];
+  chartSummaries: AdminDashboardChartReport[];
+  tables: AdminDashboardTableReport[];
+  notes: string[];
+  sections?: AdminDashboardReportSection[];
+}
+
+export type AdminNotificationCategory =
+  | 'order'
+  | 'inventory'
+  | 'product'
+  | 'sales'
+  | 'system';
+
+export interface AdminNotificationItem {
+  id: string;
+  title: string;
+  description: string;
+  category: AdminNotificationCategory;
+  createdAt: string;
+  relativeTime: string;
+  route: string;
+  tone: AdminBadgeTone;
+  unread: boolean;
 }

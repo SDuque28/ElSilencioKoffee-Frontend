@@ -26,7 +26,13 @@ import { ChartContainerComponent } from '../../../shared/ui/chart/chart-containe
 
       @if (hasData) {
         <div class="h-72">
-          <app-chart-container surface="dark" [type]="type" [data]="data" [options]="options" />
+          <app-chart-container
+            surface="dark"
+            [type]="type"
+            [data]="data"
+            [options]="options"
+            [dataCy]="dataCy"
+          />
         </div>
       } @else {
         <div
@@ -46,6 +52,7 @@ export class AdminChartCardComponent {
   @Input() type: ChartType = 'line';
   @Input({ required: true }) data!: ChartData;
   @Input() options: ChartConfiguration['options'] = {};
+  @Input() dataCy: string | null = null;
 
   get hasData(): boolean {
     return Array.isArray(this.data?.labels) && this.data.labels.length > 0;

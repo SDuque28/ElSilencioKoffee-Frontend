@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-admin-data-table',
+  styleUrl: './admin-data-table.component.css',
   template: `
     <section class="overflow-hidden rounded-lg border border-white/10 bg-[#1b1b1d]">
       @if (title || actionLabel) {

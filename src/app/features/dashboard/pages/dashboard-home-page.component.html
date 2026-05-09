@@ -3,23 +3,52 @@
     <div>
       <h1 class="text-2xl font-semibold text-white">Overview</h1>
       <p class="mt-1 text-sm text-zinc-500">Welcome back, Admin. Here's what's happening today.</p>
+      @if (overview) {
+        <p data-cy="dashboard-home-active-filter" class="mt-2 text-xs text-zinc-500">
+          Active filter:
+          <span class="font-medium text-zinc-300">{{ overview.activeFilter.label }}</span>
+          <span class="text-zinc-500">| {{ overview.activeFilter.description }}</span>
+        </p>
+      }
     </div>
     <div class="flex gap-2">
-      <button type="button" class="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-300">
+      <button
+        data-cy="dashboard-home-last-7-days"
+        type="button"
+        [attr.aria-pressed]="isLast7DaysFilterActive"
+        [class]="
+          filterButtonClass +
+          ' ' +
+          (isLast7DaysFilterActive ? activeFilterButtonClass : inactiveFilterButtonClass)
+        "
+        (click)="toggleLast7DaysFilter()"
+      >
         Last 7 Days
       </button>
-      <button type="button" class="rounded-md bg-[#f97316] px-3 py-2 text-xs font-semibold text-black">
-        Export Reports
+      <button
+        data-cy="dashboard-home-export-report"
+        type="button"
+        [disabled]="!overview || exporting"
+        class="rounded-md bg-[#f97316] px-3 py-2 text-xs font-semibold text-black transition-opacity disabled:cursor-not-allowed disabled:opacity-70"
+        (click)="exportResults()"
+      >
+        {{ exporting ? 'Exporting...' : 'Export Reports' }}
       </button>
     </div>
   </div>
 
   @if (loading) {
-    <div class="rounded-lg border border-white/10 bg-[#1b1b1d] p-6 text-sm text-zinc-400">
+    <div
+      data-cy="dashboard-home-loading"
+      class="rounded-lg border border-white/10 bg-[#1b1b1d] p-6 text-sm text-zinc-400"
+    >
       Loading admin overview...
     </div>
   } @else if (errorMessage) {
-    <div class="rounded-lg border border-rose-500/30 bg-rose-500/10 p-6 text-sm text-rose-200">
+    <div
+      data-cy="dashboard-home-error"
+      class="rounded-lg border border-rose-500/30 bg-rose-500/10 p-6 text-sm text-rose-200"
+    >
       {{ errorMessage }}
     </div>
   } @else if (overview) {
@@ -32,17 +61,24 @@
     <div class="grid gap-4 xl:grid-cols-[1fr_320px]">
       <app-admin-chart-card
         title="Sales Analytics"
-        subtitle="Revenue performance over the latest seeded dates"
+        [subtitle]="
+          overview.activeFilter.isRangeFiltered
+            ? 'Revenue performance for the active 7-day window'
+            : 'Revenue performance over the latest seeded dates'
+        "
         [tabs]="['Monthly', 'Yearly']"
         type="line"
         [data]="revenueChart"
         [options]="chartOptions"
+        dataCy="dashboard-home-revenue-chart"
       />
 
       <section class="rounded-lg border border-white/10 bg-[#1b1b1d] p-5">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-sm font-semibold text-white">Roastery Monitoring</h2>
-          <span class="rounded bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-300">LIVE</span>
+          <span class="rounded bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-300"
+            >LIVE</span
+          >
         </div>
         <div class="space-y-3">
           @for (metric of overview.monitoring; track metric.label) {
@@ -59,7 +95,7 @@
     </div>
 
     <app-admin-data-table title="Recent Orders" actionLabel="View All Orders">
-      <table class="min-w-full text-left text-sm">
+      <table data-cy="dashboard-home-orders-table" class="min-w-full text-left text-sm">
         <thead class="bg-white/[0.03] text-[11px] uppercase text-zinc-500">
           <tr>
             <th class="px-5 py-3">Order ID</th>
