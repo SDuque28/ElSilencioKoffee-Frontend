@@ -5,8 +5,15 @@
       <p class="mt-1 text-sm text-zinc-500">Manage and track customer purchases and shipments.</p>
     </div>
     <div class="flex gap-2">
-      <button type="button" class="rounded-md border border-white/10 px-3 py-2 text-xs text-zinc-300">Export</button>
-      <button type="button" disabled class="rounded-md bg-[#f97316] px-3 py-2 text-xs font-semibold text-black opacity-60">
+      <button
+        type="button"
+        class="inline-flex h-10 items-center rounded-md border border-white/10 px-3 text-xs text-zinc-300 transition-colors hover:border-white/20 hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-70"
+        [disabled]="exporting"
+        (click)="exportOrders()"
+      >
+        {{ exporting ? 'Exporting...' : 'Export' }}
+      </button>
+      <button type="button" disabled class="inline-flex h-10 items-center rounded-md bg-[#f97316] px-3 text-xs font-semibold text-black opacity-60">
         Create Order
       </button>
     </div>
@@ -20,7 +27,18 @@
       class="h-10 rounded-md border border-white/10 bg-white/[0.05] px-3 text-sm text-white placeholder:text-zinc-600"
     />
     <app-admin-filter-select [(value)]="statusFilter" [options]="statusOptions" />
-    <button type="button" class="rounded-md border border-white/10 bg-white/[0.05] px-3 text-sm text-zinc-300">
+    <button
+      type="button"
+      class="rounded-md border px-3 text-sm transition-colors"
+      [class.border-[#f97316]]="last30DaysFilterActive"
+      [class.bg-[#f97316]]="last30DaysFilterActive"
+      [class.font-semibold]="last30DaysFilterActive"
+      [class.text-black]="last30DaysFilterActive"
+      [class.border-white/10]="!last30DaysFilterActive"
+      [class.bg-white/[0.05]]="!last30DaysFilterActive"
+      [class.text-zinc-300]="!last30DaysFilterActive"
+      (click)="toggleLast30DaysFilter()"
+    >
       Last 30 days
     </button>
   </div>
@@ -71,7 +89,7 @@
     </app-admin-data-table>
 
     <div class="grid gap-4 md:grid-cols-3">
-      @for (metric of metrics; track metric.label) {
+      @for (metric of displayMetrics; track metric.label) {
         <app-admin-metric-card [metric]="metric" />
       }
     </div>

@@ -5,8 +5,15 @@
       <p class="mt-1 text-sm text-zinc-500">Manage your high-end coffee inventory and catalog details.</p>
     </div>
     <div class="flex gap-2">
-      <button type="button" class="rounded-md border border-white/10 px-3 py-2 text-xs text-zinc-300">Export</button>
-      <button type="button" class="rounded-md bg-[#f97316] px-3 py-2 text-xs font-semibold text-black" (click)="openModal()">
+      <button
+        type="button"
+        class="inline-flex h-10 items-center rounded-md border border-white/10 px-3 text-xs text-zinc-300 transition-colors hover:border-white/20 hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-70"
+        [disabled]="exporting"
+        (click)="exportProducts()"
+      >
+        {{ exporting ? 'Exporting...' : 'Export' }}
+      </button>
+      <button type="button" class="inline-flex h-10 items-center rounded-md bg-[#f97316] px-3 text-xs font-semibold text-black" (click)="openModal()">
         Add Product
       </button>
     </div>
@@ -60,10 +67,25 @@
           @for (product of filteredProducts; track product.id) {
             <tr class="hover:bg-white/[0.02]">
               <td class="px-5 py-3">
-                @if (product.imageUrl) {
-                  <img [src]="product.imageUrl" [alt]="product.name" class="h-10 w-12 rounded object-cover" />
+                @if (hasPreviewImage(product)) {
+                  <img
+                    [src]="product.imageUrl"
+                    [alt]="product.name"
+                    class="h-10 w-12 rounded object-cover"
+                    (error)="handleProductImageError(product.id)"
+                  />
                 } @else {
-                  <span class="grid h-10 w-12 place-items-center rounded bg-white/5 text-xs text-zinc-500">N/A</span>
+                  <span
+                    class="grid h-10 w-12 overflow-hidden rounded border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.22),_transparent_55%),linear-gradient(180deg,_rgba(39,39,42,0.96)_0%,_rgba(24,24,27,0.98)_100%)]"
+                    [attr.aria-label]="'Placeholder image for ' + product.name"
+                  >
+                    <span class="grid place-items-center gap-0.5 text-center leading-none">
+                      <span class="text-[10px] font-semibold tracking-[0.12em] text-[#fdba74]">
+                        {{ productPlaceholderLabel(product.name) }}
+                      </span>
+                      <span class="text-[8px] uppercase tracking-[0.16em] text-zinc-500">No Img</span>
+                    </span>
+                  </span>
                 }
               </td>
               <td class="px-5 py-3 font-medium text-white">{{ product.name }}</td>
