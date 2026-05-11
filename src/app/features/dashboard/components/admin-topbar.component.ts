@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { NavigationStart, Router } from '@angular/router';
 import { Bell, Download, LucideAngularModule, Search } from 'lucide-angular';
 import { filter } from 'rxjs';
@@ -13,19 +14,21 @@ import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 @Component({
   selector: 'app-admin-topbar',
-  imports: [LucideAngularModule, ClickOutsideDirective],
+  imports: [FormsModule, LucideAngularModule, ClickOutsideDirective],
   styleUrl: './admin-topbar.component.css',
   template: `
     <header class="sticky top-0 z-20 border-b border-white/10 bg-[#0f0f10]/95 backdrop-blur">
       <div class="flex h-16 items-center gap-4 px-4 lg:px-6">
-        <div class="relative max-w-xl flex-1">
+        <form class="relative max-w-xl flex-1" (ngSubmit)="submitSearch()">
           <lucide-icon [img]="icons.search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
           <input
+            [(ngModel)]="searchTerm"
+            name="adminSearch"
             type="search"
             placeholder="Search orders, roast profiles, or customers..."
             class="h-9 w-full rounded-md border border-white/10 bg-white/[0.05] pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-[#f97316]/50"
           />
-        </div>
+        </form>
 
         <div class="relative" appClickOutside (appClickOutside)="closeNotifications()">
           <button
@@ -160,6 +163,7 @@ export class AdminTopbarComponent {
   readonly exporting = signal(false);
   readonly notifications = this.notificationsService.notifications;
   readonly unreadCount = computed(() => this.notificationsService.unreadCount());
+  searchTerm = '';
 
   constructor() {
     void this.notificationsService.load();
@@ -185,6 +189,28 @@ export class AdminTopbarComponent {
 
   closeNotifications(): void {
     this.notificationsOpen.set(false);
+  }
+
+  async submitSearch(): Promise<void> {
+    const query = this.searchTerm.trim();
+    if (!query) {
+      this.toastService.show({
+        title: 'Search is empty',
+        description: 'Enter an order, product, or customer search term.',
+        variant: 'default',
+      });
+      return;
+    }
+
+    try {
+      await this.navigationService.navigateFromGlobalSearch(query);
+    } catch (error) {
+      this.toastService.show({
+        title: 'Search failed',
+        description: error instanceof Error ? error.message : 'Unable to search the admin workspace right now.',
+        variant: 'error',
+      });
+    }
   }
 
   markAllAsRead(): void {

@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ToastService } from '../../../shared/ui/toast/toast.service';
@@ -75,6 +76,23 @@ describe('DashboardOrdersPageComponent', () => {
         },
         { provide: AdminDashboardReportService, useValue: reportService },
         { provide: ToastService, useValue: toastService },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParamMap: of({
+              get: () => null,
+            }),
+          },
+        },
+        {
+          provide: Router,
+          useValue: {
+            navigate: vi.fn().mockResolvedValue(true),
+            navigateByUrl: vi.fn().mockResolvedValue(true),
+            serializeUrl: vi.fn().mockReturnValue('/orders/11?print=1'),
+            createUrlTree: vi.fn().mockReturnValue({}),
+          },
+        },
       ],
     })
       .overrideComponent(DashboardOrdersPageComponent, {
@@ -158,6 +176,23 @@ describe('DashboardOrdersPageComponent', () => {
         },
         { provide: AdminDashboardReportService, useValue: reportService },
         { provide: ToastService, useValue: toastService },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParamMap: of({
+              get: () => null,
+            }),
+          },
+        },
+        {
+          provide: Router,
+          useValue: {
+            navigate: vi.fn().mockResolvedValue(true),
+            navigateByUrl: vi.fn().mockResolvedValue(true),
+            serializeUrl: vi.fn().mockReturnValue('/orders/11?print=1'),
+            createUrlTree: vi.fn().mockReturnValue({}),
+          },
+        },
       ],
     })
       .overrideComponent(DashboardOrdersPageComponent, {

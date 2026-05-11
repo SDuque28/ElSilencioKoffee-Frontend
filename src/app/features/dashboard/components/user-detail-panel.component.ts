@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
 import type { AdminOrderRow, AdminUserRow } from '../models/admin-view.model';
 import { AdminStatusBadgeComponent } from './admin-status-badge.component';
@@ -47,7 +47,9 @@ import { AdminStatusBadgeComponent } from './admin-status-badge.component';
         <div class="mt-6">
           <div class="mb-3 flex items-center justify-between">
             <h3 class="text-sm font-semibold text-white">Order History</h3>
-            <span class="text-xs text-[#f97316]">View all orders</span>
+            <button type="button" class="text-xs font-semibold text-[#f97316]" (click)="viewAllOrders.emit()">
+              View all orders
+            </button>
           </div>
           <div class="overflow-x-auto rounded-lg border border-white/10">
             <table class="min-w-full text-left text-sm">
@@ -67,11 +69,19 @@ import { AdminStatusBadgeComponent } from './admin-status-badge.component';
                     <td class="px-4 py-3 text-zinc-400">{{ order.date }}</td>
                     <td class="px-4 py-3 text-white">{{ order.total }}</td>
                     <td class="px-4 py-3">
-                      <app-admin-status-badge [label]="order.statusLabel" [tone]="order.statusTone" />
-                    </td>
-                    <td class="px-4 py-3 text-zinc-500">...</td>
-                  </tr>
-                } @empty {
+                    <app-admin-status-badge [label]="order.statusLabel" [tone]="order.statusTone" />
+                  </td>
+                  <td class="px-4 py-3">
+                    <button
+                      type="button"
+                      class="text-xs font-semibold text-[#f97316]"
+                      (click)="orderSelected.emit(order)"
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
                   <tr>
                     <td colspan="5" class="px-4 py-8 text-center text-zinc-500">No orders for this user.</td>
                   </tr>
@@ -88,4 +98,6 @@ import { AdminStatusBadgeComponent } from './admin-status-badge.component';
 export class UserDetailPanelComponent {
   @Input() user: AdminUserRow | null = null;
   @Input() orders: AdminOrderRow[] = [];
+  @Output() readonly viewAllOrders = new EventEmitter<void>();
+  @Output() readonly orderSelected = new EventEmitter<AdminOrderRow>();
 }

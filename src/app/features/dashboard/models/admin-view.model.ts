@@ -63,6 +63,14 @@ export interface AdminMonitoringMetric {
   tone: AdminBadgeTone;
 }
 
+export interface AdminMonitoringThresholdConfig {
+  temperatureMin: number;
+  temperatureMax: number;
+  humidityMin: number;
+  humidityMax: number;
+  co2Max: number;
+}
+
 export interface AdminOrderRow {
   id: string | number;
   orderCode: string;

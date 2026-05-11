@@ -44,8 +44,8 @@ export class ChartContainerComponent implements AfterViewInit, OnChanges, OnDest
 
   get containerClasses(): string {
     return this.surface === 'dark'
-      ? 'h-72 rounded-lg border border-white/10 bg-[#101011] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]'
-      : 'h-72 rounded-xl border border-border bg-white p-4 shadow-soft';
+      ? 'h-full min-h-0 w-full rounded-lg border border-white/10 bg-[#101011] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] sm:p-4'
+      : 'h-full min-h-0 w-full rounded-xl border border-border bg-white p-3 shadow-soft sm:p-4';
   }
 
   ngAfterViewInit(): void {

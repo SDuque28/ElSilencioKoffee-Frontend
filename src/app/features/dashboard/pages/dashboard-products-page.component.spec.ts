@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { DashboardProductsPageComponent } from './dashboard-products-page.component';
@@ -82,6 +83,14 @@ describe('DashboardProductsPageComponent', () => {
         },
         { provide: AdminDashboardReportService, useValue: reportService },
         { provide: ToastService, useValue: toastService },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParamMap: of({
+              get: () => null,
+            }),
+          },
+        },
       ],
     })
       .overrideComponent(DashboardProductsPageComponent, {
@@ -178,6 +187,14 @@ describe('DashboardProductsPageComponent', () => {
         },
         { provide: AdminDashboardReportService, useValue: reportService },
         { provide: ToastService, useValue: toastService },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParamMap: of({
+              get: () => null,
+            }),
+          },
+        },
       ],
     })
       .overrideComponent(DashboardProductsPageComponent, {

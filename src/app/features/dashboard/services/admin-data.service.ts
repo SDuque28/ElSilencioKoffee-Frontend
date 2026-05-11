@@ -5,16 +5,21 @@ import { isApiSuccessResponse, type ApiResponse } from '../../../core/models/api
 import { ApiService } from '../../../core/services/api.service';
 import { environment } from '../../../../environments/environment';
 import type {
+  AdminDeliveryStatus,
   AdminEnvironmentMetricApi,
   AdminInventoryApi,
   AdminOrderApi,
   AdminProductApi,
   AdminProductCreateRequest,
+  AdminProductUpdateRequest,
   AdminProductionApi,
   AdminSnapshotApi,
   AdminUserApi,
+  AdminUserCreateRequest,
   AdminUserRoleApi,
+  AdminUserUpdateRequest,
 } from '../models/admin-api.model';
+import type { AuthResponse } from '../../../core/models/auth.model';
 
 @Injectable({
   providedIn: 'root',
@@ -82,6 +87,19 @@ export class AdminDataService {
     );
   }
 
+  updateDeliveryStatus(
+    orderId: string | number,
+    status: AdminDeliveryStatus,
+  ): Observable<ApiResponse<AdminOrderApi>> {
+    return this.api.patch<AdminOrderApi>(
+      `api/v1/admin/orders/${orderId}/delivery-status`,
+      { status },
+      {
+        baseUrl: environment.authApiUrl,
+      },
+    );
+  }
+
   listUsers(): Observable<ApiResponse<AdminUserApi[]>> {
     return this.api.get<AdminUserApi[]>('users', {
       baseUrl: environment.authApiUrl,
@@ -118,6 +136,21 @@ export class AdminDataService {
     });
   }
 
+  updateProduct(
+    productId: string | number,
+    payload: AdminProductUpdateRequest,
+  ): Observable<ApiResponse<AdminProductApi>> {
+    return this.api.put<AdminProductApi>(`products/${productId}`, payload, {
+      baseUrl: environment.authApiUrl,
+    });
+  }
+
+  deleteProduct(productId: string | number): Observable<ApiResponse<void>> {
+    return this.api.delete<void>(`products/${productId}`, {
+      baseUrl: environment.authApiUrl,
+    });
+  }
+
   listInventory(): Observable<ApiResponse<AdminInventoryApi[]>> {
     return this.api.get<AdminInventoryApi[]>('inventory', {
       baseUrl: environment.authApiUrl,
@@ -132,6 +165,21 @@ export class AdminDataService {
 
   listEnvironmentMetrics(): Observable<ApiResponse<AdminEnvironmentMetricApi[]>> {
     return this.api.get<AdminEnvironmentMetricApi[]>('environment-metrics', {
+      baseUrl: environment.authApiUrl,
+    });
+  }
+
+  createUser(payload: AdminUserCreateRequest): Observable<ApiResponse<AuthResponse>> {
+    return this.api.post<AuthResponse>('auth/register', payload, {
+      baseUrl: environment.authApiUrl,
+    });
+  }
+
+  updateUser(
+    userId: string | number,
+    payload: AdminUserUpdateRequest,
+  ): Observable<ApiResponse<AdminUserApi>> {
+    return this.api.patch<AdminUserApi>(`users/${userId}`, payload, {
       baseUrl: environment.authApiUrl,
     });
   }

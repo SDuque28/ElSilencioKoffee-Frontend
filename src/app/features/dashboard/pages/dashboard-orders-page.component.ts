@@ -8,9 +8,11 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
+import type { AdminDeliveryStatus } from '../models/admin-api.model';
 import { AdminDataTableComponent } from '../components/admin-data-table.component';
 import {
   AdminFilterSelectComponent,
@@ -44,6 +46,8 @@ export class DashboardOrdersPageComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   loading = true;
   exporting = false;
@@ -62,10 +66,18 @@ export class DashboardOrdersPageComponent implements OnInit {
   ];
   rows: AdminOrderRow[] = [];
   selectedOrder: AdminOrderDetail | null = null;
-  selectedOrderStatus: 'PENDING' | 'PAID' = 'PENDING';
+  selectedOrderStatus: AdminDeliveryStatus = 'PENDING';
   drawerOpen = false;
+  private routeSelectedOrderId: string | null = null;
 
   ngOnInit(): void {
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.searchTerm = params.get('q') ?? '';
+      this.routeSelectedOrderId = params.get('orderId');
+      this.openOrderFromRoute();
+      this.cdr.markForCheck();
+    });
+
     this.loadOrders();
   }
 
@@ -84,7 +96,12 @@ export class DashboardOrdersPageComponent implements OnInit {
   }
 
   get canUpdateSelectedOrder(): boolean {
-    return this.selectedOrder?.source.status === 'PENDING';
+    return (
+      !!this.selectedOrder?.deliveryOrder &&
+      this.selectedOrder.source.status === 'PAID' &&
+      this.selectedOrder.deliveryOrder.status !== 'DELIVERED' &&
+      this.selectedOrder.deliveryOrder.status !== 'CANCELLED'
+    );
   }
 
   get displayMetrics(): AdminMetric[] {
@@ -100,6 +117,14 @@ export class DashboardOrdersPageComponent implements OnInit {
   }
 
   openOrder(order: AdminOrderRow): void {
+    if (this.routeSelectedOrderId !== String(order.id)) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { orderId: order.id },
+        queryParamsHandling: 'merge',
+      });
+    }
+
     this.drawerOpen = true;
     this.detailLoading = true;
     this.detailErrorMessage = null;
@@ -116,39 +141,80 @@ export class DashboardOrdersPageComponent implements OnInit {
           return;
         }
         this.selectedOrder = toOrderDetail(response.data);
-        this.selectedOrderStatus = response.data.status === 'PAID' ? 'PAID' : 'PENDING';
+        this.selectedOrderStatus = response.data.deliveryOrder?.status ?? 'PENDING';
         this.cdr.markForCheck();
       });
   }
 
   closeDrawer(): void {
     this.drawerOpen = false;
+    this.routeSelectedOrderId = null;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { orderId: null },
+      queryParamsHandling: 'merge',
+    });
   }
 
-  applyStatus(status: 'PENDING' | 'PAID'): void {
-    if (!this.selectedOrder || !this.canUpdateSelectedOrder || status !== 'PAID') {
+  applyStatus(status: AdminDeliveryStatus): void {
+    if (!this.selectedOrder || !this.canUpdateSelectedOrder) {
       return;
     }
 
     this.detailLoading = true;
+    this.detailErrorMessage = null;
     this.adminData
-      .updateOrderStatus(this.selectedOrder.id, status)
+      .updateDeliveryStatus(this.selectedOrder.id, status)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
         this.detailLoading = false;
         if (!isApiSuccessResponse(response)) {
           this.detailErrorMessage = response.error;
+          this.toastService.show({
+            title: 'Status update failed',
+            description: response.error,
+            variant: 'error',
+          });
           this.cdr.markForCheck();
           return;
         }
+
         this.selectedOrder = toOrderDetail(response.data);
-        this.selectedOrderStatus = response.data.status === 'PAID' ? 'PAID' : 'PENDING';
-        this.loadOrders(false);
+        this.selectedOrderStatus = response.data.deliveryOrder?.status ?? 'PENDING';
+        this.rows = this.rows.map((row) => (String(row.id) === String(response.data.id) ? toOrderRows([response.data])[0] : row));
+        this.toastService.show({
+          title: 'Order status updated',
+          description: `Delivery status changed to ${this.formatDeliveryStatus(status)}.`,
+          variant: 'success',
+        });
+        this.cdr.markForCheck();
       });
   }
 
   toggleLast30DaysFilter(): void {
     this.last30DaysFilterActive = !this.last30DaysFilterActive;
+  }
+
+  async openSelectedOrderPage(): Promise<void> {
+    if (!this.selectedOrder) {
+      return;
+    }
+
+    await this.router.navigate(['/orders', this.selectedOrder.id]);
+  }
+
+  printSelectedOrder(): void {
+    if (!this.selectedOrder) {
+      return;
+    }
+
+    const url = this.router.serializeUrl(
+      this.router.createUrlTree(['/orders', this.selectedOrder.id], {
+        queryParams: { print: 1 },
+      }),
+    );
+
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   async exportOrders(): Promise<void> {
@@ -164,6 +230,7 @@ export class DashboardOrdersPageComponent implements OnInit {
         buildOrdersPageReport({
           metrics: this.displayMetrics,
           rows: this.filteredRows,
+          searchLabel: this.searchTerm.trim() || 'All orders',
           statusFilterLabel: this.statusFilterLabel,
           dateFilterLabel: this.dateFilterLabel,
         }),
@@ -204,6 +271,7 @@ export class DashboardOrdersPageComponent implements OnInit {
 
         this.errorMessage = null;
         this.rows = toOrderRows(response.data);
+        this.openOrderFromRoute();
         this.cdr.markForCheck();
       });
   }
@@ -261,5 +329,54 @@ export class DashboardOrdersPageComponent implements OnInit {
       currency: 'USD',
       minimumFractionDigits: 2,
     }).format(value);
+  }
+
+  private openOrderFromRoute(): void {
+    if (!this.routeSelectedOrderId || this.rows.length === 0) {
+      return;
+    }
+
+    if (this.selectedOrder && String(this.selectedOrder.id) === this.routeSelectedOrderId && this.drawerOpen) {
+      return;
+    }
+
+    const targetOrder = this.rows.find((order) => String(order.id) === this.routeSelectedOrderId);
+    if (targetOrder) {
+      this.openOrder(targetOrder);
+    }
+  }
+
+  protected readonly deliveryStatusOptions: ReadonlyArray<{ value: AdminDeliveryStatus; label: string }> = [
+    { value: 'PENDING', label: 'Pending' },
+    { value: 'OUT_FOR_SHIPMENT', label: 'Out for Shipment' },
+    { value: 'DELIVERED', label: 'Delivered' },
+    { value: 'CANCELLED', label: 'Cancelled' },
+  ];
+
+  get selectedOrderStatusOptions(): ReadonlyArray<{ value: AdminDeliveryStatus; label: string }> {
+    switch (this.selectedOrder?.deliveryOrder?.status) {
+      case 'PENDING':
+        return this.deliveryStatusOptions.filter(
+          (option) => option.value === 'PENDING' || option.value === 'OUT_FOR_SHIPMENT' || option.value === 'CANCELLED',
+        );
+      case 'OUT_FOR_SHIPMENT':
+        return this.deliveryStatusOptions.filter(
+          (option) => option.value === 'OUT_FOR_SHIPMENT' || option.value === 'DELIVERED' || option.value === 'CANCELLED',
+        );
+      case 'DELIVERED':
+        return this.deliveryStatusOptions.filter((option) => option.value === 'DELIVERED');
+      case 'CANCELLED':
+        return this.deliveryStatusOptions.filter((option) => option.value === 'CANCELLED');
+      default:
+        return this.deliveryStatusOptions.filter((option) => option.value === 'PENDING');
+    }
+  }
+
+  private formatDeliveryStatus(status: AdminDeliveryStatus): string {
+    return status
+      .toLowerCase()
+      .split('_')
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(' ');
   }
 }

@@ -6,13 +6,16 @@
     </div>
     <div class="flex flex-wrap gap-2">
       <input
+        [(ngModel)]="searchTerm"
         type="search"
         placeholder="Search analytics..."
         class="h-9 rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-zinc-600"
       />
-      <button type="button" class="rounded-md border border-white/10 px-3 py-2 text-xs text-zinc-300">Export</button>
-      <button type="button" class="rounded-md bg-[#f97316] px-3 py-2 text-xs font-semibold text-black">
-        Generate Report
+      <button type="button" class="rounded-md border border-white/10 px-3 py-2 text-xs text-zinc-300" (click)="exportAnalytics()">
+        {{ exporting ? 'Exporting...' : 'Export' }}
+      </button>
+      <button type="button" class="rounded-md bg-[#f97316] px-3 py-2 text-xs font-semibold text-black" (click)="generateReport()">
+        {{ generating ? 'Generating...' : 'Generate Report' }}
       </button>
     </div>
   </div>
@@ -37,6 +40,8 @@
         title="Sales Performance"
         subtitle="Revenue and order volume by date"
         [tabs]="['Revenue', 'Orders']"
+        [activeTab]="salesChartTab"
+        (activeTabChange)="setSalesChartTab($event)"
         type="line"
         [data]="revenueChart"
         [options]="revenueChartOptions"
@@ -55,7 +60,7 @@
             </div>
           }
         </div>
-        <button type="button" disabled class="mt-4 w-full rounded-md border border-white/10 py-2 text-xs text-zinc-500">
+        <button type="button" class="mt-4 w-full rounded-md border border-white/10 py-2 text-xs text-zinc-300 hover:bg-white/[0.04]" (click)="configureThresholds()">
           Configure Alert Thresholds
         </button>
       </section>
@@ -65,6 +70,8 @@
       title="Order Status Breakdown"
       subtitle="Paid, processing, shipped and delivered orders from backend order and delivery status"
       [tabs]="['Paid', 'Processing', 'Shipped', 'Delivered']"
+      [activeTab]="statusChartTab"
+      (activeTabChange)="setStatusChartTab($event)"
       type="bar"
       [data]="statusChart"
       [options]="statusChartOptions"
@@ -87,7 +94,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-white/5">
-          @for (order of analytics.recentOrders; track order.id) {
+          @for (order of filteredRecentOrders; track order.id) {
             <tr>
               <td class="px-5 py-3 font-semibold text-[#f97316]">{{ order.orderCode }}</td>
               <td class="px-5 py-3 text-white">{{ order.customer }}</td>

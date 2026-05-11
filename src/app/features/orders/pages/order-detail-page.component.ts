@@ -41,6 +41,7 @@ export class OrderDetailPageComponent implements OnInit {
   ];
 
   readonly orderId = this.route.snapshot.paramMap.get('id') ?? '';
+  readonly shouldPrintOnLoad = this.route.snapshot.queryParamMap.get('print') === '1';
   loading = true;
   paying = false;
   errorMessage: string | null = null;
@@ -108,6 +109,9 @@ export class OrderDetailPageComponent implements OnInit {
 
         this.setOrder(response.data);
         this.errorMessage = null;
+        if (this.shouldPrintOnLoad) {
+          setTimeout(() => window.print(), 250);
+        }
         this.cdr.markForCheck();
       });
   }

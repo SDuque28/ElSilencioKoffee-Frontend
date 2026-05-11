@@ -24,7 +24,13 @@
   } @else if (errorMessage) {
     <div class="rounded-lg border border-rose-500/30 bg-rose-500/10 p-6 text-sm text-rose-200">{{ errorMessage }}</div>
   } @else if (summary) {
-    <div class="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_auto_auto]">
+    <div class="grid gap-3 lg:grid-cols-[1.2fr_1fr_1fr_1fr_auto_auto]">
+      <input
+        [(ngModel)]="searchTerm"
+        type="search"
+        placeholder="Search products, categories, or status..."
+        class="h-10 rounded-md border border-white/10 bg-white/[0.05] px-3 text-sm text-white placeholder:text-zinc-600"
+      />
       <app-admin-filter-select [(value)]="categoryFilter" [options]="categoryOptions" />
       <app-admin-filter-select [(value)]="stockFilter" [options]="stockOptions" />
       <app-admin-filter-select [(value)]="priceRangeFilter" [options]="priceRangeOptions" />
@@ -96,7 +102,16 @@
                 <app-admin-status-badge [label]="product.statusLabel" [tone]="product.statusTone" />
               </td>
               <td class="px-5 py-3 text-zinc-500">{{ product.featuredLabel }}</td>
-              <td class="px-5 py-3 text-zinc-500">...</td>
+              <td class="px-5 py-3">
+                <div class="flex items-center gap-3">
+                  <button type="button" class="text-xs font-semibold text-[#f97316]" (click)="editProduct(product)">
+                    Edit
+                  </button>
+                  <button type="button" class="text-xs font-semibold text-rose-300" (click)="requestDeleteProduct(product)">
+                    Delete
+                  </button>
+                </div>
+              </td>
             </tr>
           } @empty {
             <tr>
@@ -117,10 +132,37 @@
       [open]="modalOpen"
       [saving]="saving"
       [errorMessage]="modalErrorMessage"
+      [mode]="modalMode"
+      [initialValue]="modalInitialValue"
       [presentationOptions]="summary.presentationOptions"
       [productionOptions]="summary.productionOptions"
       (cancelled)="closeModal()"
       (saved)="saveProduct($event)"
     />
+
+    <app-dialog
+      [open]="!!productPendingDelete"
+      title="Delete product"
+      [description]="
+        productPendingDelete
+          ? 'Are you sure you want to delete ' + productPendingDelete.name + '? This cannot be undone.'
+          : ''
+      "
+      (openChange)="closeDeleteDialog()"
+    >
+      <div class="flex justify-end gap-3">
+        <button type="button" class="rounded-md px-4 py-2 text-sm text-zinc-500 hover:text-zinc-800" (click)="closeDeleteDialog()">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          [disabled]="deleting"
+          (click)="confirmDeleteProduct()"
+        >
+          {{ deleting ? 'Deleting...' : 'Delete Product' }}
+        </button>
+      </div>
+    </app-dialog>
   }
 </section>

@@ -66,7 +66,6 @@
             ? 'Revenue performance for the active 7-day window'
             : 'Revenue performance over the latest seeded dates'
         "
-        [tabs]="['Monthly', 'Yearly']"
         type="line"
         [data]="revenueChart"
         [options]="chartOptions"
@@ -120,7 +119,15 @@
               <td class="px-5 py-3">
                 <app-admin-status-badge [label]="order.statusLabel" [tone]="order.statusTone" />
               </td>
-              <td class="px-5 py-3 text-zinc-500">...</td>
+              <td class="px-5 py-3">
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-[#f97316]"
+                  (click)="openOrder(order.id)"
+                >
+                  View
+                </button>
+              </td>
             </tr>
           }
         </tbody>

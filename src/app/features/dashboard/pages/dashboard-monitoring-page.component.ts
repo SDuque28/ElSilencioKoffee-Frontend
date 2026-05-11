@@ -7,12 +7,14 @@ import {
   type OnInit,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import { AdminStatusBadgeComponent } from '../components/admin-status-badge.component';
 import type { AdminMonitoringMetric } from '../models/admin-view.model';
 import { buildMonitoring } from '../services/admin-calculations';
 import { AdminDataService } from '../services/admin-data.service';
+import { AdminMonitoringThresholdsService } from '../services/admin-monitoring-thresholds.service';
 
 @Component({
   selector: 'app-dashboard-monitoring-page',
@@ -47,9 +49,14 @@ import { AdminDataService } from '../services/admin-data.service';
 
         <section class="rounded-lg border border-white/10 bg-[#1b1b1d] p-5">
           <h2 class="text-sm font-semibold text-white">Alert Thresholds</h2>
-          <p class="mt-2 text-sm text-zinc-500">
-            Configuration is pending backend support. The cards above use the latest stored values.
-          </p>
+          <p class="mt-2 text-sm text-zinc-500">Thresholds are configurable from Settings and stored locally for the admin dashboard.</p>
+          <button
+            type="button"
+            class="mt-4 rounded-md border border-white/10 px-3 py-2 text-xs text-zinc-300 hover:bg-white/[0.04]"
+            (click)="openSettings()"
+          >
+            Open Settings
+          </button>
         </section>
       }
     </section>
@@ -58,8 +65,10 @@ import { AdminDataService } from '../services/admin-data.service';
 })
 export class DashboardMonitoringPageComponent implements OnInit {
   private readonly adminData = inject(AdminDataService);
+  private readonly thresholdsService = inject(AdminMonitoringThresholdsService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
 
   loading = true;
   errorMessage: string | null = null;
@@ -78,8 +87,12 @@ export class DashboardMonitoringPageComponent implements OnInit {
           return;
         }
         this.errorMessage = null;
-        this.metrics = buildMonitoring(response.data);
+        this.metrics = buildMonitoring(response.data, this.thresholdsService.config());
         this.cdr.markForCheck();
       });
+  }
+
+  async openSettings(): Promise<void> {
+    await this.router.navigateByUrl('/dashboard/settings');
   }
 }

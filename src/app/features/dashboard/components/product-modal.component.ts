@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  type OnChanges,
+  type SimpleChanges,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Plus, X, LucideAngularModule } from 'lucide-angular';
 
@@ -13,17 +21,26 @@ export interface AdminProductFormModel {
   productionId: number | null;
 }
 
+export type AdminProductFormValue = AdminProductFormModel;
+
 @Component({
   selector: 'app-product-modal',
   imports: [FormsModule, LucideAngularModule],
   template: `
     @if (open) {
-      <div class="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm" (click)="cancelled.emit()"></div>
+      <div
+        class="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm"
+        tabindex="0"
+        role="button"
+        (click)="cancelled.emit()"
+        (keydown.enter)="cancelled.emit()"
+        (keydown.space)="cancelled.emit()"
+      ></div>
       <section class="fixed left-1/2 top-1/2 z-50 w-[min(92vw,760px)] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-white/10 bg-[#242424] shadow-2xl">
         <header class="flex items-start justify-between border-b border-white/10 px-5 py-4">
           <div>
-            <h2 class="text-sm font-semibold text-white">Add New Coffee</h2>
-            <p class="mt-1 text-xs text-zinc-500">Configure your high-end coffee profile.</p>
+            <h2 class="text-sm font-semibold text-white">{{ title }}</h2>
+            <p class="mt-1 text-xs text-zinc-500">{{ description }}</p>
           </div>
           <button type="button" class="text-zinc-500 hover:text-white" (click)="cancelled.emit()">
             <lucide-icon [img]="icons.close" class="h-4 w-4" />
@@ -149,7 +166,7 @@ export interface AdminProductFormModel {
               [disabled]="saving"
             >
               <lucide-icon [img]="icons.plus" class="h-4 w-4" />
-              {{ saving ? 'Saving...' : 'Save Product' }}
+              {{ submitLabel }}
             </button>
           </footer>
         </form>
@@ -158,12 +175,14 @@ export interface AdminProductFormModel {
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProductModalComponent {
+export class ProductModalComponent implements OnChanges {
   @Input() open = false;
   @Input() saving = false;
   @Input() errorMessage: string | null = null;
   @Input() presentationOptions: AdminSelectOption[] = [];
   @Input() productionOptions: AdminSelectOption[] = [];
+  @Input() mode: 'create' | 'edit' = 'create';
+  @Input() initialValue: AdminProductFormValue | null = null;
   @Output() cancelled = new EventEmitter<void>();
   @Output() saved = new EventEmitter<AdminProductCreateRequest>();
 
@@ -173,6 +192,30 @@ export class ProductModalComponent {
     close: X,
     plus: Plus,
   };
+
+  get title(): string {
+    return this.mode === 'edit' ? 'Edit Coffee' : 'Add New Coffee';
+  }
+
+  get description(): string {
+    return this.mode === 'edit'
+      ? 'Update the current coffee profile using the existing catalog fields.'
+      : 'Configure your high-end coffee profile.';
+  }
+
+  get submitLabel(): string {
+    if (this.saving) {
+      return this.mode === 'edit' ? 'Saving changes...' : 'Saving...';
+    }
+
+    return this.mode === 'edit' ? 'Save Changes' : 'Save Product';
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['initialValue'] || (changes['open'] && this.open)) {
+      this.form = this.toForm(this.initialValue);
+    }
+  }
 
   submit(): void {
     if (!this.form.name.trim() || !this.form.price || !this.form.presentationId || !this.form.productionId) {
@@ -189,7 +232,7 @@ export class ProductModalComponent {
   }
 
   reset(): void {
-    this.form = this.emptyForm();
+    this.form = this.toForm(this.initialValue);
   }
 
   private emptyForm(): AdminProductFormModel {
@@ -199,6 +242,20 @@ export class ProductModalComponent {
       price: null,
       presentationId: null,
       productionId: null,
+    };
+  }
+
+  private toForm(value: AdminProductFormValue | null): AdminProductFormModel {
+    if (!value) {
+      return this.emptyForm();
+    }
+
+    return {
+      name: value.name,
+      imageUrl: value.imageUrl,
+      price: value.price,
+      presentationId: value.presentationId,
+      productionId: value.productionId,
     };
   }
 }

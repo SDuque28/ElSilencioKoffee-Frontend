@@ -1,9 +1,12 @@
+export type AdminOrderPaymentStatus = 'PENDING' | 'PAID';
+export type AdminDeliveryStatus = 'PENDING' | 'OUT_FOR_SHIPMENT' | 'DELIVERED' | 'CANCELLED';
+
 export interface AdminOrderApi {
   id: number | string;
   userId: number | string;
   orderDate: string;
   totalAmount: number | string;
-  status: 'PENDING' | 'PAID' | string;
+  status: AdminOrderPaymentStatus;
   notes?: string | null;
   items?: AdminOrderItemApi[];
   shippingInformation?: AdminShippingApi | null;
@@ -30,16 +33,16 @@ export interface AdminShippingApi {
 }
 
 export interface AdminPaymentApi {
-  paymentMethod: 'CREDIT_CARD' | 'DEBIT_CARD' | string;
+  paymentMethod: string;
   maskedCardNumber: string;
-  status: 'APPROVED' | 'DECLINED' | string;
+  status: string;
   transactionReference: string;
   paidAt: string;
 }
 
 export interface AdminDeliveryApi {
   id: number | string;
-  status: 'PENDING' | 'OUT_FOR_SHIPMENT' | 'DELIVERED' | 'CANCELLED' | string;
+  status: AdminDeliveryStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -56,6 +59,18 @@ export interface AdminUserApi {
   email: string;
   activo: boolean;
   createdAt: string;
+}
+
+export interface AdminUserCreateRequest {
+  username: string;
+  email: string;
+  password: string;
+}
+
+export interface AdminUserUpdateRequest {
+  username?: string;
+  email?: string;
+  activo?: boolean;
 }
 
 export interface AdminUserRoleApi {
@@ -82,6 +97,8 @@ export interface AdminProductCreateRequest {
   presentationId: number;
   productionId: number;
 }
+
+export type AdminProductUpdateRequest = AdminProductCreateRequest;
 
 export interface AdminInventoryApi {
   id: number | string;

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { FormsModule } from '@angular/forms';
 import { Printer, X, LucideAngularModule } from 'lucide-angular';
 
+import type { AdminDeliveryStatus } from '../models/admin-api.model';
 import type { AdminOrderDetail } from '../models/admin-view.model';
 import { AdminStatusBadgeComponent } from './admin-status-badge.component';
 
@@ -10,7 +11,14 @@ import { AdminStatusBadgeComponent } from './admin-status-badge.component';
   imports: [FormsModule, LucideAngularModule, AdminStatusBadgeComponent],
   template: `
     @if (open) {
-      <div class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" (click)="closed.emit()"></div>
+      <div
+        class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+        tabindex="0"
+        role="button"
+        (click)="closed.emit()"
+        (keydown.enter)="closed.emit()"
+        (keydown.space)="closed.emit()"
+      ></div>
       <aside
         class="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-white/10 bg-[#111112] shadow-2xl"
         data-cy="admin-order-detail-drawer"
@@ -22,8 +30,9 @@ import { AdminStatusBadgeComponent } from './admin-status-badge.component';
           <h2 class="text-sm font-semibold text-white">Order Details</h2>
           <button
             type="button"
-            disabled
             class="inline-flex items-center gap-2 rounded-md bg-white/5 px-3 py-1.5 text-xs text-zinc-300 disabled:opacity-50"
+            [disabled]="!order || loading"
+            (click)="printRequested.emit()"
           >
             <lucide-icon [img]="icons.print" class="h-3.5 w-3.5" />
             Print Invoice
@@ -50,27 +59,40 @@ import { AdminStatusBadgeComponent } from './admin-status-badge.component';
                 <app-admin-status-badge [label]="order.statusLabel" [tone]="order.statusTone" />
               </div>
 
-              <label class="mt-5 block text-[11px] font-semibold uppercase text-zinc-500">
-                Quick Status Update
+              <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                <div class="rounded-md border border-white/5 bg-black/20 p-3">
+                  <p class="text-[11px] font-semibold uppercase text-zinc-500">Payment Status</p>
+                  <p class="mt-2 text-sm font-medium text-white">{{ order.source.status }}</p>
+                </div>
+                <div class="rounded-md border border-white/5 bg-black/20 p-3">
+                  <p class="text-[11px] font-semibold uppercase text-zinc-500">Delivery Status</p>
+                  <p class="mt-2 text-sm font-medium text-white">{{ order.deliveryOrder?.status ?? 'N/A' }}</p>
+                </div>
+              </div>
+
+              <label for="admin-order-status" class="mt-5 block text-[11px] font-semibold uppercase text-zinc-500">
+                Update Delivery Status
               </label>
               <select
+                id="admin-order-status"
                 class="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#1b1b1d] px-3 text-sm text-white [color-scheme:dark]"
-                [disabled]="!canUpdateStatus"
+                [disabled]="!canUpdateStatus || loading"
                 [(ngModel)]="selectedStatus"
               >
-                <option value="PENDING" class="bg-[#1b1b1d] text-white">Pending</option>
-                <option value="PAID" class="bg-[#1b1b1d] text-white">Paid</option>
+                @for (option of statusOptions; track option.value) {
+                  <option [value]="option.value" class="bg-[#1b1b1d] text-white">{{ option.label }}</option>
+                }
               </select>
               <button
                 type="button"
                 class="mt-3 w-full rounded-md bg-[#f97316] px-3 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
-                [disabled]="!canUpdateStatus"
+                [disabled]="!canSubmitStatusChange"
                 (click)="statusApplied.emit(selectedStatus)"
               >
-                Apply Changes
+                {{ loading ? 'Saving...' : 'Apply Changes' }}
               </button>
               @if (!canUpdateStatus) {
-                <p class="mt-2 text-xs text-zinc-500">Delivery status updates are not exposed by the backend.</p>
+                <p class="mt-2 text-xs text-zinc-500">{{ statusHelperText }}</p>
               }
             </section>
 
@@ -121,8 +143,13 @@ import { AdminStatusBadgeComponent } from './admin-status-badge.component';
         </div>
 
         <footer class="flex items-center justify-between border-t border-white/10 p-4">
-          <p class="text-xs text-zinc-500">Archive and invoice actions are pending backend support.</p>
-          <button type="button" class="rounded-md bg-[#f97316] px-3 py-2 text-xs font-semibold text-black">
+          <p class="text-xs text-zinc-500">Print opens the full order detail page in a printable view. Archive flows still need backend support.</p>
+          <button
+            type="button"
+            class="rounded-md bg-[#f97316] px-3 py-2 text-xs font-semibold text-black disabled:opacity-50"
+            [disabled]="!order"
+            (click)="detailsRequested.emit()"
+          >
             Full Details
           </button>
         </footer>
@@ -132,17 +159,45 @@ import { AdminStatusBadgeComponent } from './admin-status-badge.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderDetailDrawerComponent {
+  @Input() statusOptions: ReadonlyArray<{ value: AdminDeliveryStatus; label: string }> = [];
   @Input() open = false;
   @Input() loading = false;
   @Input() errorMessage: string | null = null;
   @Input() order: AdminOrderDetail | null = null;
   @Input() canUpdateStatus = false;
-  @Input() selectedStatus: 'PENDING' | 'PAID' = 'PENDING';
+  @Input() selectedStatus: AdminDeliveryStatus = 'PENDING';
   @Output() closed = new EventEmitter<void>();
-  @Output() statusApplied = new EventEmitter<'PENDING' | 'PAID'>();
+  @Output() statusApplied = new EventEmitter<AdminDeliveryStatus>();
+  @Output() detailsRequested = new EventEmitter<void>();
+  @Output() printRequested = new EventEmitter<void>();
 
   protected readonly icons = {
     close: X,
     print: Printer,
   };
+
+  get canSubmitStatusChange(): boolean {
+    return (
+      this.canUpdateStatus &&
+      !this.loading &&
+      !!this.order?.deliveryOrder &&
+      this.selectedStatus !== this.order.deliveryOrder.status
+    );
+  }
+
+  get statusHelperText(): string {
+    if (!this.order) {
+      return 'Select an order to manage its delivery status.';
+    }
+
+    if (!this.order.deliveryOrder) {
+      return 'This order does not have delivery tracking information yet.';
+    }
+
+    if (this.order.source.status !== 'PAID') {
+      return 'Delivery status can be updated after the order payment is completed.';
+    }
+
+    return 'This delivery status is locked because the order is already completed or cancelled.';
+  }
 }

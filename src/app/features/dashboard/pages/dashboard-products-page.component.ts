@@ -9,9 +9,11 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
+import { DialogComponent } from '../../../shared/ui/dialog/dialog.component';
 import { AdminDataTableComponent } from '../components/admin-data-table.component';
 import {
   AdminFilterSelectComponent,
@@ -19,7 +21,10 @@ import {
 } from '../components/admin-filter-select.component';
 import { AdminMetricCardComponent } from '../components/admin-metric-card.component';
 import { AdminStatusBadgeComponent } from '../components/admin-status-badge.component';
-import { ProductModalComponent } from '../components/product-modal.component';
+import {
+  ProductModalComponent,
+  type AdminProductFormValue,
+} from '../components/product-modal.component';
 import type { AdminProductCreateRequest } from '../models/admin-api.model';
 import type { AdminMetric, AdminProductRow, AdminProductSummary } from '../models/admin-view.model';
 import { buildProductSummary } from '../services/admin-calculations';
@@ -36,6 +41,7 @@ import { buildProductsPageReport } from '../services/admin-page-reports';
     AdminMetricCardComponent,
     AdminStatusBadgeComponent,
     ProductModalComponent,
+    DialogComponent,
   ],
   templateUrl: './dashboard-products-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,6 +52,7 @@ export class DashboardProductsPageComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
   private readonly failedProductImageIds = new Set<number>();
 
   @ViewChild(ProductModalComponent) private readonly productModal?: ProductModalComponent;
@@ -53,8 +60,10 @@ export class DashboardProductsPageComponent implements OnInit {
   loading = true;
   exporting = false;
   saving = false;
+  deleting = false;
   errorMessage: string | null = null;
   modalErrorMessage: string | null = null;
+  searchTerm = '';
   categoryFilter = 'ALL';
   stockFilter = 'ALL';
   priceRangeFilter = 'ALL';
@@ -73,14 +82,28 @@ export class DashboardProductsPageComponent implements OnInit {
   ];
   modalOpen = false;
   summary: AdminProductSummary | null = null;
+  modalMode: 'create' | 'edit' = 'create';
+  editingProduct: AdminProductRow | null = null;
+  productPendingDelete: AdminProductRow | null = null;
 
   ngOnInit(): void {
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.searchTerm = params.get('q') ?? '';
+      this.cdr.markForCheck();
+    });
+
     this.loadProducts();
   }
 
   get filteredProducts(): AdminProductRow[] {
     const rows = this.summary?.products ?? [];
+    const query = this.searchTerm.trim().toLowerCase();
     return rows.filter((product) => {
+      const matchesSearch =
+        !query ||
+        product.name.toLowerCase().includes(query) ||
+        product.category.toLowerCase().includes(query) ||
+        product.statusLabel.toLowerCase().includes(query);
       const matchesCategory = this.categoryFilter === 'ALL' || product.category === this.categoryFilter;
       const matchesStock =
         this.stockFilter === 'ALL' ||
@@ -89,16 +112,31 @@ export class DashboardProductsPageComponent implements OnInit {
         (this.stockFilter === 'DRAFT' && product.statusLabel === 'Draft');
       const matchesPriceRange = this.matchesPriceRange(product.priceValue);
 
-      return matchesCategory && matchesStock && matchesPriceRange;
+      return matchesSearch && matchesCategory && matchesStock && matchesPriceRange;
     });
   }
 
   get hasActiveFilters(): boolean {
     return (
+      this.searchTerm.trim().length > 0 ||
       this.categoryFilter !== 'ALL' ||
       this.stockFilter !== 'ALL' ||
       this.priceRangeFilter !== 'ALL'
     );
+  }
+
+  get modalInitialValue(): AdminProductFormValue | null {
+    if (!this.editingProduct) {
+      return null;
+    }
+
+    return {
+      name: this.editingProduct.name,
+      imageUrl: this.editingProduct.imageUrl ?? '',
+      price: this.editingProduct.priceValue,
+      presentationId: this.editingProduct.presentationId,
+      productionId: this.editingProduct.productionId,
+    };
   }
 
   get categoryOptions(): AdminFilterSelectOption[] {
@@ -153,20 +191,36 @@ export class DashboardProductsPageComponent implements OnInit {
   }
 
   openModal(): void {
+    this.modalMode = 'create';
+    this.editingProduct = null;
     this.modalErrorMessage = null;
     this.modalOpen = true;
   }
 
   closeModal(): void {
     this.modalOpen = false;
+    this.modalMode = 'create';
+    this.editingProduct = null;
     this.productModal?.reset();
   }
 
+  editProduct(product: AdminProductRow): void {
+    this.modalMode = 'edit';
+    this.editingProduct = product;
+    this.modalErrorMessage = null;
+    this.modalOpen = true;
+  }
+
   saveProduct(payload: AdminProductCreateRequest): void {
+    const isEditMode = this.modalMode === 'edit';
     this.saving = true;
     this.modalErrorMessage = null;
-    this.adminData
-      .createProduct(payload)
+    const request$ =
+      isEditMode && this.editingProduct
+        ? this.adminData.updateProduct(this.editingProduct.id, payload)
+        : this.adminData.createProduct(payload);
+
+    request$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
         this.saving = false;
@@ -176,14 +230,67 @@ export class DashboardProductsPageComponent implements OnInit {
           return;
         }
         this.closeModal();
+        this.toastService.show({
+          title: isEditMode ? 'Product updated' : 'Product created',
+          description:
+            isEditMode
+              ? 'The product changes were saved successfully.'
+              : 'The new product is now available in the admin catalog.',
+          variant: 'success',
+        });
         this.loadProducts(false);
       });
   }
 
   clearFilters(): void {
+    this.searchTerm = '';
     this.categoryFilter = 'ALL';
     this.stockFilter = 'ALL';
     this.priceRangeFilter = 'ALL';
+  }
+
+  requestDeleteProduct(product: AdminProductRow): void {
+    this.productPendingDelete = product;
+  }
+
+  closeDeleteDialog(): void {
+    if (this.deleting) {
+      return;
+    }
+
+    this.productPendingDelete = null;
+  }
+
+  confirmDeleteProduct(): void {
+    if (!this.productPendingDelete) {
+      return;
+    }
+
+    this.deleting = true;
+    this.adminData
+      .deleteProduct(this.productPendingDelete.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => {
+        this.deleting = false;
+
+        if (!isApiSuccessResponse(response)) {
+          this.toastService.show({
+            title: 'Product deletion failed',
+            description: response.error,
+            variant: 'error',
+          });
+          this.cdr.markForCheck();
+          return;
+        }
+
+        this.toastService.show({
+          title: 'Product deleted',
+          description: 'The product was removed from the catalog.',
+          variant: 'success',
+        });
+        this.productPendingDelete = null;
+        this.loadProducts(false);
+      });
   }
 
   productPlaceholderLabel(name: string): string {
@@ -248,6 +355,7 @@ export class DashboardProductsPageComponent implements OnInit {
         buildProductsPageReport({
           metrics: this.filteredMetrics,
           rows: this.filteredProducts,
+          searchLabel: this.searchTerm.trim() || 'All products',
           categoryFilterLabel: this.categoryFilterLabel,
           stockFilterLabel: this.stockFilterLabel,
           priceRangeFilterLabel: this.priceRangeFilterLabel,

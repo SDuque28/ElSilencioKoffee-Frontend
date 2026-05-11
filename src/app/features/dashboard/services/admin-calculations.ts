@@ -14,6 +14,7 @@ import type {
   AdminDashboardDateFilterState,
   AdminMetric,
   AdminMonitoringMetric,
+  AdminMonitoringThresholdConfig,
   AdminOrderDetail,
   AdminOrderDetailItem,
   AdminOrderRow,
@@ -57,6 +58,7 @@ export function buildOverview(
   options: {
     filter?: AdminDashboardDateFilterState;
     notes?: string[];
+    thresholdConfig?: AdminMonitoringThresholdConfig;
   } = {},
 ): AdminOverview {
   const paidOrders = snapshot.orders.filter((order) => order.status === 'PAID');
@@ -82,7 +84,7 @@ export function buildOverview(
   ).length;
   const revenueSeries = buildRevenueSeries(snapshot.orders);
   const orderSeries = buildOrderSeries(snapshot.orders);
-  const monitoring = buildMonitoring(snapshot.environmentMetrics);
+  const monitoring = buildMonitoring(snapshot.environmentMetrics, options.thresholdConfig);
   const metrics = [
     metric(
       'Total Sales',
@@ -134,7 +136,12 @@ export function buildOverview(
   };
 }
 
-export function buildAnalytics(snapshot: AdminSnapshotApi): AdminAnalytics {
+export function buildAnalytics(
+  snapshot: AdminSnapshotApi,
+  options: {
+    thresholdConfig?: AdminMonitoringThresholdConfig;
+  } = {},
+): AdminAnalytics {
   const paidOrders = snapshot.orders.filter((order) => order.status === 'PAID');
   const processingOrders = snapshot.orders.filter((order) => deliveryState(order).label === 'Processing');
   const shippedOrders = snapshot.orders.filter((order) => deliveryState(order).label === 'Shipped');
@@ -163,7 +170,7 @@ export function buildAnalytics(snapshot: AdminSnapshotApi): AdminAnalytics {
     orderSeries: buildOrderSeries(snapshot.orders),
     statusSeries: buildStatusSeries(snapshot.orders),
     recentOrders: toRecentOrders(snapshot.orders, 6),
-    monitoring: buildMonitoring(snapshot.environmentMetrics),
+    monitoring: buildMonitoring(snapshot.environmentMetrics, options.thresholdConfig),
   };
 }
 
@@ -234,29 +241,63 @@ export function toOrderRows(orders: AdminOrderApi[]): AdminOrderRow[] {
   return orders.map(toOrderRow);
 }
 
-export function buildMonitoring(metrics: AdminEnvironmentMetricApi[]): AdminMonitoringMetric[] {
+export function buildMonitoring(
+  metrics: AdminEnvironmentMetricApi[],
+  thresholdConfig?: AdminMonitoringThresholdConfig,
+): AdminMonitoringMetric[] {
   const latestTemperature = latestMetric(metrics, 'temperature');
   const latestHumidity = latestMetric(metrics, 'humidity');
   const co2Metric = latestMetric(metrics, 'co2');
+  const thresholds = thresholdConfig ?? {
+    temperatureMin: 18,
+    temperatureMax: 24,
+    humidityMin: 45,
+    humidityMax: 60,
+    co2Max: 700,
+  };
+  const temperatureState = rangeStatus(
+    latestTemperature?.value,
+    thresholds.temperatureMin,
+    thresholds.temperatureMax,
+    {
+      optimalLabel: 'OPTIMAL',
+      lowLabel: 'LOW',
+      highLabel: 'HIGH',
+    },
+  );
+  const humidityState = rangeStatus(
+    latestHumidity?.value,
+    thresholds.humidityMin,
+    thresholds.humidityMax,
+    {
+      optimalLabel: 'OPTIMAL',
+      lowLabel: 'LOW',
+      highLabel: 'HIGH',
+    },
+  );
+  const co2State = upperBoundStatus(co2Metric?.value, thresholds.co2Max, {
+    optimalLabel: 'NORMAL',
+    highLabel: 'ELEVATED',
+  });
 
   return [
     {
       label: 'Temperature',
       value: latestTemperature ? `${toNumber(latestTemperature.value).toFixed(1)}${latestTemperature.unit}` : 'N/A',
-      status: latestTemperature ? 'OPTIMAL' : 'N/A',
-      tone: latestTemperature ? 'success' : 'neutral',
+      status: temperatureState.label,
+      tone: temperatureState.tone,
     },
     {
       label: 'Humidity',
       value: latestHumidity ? `${toNumber(latestHumidity.value).toFixed(1)}${latestHumidity.unit}` : 'N/A',
-      status: latestHumidity ? 'OPTIMAL' : 'neutral',
-      tone: latestHumidity ? 'success' : 'neutral',
+      status: humidityState.label,
+      tone: humidityState.tone,
     },
     {
       label: 'CO2 Levels',
       value: co2Metric ? `${toNumber(co2Metric.value).toFixed(0)} ${co2Metric.unit}` : '412 ppm',
-      status: co2Metric ? 'NORMAL' : 'SIMULATED',
-      tone: co2Metric ? 'success' : 'info',
+      status: co2Metric ? co2State.label : 'SIMULATED',
+      tone: co2Metric ? co2State.tone : 'info',
     },
   ];
 }
@@ -643,6 +684,58 @@ function toDateKey(value: string): string | null {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function rangeStatus(
+  value: number | string | null | undefined,
+  min: number,
+  max: number,
+  labels: {
+    optimalLabel: string;
+    lowLabel: string;
+    highLabel: string;
+  },
+): {
+  label: string;
+  tone: AdminBadgeTone;
+} {
+  if (value === null || value === undefined || value === '') {
+    return { label: 'N/A', tone: 'neutral' };
+  }
+
+  const numericValue = toNumber(value);
+  if (numericValue < min) {
+    return { label: labels.lowLabel, tone: 'warning' };
+  }
+
+  if (numericValue > max) {
+    return { label: labels.highLabel, tone: 'danger' };
+  }
+
+  return { label: labels.optimalLabel, tone: 'success' };
+}
+
+function upperBoundStatus(
+  value: number | string | null | undefined,
+  max: number,
+  labels: {
+    optimalLabel: string;
+    highLabel: string;
+  },
+): {
+  label: string;
+  tone: AdminBadgeTone;
+} {
+  if (value === null || value === undefined || value === '') {
+    return { label: 'N/A', tone: 'neutral' };
+  }
+
+  const numericValue = toNumber(value);
+  if (numericValue > max) {
+    return { label: labels.highLabel, tone: 'danger' };
+  }
+
+  return { label: labels.optimalLabel, tone: 'success' };
 }
 
 function uniqueNotes(notes: string[]): string[] {

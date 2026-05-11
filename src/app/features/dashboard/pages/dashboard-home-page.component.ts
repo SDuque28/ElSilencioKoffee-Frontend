@@ -25,7 +25,9 @@ import type {
 import { buildOverview } from '../services/admin-calculations';
 import { buildFilteredAdminSnapshot } from '../services/admin-dashboard-filtering';
 import { AdminDataService } from '../services/admin-data.service';
+import { AdminMonitoringThresholdsService } from '../services/admin-monitoring-thresholds.service';
 import { AdminProjectReportService } from '../services/admin-project-report.service';
+import { AdminViewNavigationService } from '../services/admin-view-navigation.service';
 
 @Component({
   selector: 'app-dashboard-home-page',
@@ -41,6 +43,8 @@ import { AdminProjectReportService } from '../services/admin-project-report.serv
 export class DashboardHomePageComponent implements OnInit {
   private readonly adminData = inject(AdminDataService);
   private readonly reportService = inject(AdminProjectReportService);
+  private readonly navigationService = inject(AdminViewNavigationService);
+  private readonly thresholdsService = inject(AdminMonitoringThresholdsService);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -144,6 +148,10 @@ export class DashboardHomePageComponent implements OnInit {
     await this.router.navigateByUrl('/dashboard/orders');
   }
 
+  async openOrder(orderId: string | number): Promise<void> {
+    await this.navigationService.navigateToAdminOrder(orderId);
+  }
+
   private toLineChart(series: AdminChartSeries): ChartData<'line'> {
     return {
       labels: series.labels,
@@ -173,6 +181,7 @@ export class DashboardHomePageComponent implements OnInit {
     this.overview = buildOverview(filteredSnapshot.snapshot, {
       filter: filteredSnapshot.filter,
       notes: filteredSnapshot.notes,
+      thresholdConfig: this.thresholdsService.config(),
     });
     this.revenueChart = this.toLineChart(this.overview.revenueSeries);
   }
