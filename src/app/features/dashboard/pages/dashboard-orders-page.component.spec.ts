@@ -12,8 +12,9 @@ describe('DashboardOrdersPageComponent', () => {
     let exportCalls = 0;
     let toastCalls = 0;
     const reportService = {
-      exportReport: async () => {
+      exportReport: () => {
         exportCalls += 1;
+        return Promise.resolve();
       },
     };
     const toastService = {
@@ -131,13 +132,14 @@ describe('DashboardOrdersPageComponent', () => {
     let exportedFilterDescription = '';
     let toastCalls = 0;
     const reportService = {
-      exportReport: async (report: unknown) => {
+      exportReport: (report: unknown) => {
         const exportedReport = report as {
           title: string;
           filterDescription: string;
         };
         exportedTitle = exportedReport.title;
         exportedFilterDescription = exportedReport.filterDescription;
+        return Promise.resolve();
       },
     };
     const toastService = {

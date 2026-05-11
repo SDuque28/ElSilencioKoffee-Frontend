@@ -1,4 +1,4 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
@@ -10,6 +10,7 @@ import { AdminDataService } from './admin-data.service';
   providedIn: 'root',
 })
 export class AdminNotificationsService {
+  private readonly adminData = inject(AdminDataService);
   private readonly readIds = new Set<string>();
   private readonly _notifications = signal<AdminNotificationItem[]>([]);
   private readonly _loading = signal(false);
@@ -21,8 +22,6 @@ export class AdminNotificationsService {
   readonly unreadCount = computed(() =>
     this._notifications().filter((notification) => notification.unread).length,
   );
-
-  constructor(private readonly adminData: AdminDataService) {}
 
   async load(): Promise<void> {
     if (this._loading()) {

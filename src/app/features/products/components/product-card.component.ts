@@ -13,7 +13,6 @@ import {
   PRODUCT_IMAGE_FALLBACK,
   getProductAvailabilityLabel,
   type Product,
-  type ProductAvailability,
 } from '../../../core/models/product.model';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';

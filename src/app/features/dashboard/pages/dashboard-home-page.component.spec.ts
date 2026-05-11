@@ -78,7 +78,7 @@ describe('DashboardHomePageComponent', () => {
     };
     const toastService = {
       show: vi.fn(),
-      messages: signal([]),
+      messages: signal<unknown[]>([]),
     };
 
     await TestBed.configureTestingModule({
@@ -161,13 +161,10 @@ describe('DashboardHomePageComponent', () => {
     await fixture.whenStable();
 
     expect(reportService.exportCompleteProjectReport).toHaveBeenCalledTimes(1);
-    expect(reportService.exportCompleteProjectReport).toHaveBeenCalledWith(
-      expect.objectContaining({
-        activeFilter: expect.objectContaining({
-          label: 'Last 7 Days',
-        }),
-      }),
-    );
+    const exportCall = reportService.exportCompleteProjectReport.mock.calls[0]?.[0] as
+      | { activeFilter?: { label?: string | null } | null }
+      | undefined;
+    expect(exportCall?.activeFilter?.label).toBe('Last 7 Days');
     expect(toastService.show).toHaveBeenCalled();
 
     viewAllOrdersButton.click();

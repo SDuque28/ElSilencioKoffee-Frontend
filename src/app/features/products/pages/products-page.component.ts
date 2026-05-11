@@ -1,4 +1,3 @@
-import { NgFor, NgIf } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -19,7 +18,7 @@ import { ProductsService, type ProductsListResponse } from '../services/products
 
 @Component({
   selector: 'app-products-page',
-  imports: [NgIf, NgFor, ProductCardComponent],
+  imports: [ProductCardComponent],
   templateUrl: './products-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -47,7 +46,7 @@ export class ProductsPageComponent implements OnInit {
           this.isLoading = false;
           this.cdr.markForCheck();
         },
-        error: (error) => {
+        error: (_error) => {
           this.products = [];
           this.isLoading = false;
           this.cdr.markForCheck();

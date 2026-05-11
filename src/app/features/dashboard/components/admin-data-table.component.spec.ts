@@ -16,7 +16,11 @@ describe('AdminDataTableComponent', () => {
     fixture.componentInstance.actionClicked.subscribe(actionClickedSpy);
     fixture.detectChanges();
 
-    const actionButton = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    const nativeElement = fixture.nativeElement as HTMLElement;
+    const actionButton = nativeElement.querySelector('button');
+    if (!(actionButton instanceof HTMLButtonElement)) {
+      throw new Error('Expected action button to be rendered.');
+    }
     actionButton.click();
 
     expect(actionClickedSpy).toHaveBeenCalledTimes(1);

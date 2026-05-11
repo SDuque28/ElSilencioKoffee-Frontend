@@ -1,0 +1,30 @@
+:host {
+  display: block;
+  --home-scrollbar-track: rgba(122, 92, 69, 0.12);
+  --home-scrollbar-thumb: rgba(107, 63, 29, 0.48);
+  --home-scrollbar-thumb-hover: rgba(90, 59, 46, 0.72);
+}
+
+.home-page__collection-track {
+  scrollbar-width: thin;
+  scrollbar-color: var(--home-scrollbar-thumb) var(--home-scrollbar-track);
+}
+
+.home-page__collection-track::-webkit-scrollbar {
+  height: 10px;
+}
+
+.home-page__collection-track::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, rgba(255, 251, 246, 0.92) 0%, rgba(232, 219, 204, 0.78) 100%);
+  border-radius: 999px;
+}
+
+.home-page__collection-track::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--home-scrollbar-thumb) 0%, rgba(90, 59, 46, 0.92) 100%);
+  border: 2px solid rgba(248, 241, 232, 0.95);
+  border-radius: 999px;
+}
+
+.home-page__collection-track::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--home-scrollbar-thumb-hover) 0%, rgba(79, 58, 45, 0.95) 100%);
+}

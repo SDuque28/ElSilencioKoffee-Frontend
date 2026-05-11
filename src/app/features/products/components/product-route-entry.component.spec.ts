@@ -8,7 +8,10 @@ import { ProductsService } from '../services/products.service';
 import { ProductModalService } from '../services/product-modal.service';
 
 describe('ProductRouteEntryComponent', () => {
-  function configureTestingModule(getProductResult: object | undefined) {
+  function configureTestingModule(getProductResult: object | undefined): {
+    navigateByUrl: ReturnType<typeof vi.fn>;
+    open: ReturnType<typeof vi.fn>;
+  } {
     const navigateByUrl = vi.fn().mockResolvedValue(true);
     const open = vi.fn();
 

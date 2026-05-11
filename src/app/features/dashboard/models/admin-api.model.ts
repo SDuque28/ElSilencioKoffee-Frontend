@@ -98,7 +98,9 @@ export interface AdminProductCreateRequest {
   productionId: number;
 }
 
-export type AdminProductUpdateRequest = AdminProductCreateRequest;
+export interface AdminProductUpdateRequest extends AdminProductCreateRequest {
+  stockQuantity?: number | null;
+}
 
 export interface AdminInventoryApi {
   id: number | string;

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { firstValueFrom, forkJoin, map, of, type Observable } from 'rxjs';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
@@ -11,10 +11,8 @@ import { AdminDataService } from './admin-data.service';
   providedIn: 'root',
 })
 export class AdminProjectReportService {
-  constructor(
-    private readonly adminData: AdminDataService,
-    private readonly pdfReportService: AdminDashboardReportService,
-  ) {}
+  private readonly adminData = inject(AdminDataService);
+  private readonly pdfReportService = inject(AdminDashboardReportService);
 
   async exportCompleteProjectReport(options?: {
     activeFilter?: AdminDashboardDateFilterState | null;

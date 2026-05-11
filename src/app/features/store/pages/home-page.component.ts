@@ -3,9 +3,9 @@ import {
   ChangeDetectorRef,
   Component,
   DestroyRef,
-  ElementRef,
   inject,
   viewChild,
+  type ElementRef,
   type OnInit,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -24,6 +24,7 @@ import { ProductsService } from '../../products/services/products.service';
   selector: 'app-home-page',
   imports: [RouterLink, ProductCardComponent, LucideAngularModule],
   templateUrl: './home-page.component.html',
+  styleUrl: './home-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomePageComponent implements OnInit {

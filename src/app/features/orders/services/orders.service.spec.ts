@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, of } from 'rxjs';
 
 import type { ApiResponse } from '../../../core/models/api-response.model';
+import type { CheckoutResult } from '../../../core/models/checkout.model';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { OrdersService } from './orders.service';
@@ -167,7 +168,7 @@ describe('OrdersService', () => {
       } satisfies ApiResponse<unknown>),
     );
 
-    const response = await firstValueFrom(
+    const response: ApiResponse<CheckoutResult> = await firstValueFrom(
       service.checkout({
         shippingInformation: {
           address: 'Street 123',
@@ -187,25 +188,32 @@ describe('OrdersService', () => {
       }),
     );
 
-    expect(apiService.post).toHaveBeenCalledWith(
-      'api/v1/checkout',
-      expect.objectContaining({
-        shippingInformation: expect.objectContaining({
-          city: 'Bogota',
-        }),
-        payment: expect.objectContaining({
-          cardNumber: '4242424242424242',
-        }),
-      }),
+    const [endpoint, payload, options] = apiService.post.mock.calls[0] as [
+      string,
       {
-        baseUrl: '/api-auth',
+        shippingInformation: {
+          city: string;
+        };
+        payment: {
+          cardNumber: string;
+        };
       },
-    );
+      {
+        baseUrl: string;
+      },
+    ];
+    expect(endpoint).toBe('api/v1/checkout');
+    expect(payload.shippingInformation.city).toBe('Bogota');
+    expect(payload.payment.cardNumber).toBe('4242424242424242');
+    expect(options).toEqual({
+      baseUrl: '/api-auth',
+    });
     expect(response.success).toBe(true);
     if (!response.success) {
       throw new Error('Expected success response');
     }
-    expect(response.data.payment.maskedCardNumber).toBe('**** **** **** 4242');
-    expect(response.data.deliveryOrder.status).toBe('OUT_FOR_SHIPMENT');
+    const checkoutResult = response.data;
+    expect(checkoutResult.payment.maskedCardNumber).toBe('**** **** **** 4242');
+    expect(checkoutResult.deliveryOrder.status).toBe('OUT_FOR_SHIPMENT');
   });
 });

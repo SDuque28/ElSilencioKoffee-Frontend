@@ -130,13 +130,7 @@ export class ApiService {
 
       return {
         success: false,
-        error:
-          typeof error.error === 'string'
-            ? error.error
-            : (error.error?.error ??
-                error.error?.message ??
-                error.message ??
-                'Unexpected API error.'),
+        error: this.resolveHttpErrorMessage(error),
         code: error.status || 500,
       };
     }
@@ -180,6 +174,33 @@ export class ApiService {
       'error' in value &&
       'code' in value
     );
+  }
+
+  private resolveHttpErrorMessage(error: HttpErrorResponse): string {
+    if (typeof error.error === 'string' && error.error.trim().length > 0) {
+      return error.error;
+    }
+
+    const apiError = this.readStringProperty(error.error, 'error');
+    if (apiError) {
+      return apiError;
+    }
+
+    const apiMessage = this.readStringProperty(error.error, 'message');
+    if (apiMessage) {
+      return apiMessage;
+    }
+
+    return error.message || 'Unexpected API error.';
+  }
+
+  private readStringProperty(value: unknown, key: 'error' | 'message'): string | null {
+    if (typeof value !== 'object' || value === null || !(key in value)) {
+      return null;
+    }
+
+    const property = (value as Record<'error' | 'message', unknown>)[key];
+    return typeof property === 'string' ? property : null;
   }
 
   private logRequest(

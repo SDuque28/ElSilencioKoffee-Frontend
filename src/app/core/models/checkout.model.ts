@@ -32,7 +32,7 @@ export interface CheckoutRequest {
 export interface CheckoutResult {
   orderId: string | number;
   orderDate: string;
-  orderStatus: OrderStatus | string;
+  orderStatus: OrderStatus;
   totalAmount: number;
   notes?: string | null;
   items: OrderItem[];

@@ -285,11 +285,13 @@ export class DashboardOrdersPageComponent implements OnInit {
     const pendingShipment = rows.filter(
       (row) => row.source.deliveryOrder?.status === 'PENDING' || row.source.deliveryOrder?.status === 'OUT_FOR_SHIPMENT',
     ).length;
+    const averageOrderValue =
+      rows.length > 0 ? rows.reduce((sum, row) => sum + row.totalValue, 0) / rows.length : 0;
 
     return [
       { label: 'Total Sales Today', value: this.formatCurrency(todaysSales), change: 'Latest date', tone: 'success' },
       { label: 'Pending Shipment', value: `${pendingShipment} Orders`, change: 'Live', tone: 'warning' },
-      { label: 'Refund Rate', value: 'N/A', change: 'No refunds endpoint', tone: 'neutral' },
+      { label: 'Avg. Order Value', value: this.formatCurrency(averageOrderValue), change: 'Filtered results', tone: 'info' },
     ];
   }
 

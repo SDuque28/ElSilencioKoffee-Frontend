@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Printer, X, LucideAngularModule } from 'lucide-angular';
 
 import type { AdminDeliveryStatus } from '../models/admin-api.model';
-import type { AdminOrderDetail } from '../models/admin-view.model';
+import type { AdminBadgeTone, AdminOrderDetail } from '../models/admin-view.model';
 import { AdminStatusBadgeComponent } from './admin-status-badge.component';
 
 @Component({
@@ -20,7 +20,7 @@ import { AdminStatusBadgeComponent } from './admin-status-badge.component';
         (keydown.space)="closed.emit()"
       ></div>
       <aside
-        class="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-white/10 bg-[#111112] shadow-2xl"
+        class="fixed inset-y-0 right-0 z-50 flex w-full max-w-xl flex-col border-l border-white/10 bg-[#111112] shadow-2xl"
         data-cy="admin-order-detail-drawer"
       >
         <header class="flex h-14 items-center justify-between border-b border-white/10 px-5">
@@ -49,7 +49,7 @@ import { AdminStatusBadgeComponent } from './admin-status-badge.component';
               {{ errorMessage }}
             </p>
           } @else if (order) {
-            <section class="rounded-lg border border-white/10 bg-[#1b1b1d] p-4">
+            <section class="rounded-2xl border border-white/10 bg-[#1b1b1d] p-5">
               <div class="flex items-start justify-between gap-3">
                 <div>
                   <p class="text-xs font-semibold text-[#f97316]">{{ order.orderCode }}</p>
@@ -59,56 +59,88 @@ import { AdminStatusBadgeComponent } from './admin-status-badge.component';
                 <app-admin-status-badge [label]="order.statusLabel" [tone]="order.statusTone" />
               </div>
 
-              <div class="mt-5 grid gap-3 sm:grid-cols-2">
-                <div class="rounded-md border border-white/5 bg-black/20 p-3">
-                  <p class="text-[11px] font-semibold uppercase text-zinc-500">Payment Status</p>
-                  <p class="mt-2 text-sm font-medium text-white">{{ order.source.status }}</p>
+              <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div class="rounded-xl border border-white/5 bg-black/20 p-3">
+                  <p class="text-[11px] font-semibold uppercase text-zinc-500">Order Total</p>
+                  <p class="mt-2 text-sm font-medium text-white">{{ order.total }}</p>
                 </div>
-                <div class="rounded-md border border-white/5 bg-black/20 p-3">
+                <div class="rounded-xl border border-white/5 bg-black/20 p-3">
+                  <p class="text-[11px] font-semibold uppercase text-zinc-500">Items</p>
+                  <p class="mt-2 text-sm font-medium text-white">{{ order.items.length }} line items</p>
+                </div>
+                <div class="rounded-xl border border-white/5 bg-black/20 p-3">
+                  <p class="text-[11px] font-semibold uppercase text-zinc-500">Payment Status</p>
+                  <p class="mt-2 text-sm font-medium text-white">{{ paymentStatusLabel }}</p>
+                </div>
+                <div class="rounded-xl border border-white/5 bg-black/20 p-3">
                   <p class="text-[11px] font-semibold uppercase text-zinc-500">Delivery Status</p>
-                  <p class="mt-2 text-sm font-medium text-white">{{ order.deliveryOrder?.status ?? 'N/A' }}</p>
+                  <p class="mt-2 text-sm font-medium text-white">{{ deliveryStatusLabel }}</p>
                 </div>
               </div>
 
-              <label for="admin-order-status" class="mt-5 block text-[11px] font-semibold uppercase text-zinc-500">
-                Update Delivery Status
-              </label>
-              <select
-                id="admin-order-status"
-                class="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#1b1b1d] px-3 text-sm text-white [color-scheme:dark]"
-                [disabled]="!canUpdateStatus || loading"
-                [(ngModel)]="selectedStatus"
-              >
-                @for (option of statusOptions; track option.value) {
-                  <option [value]="option.value" class="bg-[#1b1b1d] text-white">{{ option.label }}</option>
+              <div class="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p class="text-[11px] font-semibold uppercase text-zinc-500">Delivery Workflow</p>
+                    <p class="mt-2 text-sm text-zinc-400">
+                      Update the shipment milestone when the order is already paid.
+                    </p>
+                  </div>
+                  @if (order.deliveryOrder) {
+                    <app-admin-status-badge [label]="deliveryStatusLabel" [tone]="deliveryStatusTone" />
+                  }
+                </div>
+
+                <label for="admin-order-status" class="mt-5 block text-[11px] font-semibold uppercase text-zinc-500">
+                  Update Delivery Status
+                </label>
+                <select
+                  id="admin-order-status"
+                  class="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#1b1b1d] px-3 text-sm text-white [color-scheme:dark]"
+                  [disabled]="!canUpdateStatus || loading"
+                  [(ngModel)]="selectedStatus"
+                >
+                  @for (option of statusOptions; track option.value) {
+                    <option [value]="option.value" class="bg-[#1b1b1d] text-white">{{ option.label }}</option>
+                  }
+                </select>
+                <button
+                  type="button"
+                  class="mt-3 w-full rounded-md bg-[#f97316] px-3 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
+                  [disabled]="!canSubmitStatusChange"
+                  (click)="statusApplied.emit(selectedStatus)"
+                >
+                  {{ loading ? 'Saving...' : 'Apply Changes' }}
+                </button>
+                @if (!canUpdateStatus) {
+                  <p class="mt-2 text-xs text-zinc-500">{{ statusHelperText }}</p>
                 }
-              </select>
-              <button
-                type="button"
-                class="mt-3 w-full rounded-md bg-[#f97316] px-3 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
-                [disabled]="!canSubmitStatusChange"
-                (click)="statusApplied.emit(selectedStatus)"
-              >
-                {{ loading ? 'Saving...' : 'Apply Changes' }}
-              </button>
-              @if (!canUpdateStatus) {
-                <p class="mt-2 text-xs text-zinc-500">{{ statusHelperText }}</p>
-              }
+              </div>
             </section>
 
             <section class="mt-5">
-              <h3 class="mb-3 text-xs font-semibold uppercase text-zinc-500">
-                Purchased Products ({{ order.items.length }})
-              </h3>
-              <div class="space-y-2 rounded-lg border border-white/10 bg-[#1b1b1d] p-3">
+              <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <h3 class="text-xs font-semibold uppercase text-zinc-500">
+                  Purchased Products ({{ order.items.length }})
+                </h3>
+                <p class="text-xs text-zinc-500">This stays aligned with the full customer-facing order page.</p>
+              </div>
+
+              <div class="space-y-3 rounded-2xl border border-white/10 bg-[#1b1b1d] p-3">
                 @for (item of order.items; track item.productName) {
-                  <div class="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-b border-white/5 py-2 last:border-b-0">
-                    <p class="text-sm text-white">{{ item.productName }}</p>
-                    <p class="text-xs text-zinc-400">x{{ item.quantity }}</p>
-                    <p class="text-sm font-semibold text-white">{{ item.subtotal }}</p>
+                  <div class="rounded-xl border border-white/5 bg-black/20 p-4">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p class="text-sm font-medium text-white">{{ item.productName }}</p>
+                        <p class="mt-2 text-xs text-zinc-400">
+                          {{ item.quantity }} {{ item.quantity === 1 ? 'unit' : 'units' }} at {{ item.unitPrice }}
+                        </p>
+                      </div>
+                      <p class="text-sm font-semibold text-white">{{ item.subtotal }}</p>
+                    </div>
                   </div>
                 }
-                <div class="flex items-center justify-between pt-2 text-sm">
+                <div class="flex items-center justify-between px-1 pt-1 text-sm">
                   <span class="text-zinc-500">Order Total</span>
                   <span class="font-semibold text-[#f97316]">{{ order.total }}</span>
                 </div>
@@ -116,34 +148,56 @@ import { AdminStatusBadgeComponent } from './admin-status-badge.component';
             </section>
 
             <div class="mt-5 grid gap-3 sm:grid-cols-2">
-              <section class="rounded-lg border border-white/10 bg-[#1b1b1d] p-4">
+              <section class="rounded-2xl border border-white/10 bg-[#1b1b1d] p-4">
                 <h3 class="text-[11px] font-semibold uppercase text-[#f97316]">Shipping Address</h3>
-                <p class="mt-3 text-sm text-zinc-300">{{ order.shippingInformation?.address ?? 'N/A' }}</p>
-                <p class="text-sm text-zinc-400">
-                  {{ order.shippingInformation?.city ?? 'N/A' }},
-                  {{ order.shippingInformation?.neighborhood ?? 'N/A' }}
-                </p>
-                <p class="text-sm text-zinc-400">{{ order.shippingInformation?.country ?? 'N/A' }}</p>
+                @if (order.shippingInformation) {
+                  <p class="mt-3 text-sm text-zinc-300">{{ order.shippingInformation.address }}</p>
+                  <p class="text-sm text-zinc-400">
+                    {{ order.shippingInformation.city }},
+                    {{ order.shippingInformation.neighborhood }}
+                  </p>
+                  <p class="text-sm text-zinc-400">{{ order.shippingInformation.country }}</p>
+                  @if (order.shippingInformation.referenceDetails) {
+                    <p class="mt-2 text-sm text-zinc-500">
+                      Reference: {{ order.shippingInformation.referenceDetails }}
+                    </p>
+                  }
+                } @else {
+                  <p class="mt-3 text-sm text-zinc-500">Shipping information is not available for this order.</p>
+                }
               </section>
-              <section class="rounded-lg border border-white/10 bg-[#1b1b1d] p-4">
-                <h3 class="text-[11px] font-semibold uppercase text-[#f97316]">Contact Info</h3>
-                <p class="mt-3 text-sm text-zinc-300">{{ order.customerEmail }}</p>
-                <p class="text-sm text-zinc-500">Phone: N/A</p>
+
+              <section class="rounded-2xl border border-white/10 bg-[#1b1b1d] p-4">
+                <h3 class="text-[11px] font-semibold uppercase text-[#f97316]">Payment Reference</h3>
+                @if (order.payment) {
+                  <p class="mt-3 text-sm text-zinc-300">{{ paymentMethodLabel }}</p>
+                  <p class="mt-1 text-sm text-zinc-400">{{ order.payment.maskedCardNumber }}</p>
+                  <p class="mt-1 text-sm text-zinc-500">Ref: {{ order.payment.transactionReference }}</p>
+                } @else {
+                  <p class="mt-3 text-sm text-zinc-500">Payment details will appear after checkout is completed.</p>
+                }
               </section>
             </div>
 
-            <section class="mt-5 rounded-lg border border-white/10 bg-[#1b1b1d] p-4">
-              <h3 class="text-[11px] font-semibold uppercase text-zinc-500">Order History</h3>
+            <section class="mt-5 rounded-2xl border border-white/10 bg-[#1b1b1d] p-4">
+              <h3 class="text-[11px] font-semibold uppercase text-zinc-500">Activity Snapshot</h3>
               <p class="mt-3 text-sm text-zinc-400">
-                Current order status: {{ order.source.status }}. Delivery:
-                {{ order.deliveryOrder?.status ?? 'N/A' }}.
+                Customer contact: {{ order.customerEmail }}.
+                @if (paidAtLabel) {
+                  Payment confirmed {{ paidAtLabel }}.
+                }
+                @if (deliveryUpdatedLabel) {
+                  Delivery updated {{ deliveryUpdatedLabel }}.
+                }
               </p>
             </section>
           }
         </div>
 
         <footer class="flex items-center justify-between border-t border-white/10 p-4">
-          <p class="text-xs text-zinc-500">Print opens the full order detail page in a printable view. Archive flows still need backend support.</p>
+          <p class="text-xs text-zinc-500">
+            Print opens the public-friendly full order detail page in a printable view.
+          </p>
           <button
             type="button"
             class="rounded-md bg-[#f97316] px-3 py-2 text-xs font-semibold text-black disabled:opacity-50"
@@ -199,5 +253,94 @@ export class OrderDetailDrawerComponent {
     }
 
     return 'This delivery status is locked because the order is already completed or cancelled.';
+  }
+
+  get paymentStatusLabel(): string {
+    if (!this.order) {
+      return 'N/A';
+    }
+
+    if (this.order.payment?.status === 'APPROVED' || this.order.source.status === 'PAID') {
+      return 'Paid';
+    }
+
+    if (this.order.payment?.status === 'DECLINED') {
+      return 'Declined';
+    }
+
+    return 'Pending';
+  }
+
+  get deliveryStatusLabel(): string {
+    if (!this.order?.deliveryOrder) {
+      return 'Not started';
+    }
+
+    switch (this.order.deliveryOrder.status) {
+      case 'OUT_FOR_SHIPMENT':
+        return 'Out for Shipment';
+      case 'DELIVERED':
+        return 'Delivered';
+      case 'CANCELLED':
+        return 'Cancelled';
+      default:
+        return 'Pending';
+    }
+  }
+
+  get deliveryStatusTone(): AdminBadgeTone {
+    if (!this.order?.deliveryOrder) {
+      return 'neutral';
+    }
+
+    switch (this.order.deliveryOrder.status) {
+      case 'OUT_FOR_SHIPMENT':
+        return 'info';
+      case 'DELIVERED':
+        return 'success';
+      case 'CANCELLED':
+        return 'danger';
+      default:
+        return 'warning';
+    }
+  }
+
+  get paymentMethodLabel(): string {
+    if (!this.order?.payment) {
+      return 'N/A';
+    }
+
+    return this.toTitleCase(this.order.payment.paymentMethod);
+  }
+
+  get paidAtLabel(): string | null {
+    return this.order?.payment?.paidAt ? this.formatTimestamp(this.order.payment.paidAt) : null;
+  }
+
+  get deliveryUpdatedLabel(): string | null {
+    return this.order?.deliveryOrder?.updatedAt
+      ? this.formatTimestamp(this.order.deliveryOrder.updatedAt)
+      : null;
+  }
+
+  private formatTimestamp(value: string): string {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return new Intl.DateTimeFormat('en-US', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(date);
+  }
+
+  private toTitleCase(value: string): string {
+    return value
+      .toLowerCase()
+      .split('_')
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(' ');
   }
 }

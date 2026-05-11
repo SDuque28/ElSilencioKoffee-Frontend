@@ -1,4 +1,3 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -13,15 +12,30 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import type { Order } from '../../../core/models/order.model';
+import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
-import { TableComponent, type TableColumn } from '../../../shared/ui/table/table.component';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { OrdersService } from '../services/orders.service';
+import {
+  formatOrderCode,
+  formatOrderCurrency,
+  formatOrderDate,
+  getDeliveryStatusPresentation,
+  getDeliveryUpdateSummary,
+  getOrderItemsSummary,
+  getPaymentMethodSummary,
+  getPaymentStatusPresentation,
+  getPrimaryOrderStatusPresentation,
+  getShippingDestination,
+  type OrderBadgePresentation,
+  toTitleCase,
+} from '../utils/order-presentation';
 
 @Component({
   selector: 'app-order-detail-page',
-  imports: [CurrencyPipe, DatePipe, RouterLink, CardComponent, ButtonComponent, TableComponent],
+  standalone: true,
+  imports: [RouterLink, CardComponent, ButtonComponent, BadgeComponent],
   templateUrl: './order-detail-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -33,20 +47,12 @@ export class OrderDetailPageComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   readonly authService = inject(AuthService);
 
-  readonly itemColumns: TableColumn[] = [
-    { key: 'product', label: 'Product' },
-    { key: 'quantity', label: 'Quantity' },
-    { key: 'unitPrice', label: 'Unit Price' },
-    { key: 'subtotal', label: 'Subtotal' },
-  ];
-
   readonly orderId = this.route.snapshot.paramMap.get('id') ?? '';
   readonly shouldPrintOnLoad = this.route.snapshot.queryParamMap.get('print') === '1';
   loading = true;
   paying = false;
   errorMessage: string | null = null;
   order: Order | null = null;
-  itemRows: Record<string, unknown>[] = [];
 
   ngOnInit(): void {
     this.loadOrder();
@@ -101,7 +107,6 @@ export class OrderDetailPageComponent implements OnInit {
 
         if (!isApiSuccessResponse(response)) {
           this.order = null;
-          this.itemRows = [];
           this.errorMessage = response.error;
           this.cdr.markForCheck();
           return;
@@ -118,21 +123,54 @@ export class OrderDetailPageComponent implements OnInit {
 
   private setOrder(order: Order): void {
     this.order = order;
-    this.itemRows = order.items.map((item) => ({
-      product: item.productName,
-      quantity: item.quantity,
-      unitPrice: this.formatCurrency(item.unitPrice),
-      subtotal: this.formatCurrency(item.subtotal),
-    }));
   }
 
-  private formatCurrency(value: number): string {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value);
+  protected formatOrderCode(value: string | number): string {
+    return formatOrderCode(value);
+  }
+
+  protected formatOrderDate(value: string, style: 'compact' | 'detailed' = 'compact'): string {
+    return formatOrderDate(value, style);
+  }
+
+  protected formatOrderCurrency(value: number): string {
+    return formatOrderCurrency(value);
+  }
+
+  protected primaryStatus(order: Order): OrderBadgePresentation {
+    return getPrimaryOrderStatusPresentation(order);
+  }
+
+  protected paymentStatus(order: Order): OrderBadgePresentation {
+    return getPaymentStatusPresentation(order);
+  }
+
+  protected deliveryStatus(order: Order): OrderBadgePresentation {
+    return getDeliveryStatusPresentation(order);
+  }
+
+  protected itemsSummary(order: Order): string {
+    return getOrderItemsSummary(order.items);
+  }
+
+  protected shippingDestination(order: Order): string | null {
+    return getShippingDestination(order);
+  }
+
+  protected paymentMethodSummary(order: Order): string | null {
+    return getPaymentMethodSummary(order.payment);
+  }
+
+  protected deliveryUpdateSummary(order: Order): string | null {
+    return getDeliveryUpdateSummary(order.deliveryOrder);
+  }
+
+  protected formatPaymentMethod(value: string): string {
+    return toTitleCase(value);
+  }
+
+  protected formatPaymentStatus(value: string): string {
+    return toTitleCase(value);
   }
 
   private isPending(status: string | undefined): boolean {

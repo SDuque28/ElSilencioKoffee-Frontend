@@ -1,4 +1,4 @@
-<section data-cy="orders-page" class="space-y-6">
+<section data-cy="orders-page" class="space-y-8 lg:space-y-10">
   <div class="space-y-2">
     <div class="flex flex-wrap items-center gap-3">
       <h1 class="text-2xl font-semibold text-foreground">{{ heading }}</h1>
@@ -12,9 +12,39 @@
     </p>
   </div>
 
-  <app-card className="space-y-4 p-6">
+  @if (!loading && !errorMessage && metrics.length > 0) {
+    <div class="grid gap-5 lg:gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      @for (metric of metrics; track metric.label) {
+        <app-card className="rounded-3xl border-[#eadfce] bg-white/90 p-5 shadow-[0_18px_45px_rgba(73,43,26,0.08)]">
+          <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#9a8068]">{{ metric.label }}</p>
+          <p
+            class="mt-3 text-2xl font-semibold"
+            [class.text-foreground]="metric.tone === 'default'"
+            [class.text-emerald-700]="metric.tone === 'success'"
+            [class.text-amber-900]="metric.tone === 'warning'"
+          >
+            {{ metric.value }}
+          </p>
+          <p class="mt-2 text-sm text-muted">{{ metric.supportingText }}</p>
+        </app-card>
+      }
+    </div>
+  }
+
+  <app-card className="space-y-7 rounded-[32px] p-6 sm:p-8 lg:p-12">
     @if (loading) {
-      <p data-cy="orders-loading" class="text-sm text-muted">Loading orders...</p>
+      <div data-cy="orders-loading" class="grid gap-4 lg:grid-cols-2">
+        @for (_ of [1, 2, 3, 4]; track $index) {
+          <div class="rounded-3xl border border-border/70 bg-[#fcf9f5] p-5">
+            <div class="h-4 w-24 rounded-full bg-amber-100"></div>
+            <div class="mt-4 h-7 w-44 rounded-full bg-amber-50"></div>
+            <div class="mt-6 grid gap-3 sm:grid-cols-2">
+              <div class="h-16 rounded-2xl bg-white"></div>
+              <div class="h-16 rounded-2xl bg-white"></div>
+            </div>
+          </div>
+        }
+      </div>
     } @else if (errorMessage) {
       <div
         data-cy="orders-error"
@@ -22,15 +52,82 @@
       >
         {{ errorMessage }}
       </div>
-    } @else if (rows.length === 0) {
+    } @else if (orderCards.length === 0) {
       <div
         data-cy="orders-empty"
-        class="rounded-xl border border-dashed border-border bg-amber-50/50 px-4 py-8 text-center text-sm text-muted"
+        class="rounded-3xl border border-dashed border-[#dbcab8] bg-[#fbf7f1] px-6 py-12 text-center"
       >
-        No orders found yet.
+        <p class="text-sm font-semibold text-foreground">
+          {{ authService.isAdmin() ? 'No orders are available yet.' : 'You have not placed any orders yet.' }}
+        </p>
+        <p class="mt-2 text-sm text-muted">
+          {{
+            authService.isAdmin()
+              ? 'Orders will appear here as soon as customers complete checkout.'
+              : 'Your purchases will appear here once checkout is completed.'
+          }}
+        </p>
       </div>
     } @else {
-      <app-table dataCy="orders-table" [columns]="columns" [rows]="rows" />
+      <div class="grid gap-7 xl:grid-cols-2">
+        @for (card of orderCards; track card.id) {
+          <a
+            [routerLink]="card.route"
+            [attr.data-cy]="'orders-link-' + card.id"
+            class="group block rounded-[28px] border border-[#e5d8ca] bg-[linear-gradient(180deg,#fffefc_0%,#f9f4ee_100%)] p-8 shadow-[0_20px_55px_rgba(73,43,26,0.08)] transition hover:-translate-y-0.5 hover:border-[#d7c0aa] hover:shadow-[0_24px_60px_rgba(73,43,26,0.12)] sm:p-9"
+          >
+            <div class="flex flex-wrap items-start justify-between gap-7">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#a17f63]">Order</p>
+                <h2 class="mt-2 text-xl font-semibold text-foreground">{{ card.orderCode }}</h2>
+                <p class="mt-3 text-sm text-muted">{{ card.date }}</p>
+              </div>
+
+              <div class="flex flex-wrap justify-end gap-2">
+                <app-badge [variant]="card.primaryStatus.variant">{{ card.primaryStatus.label }}</app-badge>
+                <app-badge [variant]="card.paymentStatus.variant">{{ card.paymentStatus.label }}</app-badge>
+                <app-badge [variant]="card.deliveryStatus.variant">{{ card.deliveryStatus.label }}</app-badge>
+              </div>
+            </div>
+
+            <div class="mt-8 grid gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(240px,0.8fr)]">
+              <div class="rounded-2xl border border-white/80 bg-white/80 p-6 sm:p-7">
+                @if (card.customerName) {
+                  <p class="text-sm font-semibold text-foreground">{{ card.customerName }}</p>
+                }
+                @if (card.customerEmail) {
+                  <p class="mt-1.5 text-sm text-muted">{{ card.customerEmail }}</p>
+                }
+                <p class="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#9a8068]">
+                  {{ card.itemSummary }}
+                </p>
+                <div class="mt-5 space-y-3.5">
+                  @for (item of card.itemPreview; track item) {
+                    <p class="rounded-2xl bg-[#f7f1ea] px-4 py-3 text-sm text-[#5d4b3d]">{{ item }}</p>
+                  }
+                  @if (card.itemPreview.length === 0) {
+                    <p class="rounded-2xl bg-[#f7f1ea] px-4 py-3 text-sm text-muted">No order items available.</p>
+                  }
+                </div>
+              </div>
+
+              <div class="rounded-2xl border border-[#eadfce] bg-[#fffdfa] p-6 sm:p-7">
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[#9a8068]">Order Total</p>
+                <p class="mt-3 text-2xl font-semibold text-foreground">{{ card.total }}</p>
+                @if (card.destination) {
+                  <p class="mt-6 text-sm leading-6 text-muted">Shipping to {{ card.destination }}</p>
+                }
+                @if (card.notes) {
+                  <p class="mt-5 text-sm leading-6 text-[#6b5645]">{{ card.notes }}</p>
+                }
+                <p class="mt-8 text-sm font-semibold text-[#b45f1e] transition group-hover:text-[#9d531a]">
+                  Review order details
+                </p>
+              </div>
+            </div>
+          </a>
+        }
+      </div>
     }
   </app-card>
 </section>

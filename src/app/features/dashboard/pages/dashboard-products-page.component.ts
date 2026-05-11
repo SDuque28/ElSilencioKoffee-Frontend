@@ -23,9 +23,10 @@ import { AdminMetricCardComponent } from '../components/admin-metric-card.compon
 import { AdminStatusBadgeComponent } from '../components/admin-status-badge.component';
 import {
   ProductModalComponent,
+  type AdminProductFormSubmission,
   type AdminProductFormValue,
 } from '../components/product-modal.component';
-import type { AdminProductCreateRequest } from '../models/admin-api.model';
+import type { AdminProductCreateRequest, AdminProductUpdateRequest } from '../models/admin-api.model';
 import type { AdminMetric, AdminProductRow, AdminProductSummary } from '../models/admin-view.model';
 import { buildProductSummary } from '../services/admin-calculations';
 import { AdminDashboardReportService } from '../services/admin-dashboard-report.service';
@@ -134,6 +135,7 @@ export class DashboardProductsPageComponent implements OnInit {
       name: this.editingProduct.name,
       imageUrl: this.editingProduct.imageUrl ?? '',
       price: this.editingProduct.priceValue,
+      stockQuantity: this.editingProduct.stock,
       presentationId: this.editingProduct.presentationId,
       productionId: this.editingProduct.productionId,
     };
@@ -211,14 +213,14 @@ export class DashboardProductsPageComponent implements OnInit {
     this.modalOpen = true;
   }
 
-  saveProduct(payload: AdminProductCreateRequest): void {
+  saveProduct(formValue: AdminProductFormSubmission): void {
     const isEditMode = this.modalMode === 'edit';
     this.saving = true;
     this.modalErrorMessage = null;
     const request$ =
       isEditMode && this.editingProduct
-        ? this.adminData.updateProduct(this.editingProduct.id, payload)
-        : this.adminData.createProduct(payload);
+        ? this.adminData.updateProduct(this.editingProduct.id, this.toUpdateRequest(formValue))
+        : this.adminData.createProduct(this.toCreateRequest(formValue));
 
     request$
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -337,7 +339,7 @@ export class DashboardProductsPageComponent implements OnInit {
           return;
         }
         this.errorMessage = null;
-        this.summary = buildProductSummary(response.data.products, response.data.production);
+        this.summary = buildProductSummary(response.data.products, response.data.production, response.data.inventory);
         this.cdr.markForCheck();
       });
   }
@@ -391,5 +393,22 @@ export class DashboardProductsPageComponent implements OnInit {
       default:
         return true;
     }
+  }
+
+  private toCreateRequest(formValue: AdminProductFormSubmission): AdminProductCreateRequest {
+    return {
+      name: formValue.name,
+      imageUrl: formValue.imageUrl,
+      price: formValue.price,
+      presentationId: formValue.presentationId,
+      productionId: formValue.productionId,
+    };
+  }
+
+  private toUpdateRequest(formValue: AdminProductFormSubmission): AdminProductUpdateRequest {
+    return {
+      ...this.toCreateRequest(formValue),
+      stockQuantity: formValue.stockQuantity,
+    };
   }
 }

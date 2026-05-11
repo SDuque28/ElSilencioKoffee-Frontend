@@ -13,6 +13,7 @@ import type {
   Order,
   OrderCustomer,
   OrderItem,
+  OrderStatus,
   OrdersListResult,
   PaymentSummary,
   ShippingInformation,
@@ -252,7 +253,7 @@ export class OrdersService {
       data: {
         orderId: response.data.orderId,
         orderDate: response.data.orderDate,
-        orderStatus: response.data.orderStatus,
+        orderStatus: this.toOrderStatus(response.data.orderStatus),
         totalAmount: Number(response.data.totalAmount),
         notes: response.data.notes ?? null,
         items: (response.data.items ?? []).map((item) => this.toOrderItem(item)),
@@ -267,7 +268,7 @@ export class OrdersService {
     return {
       id: order.id,
       orderDate: order.orderDate,
-      status: order.status,
+      status: this.toOrderStatus(order.status),
       totalAmount: Number(order.totalAmount),
       userId: order.userId,
       notes: order.notes ?? null,
@@ -340,5 +341,19 @@ export class OrdersService {
         quantity: item.quantity,
       })),
     };
+  }
+
+  private toOrderStatus(status: string): OrderStatus {
+    switch (status) {
+      case 'PENDING':
+      case 'NON PAID':
+      case 'PAID':
+      case 'SHIPPED':
+      case 'DELIVERED':
+      case 'CANCELLED':
+        return status;
+      default:
+        return 'PENDING';
+    }
   }
 }

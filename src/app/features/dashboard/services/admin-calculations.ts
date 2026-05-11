@@ -1,5 +1,6 @@
 import type {
   AdminEnvironmentMetricApi,
+  AdminInventoryApi,
   AdminOrderApi,
   AdminProductApi,
   AdminProductionApi,
@@ -177,8 +178,12 @@ export function buildAnalytics(
 export function buildProductSummary(
   products: AdminProductApi[],
   production: AdminProductionApi[],
+  inventory: AdminInventoryApi[] = [],
 ): AdminProductSummary {
-  const rows = products.map(toProductRow);
+  const inventoryByProductId = new Map(
+    inventory.map((item) => [toNumber(item.productId), toNumber(item.stockQuantity)]),
+  );
+  const rows = products.map((product) => toProductRow(product, inventoryByProductId));
   const activeListings = rows.filter((product) => product.stock > 0).length;
   const lowStock = rows.filter((product) => product.stock <= LOW_STOCK_THRESHOLD).length;
   const averagePrice =
@@ -340,8 +345,12 @@ interface AdminOrderDetailItemApiLike {
   subtotal: number | string;
 }
 
-function toProductRow(product: AdminProductApi): AdminProductRow {
-  const stock = toNumber(product.stockQuantity);
+function toProductRow(
+  product: AdminProductApi,
+  inventoryByProductId: ReadonlyMap<number, number>,
+): AdminProductRow {
+  const inventoryStock = inventoryByProductId.get(product.id);
+  const stock = inventoryStock ?? toNumber(product.stockQuantity);
   const status = productStatus(stock);
 
   return {

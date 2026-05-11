@@ -31,7 +31,7 @@ export function buildCompleteAdminProjectReport(
 ): AdminDashboardReportData {
   const overview = buildOverview(snapshot);
   const analytics = buildAnalytics(snapshot);
-  const productSummary = buildProductSummary(snapshot.products, snapshot.production);
+  const productSummary = buildProductSummary(snapshot.products, snapshot.production, snapshot.inventory);
   const usersSummary = buildUsersSummary(snapshot.users, snapshot.orders, rolesByUserId);
   const orderRows = toOrderRows(snapshot.orders);
   const inventoryMetrics = buildInventoryMetrics(snapshot.inventory);

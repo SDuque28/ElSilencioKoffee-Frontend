@@ -55,7 +55,7 @@ export interface DeliveryOrder {
 export interface Order {
   id: string | number;
   orderDate: string;
-  status: OrderStatus | string;
+  status: OrderStatus;
   totalAmount: number;
   userId: string | number;
   notes?: string | null;
