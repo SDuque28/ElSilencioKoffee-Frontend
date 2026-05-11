@@ -41,7 +41,6 @@ export class AuthService {
     return this.api
       .post<AuthResponse>('auth/login', payload, {
         baseUrl: environment.authApiUrl,
-        bypassMock: true,
       })
       .pipe(
         map((response) => this.normalizeAuthResponse(response)),
@@ -57,7 +56,6 @@ export class AuthService {
     return this.api
       .post<AuthResponse>('auth/register', payload, {
         baseUrl: environment.authApiUrl,
-        bypassMock: true,
       })
       .pipe(
         map((response) => this.normalizeAuthResponse(response)),
@@ -74,14 +72,12 @@ export class AuthService {
   ): Observable<ApiResponse<AuthMessageResponse>> {
     return this.api.post<AuthMessageResponse>('auth/password-recovery', payload, {
       baseUrl: environment.authApiUrl,
-      bypassMock: true,
     });
   }
 
   changePassword(payload: ChangePasswordRequest): Observable<ApiResponse<AuthMessageResponse>> {
     return this.api.post<AuthMessageResponse>('auth/change-password', payload, {
       baseUrl: environment.authApiUrl,
-      bypassMock: true,
     });
   }
 

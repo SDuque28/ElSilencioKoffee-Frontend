@@ -1,0 +1,122 @@
+<section class="space-y-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-semibold text-white">Orders</h1>
+      <p class="mt-1 text-sm text-zinc-500">Manage and track customer purchases and shipments.</p>
+    </div>
+    <div class="flex gap-2">
+      <button
+        type="button"
+        class="inline-flex h-10 items-center rounded-md border border-white/10 px-3 text-xs text-zinc-300 transition-colors hover:border-white/20 hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-70"
+        [disabled]="exporting"
+        (click)="exportOrders()"
+      >
+        {{ exporting ? 'Exporting...' : 'Export' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="grid gap-3 md:grid-cols-[1fr_220px_160px]">
+    <input
+      [(ngModel)]="searchTerm"
+      type="search"
+      placeholder="Search order ID, customer name, email..."
+      class="h-10 rounded-md border border-white/10 bg-white/[0.05] px-3 text-sm text-white placeholder:text-zinc-600"
+    />
+    <app-admin-filter-select [(value)]="statusFilter" [options]="statusOptions" />
+    <button
+      type="button"
+      class="rounded-md border px-3 text-sm transition-colors"
+      [class.border-[#f97316]]="last30DaysFilterActive"
+      [class.bg-[#f97316]]="last30DaysFilterActive"
+      [class.font-semibold]="last30DaysFilterActive"
+      [class.text-black]="last30DaysFilterActive"
+      [class.border-white/10]="!last30DaysFilterActive"
+      [class.bg-white/[0.05]]="!last30DaysFilterActive"
+      [class.text-zinc-300]="!last30DaysFilterActive"
+      (click)="toggleLast30DaysFilter()"
+    >
+      Last 30 days
+    </button>
+  </div>
+
+  @if (!loading && !errorMessage) {
+    <div class="rounded-2xl border border-white/10 bg-[#171719] px-4 py-3 text-sm text-zinc-400">
+      Open an order to review payment, shipment, and printable details without leaving the dashboard.
+    </div>
+  }
+
+  @if (loading) {
+    <div class="rounded-lg border border-white/10 bg-[#1b1b1d] p-6 text-sm text-zinc-400">Loading orders...</div>
+  } @else if (errorMessage) {
+    <div class="rounded-lg border border-rose-500/30 bg-rose-500/10 p-6 text-sm text-rose-200">{{ errorMessage }}</div>
+  } @else {
+    <div class="grid gap-4 md:grid-cols-3">
+      @for (metric of displayMetrics; track metric.label) {
+        <app-admin-metric-card [metric]="metric" />
+      }
+    </div>
+
+    <app-admin-data-table class="mt-4">
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-white/[0.03] text-[11px] uppercase text-zinc-500">
+          <tr>
+            <th class="px-5 py-3">Order ID</th>
+            <th class="px-5 py-3">Customer</th>
+            <th class="px-5 py-3">Date</th>
+            <th class="px-5 py-3">Total</th>
+            <th class="px-5 py-3">Payment</th>
+            <th class="px-5 py-3">Status</th>
+            <th class="px-5 py-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          @for (order of filteredRows; track order.id) {
+            <tr class="cursor-pointer hover:bg-white/[0.03]" (click)="openOrder(order)">
+              <td class="px-5 py-3 font-semibold text-[#f97316]">{{ order.orderCode }}</td>
+              <td class="px-5 py-3">
+                <p class="font-medium text-white">{{ order.customer }}</p>
+                <p class="text-xs text-zinc-500">{{ order.customerEmail }}</p>
+              </td>
+              <td class="px-5 py-3 text-zinc-400">{{ order.date }}</td>
+              <td class="px-5 py-3 text-white">{{ order.total }}</td>
+              <td class="px-5 py-3">
+                <app-admin-status-badge [label]="order.paymentLabel" [tone]="order.paymentTone" />
+              </td>
+              <td class="px-5 py-3">
+                <app-admin-status-badge [label]="order.statusLabel" [tone]="order.statusTone" />
+              </td>
+              <td class="px-5 py-3">
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-[#f97316]"
+                  (click)="openOrder(order); $event.stopPropagation()"
+                >
+                  View
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="px-5 py-10 text-center text-zinc-500">No orders match the current filters.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-admin-data-table>
+  }
+
+  <app-order-detail-drawer
+    [open]="drawerOpen"
+    [loading]="detailLoading"
+    [errorMessage]="detailErrorMessage"
+    [order]="selectedOrder"
+    [statusOptions]="selectedOrderStatusOptions"
+    [selectedStatus]="selectedOrderStatus"
+    [canUpdateStatus]="canUpdateSelectedOrder"
+    (closed)="closeDrawer()"
+    (detailsRequested)="openSelectedOrderPage()"
+    (printRequested)="printSelectedOrder()"
+    (statusApplied)="applyStatus($event)"
+  />
+</section>

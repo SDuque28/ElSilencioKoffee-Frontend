@@ -7,9 +7,26 @@ export const DASHBOARD_ROUTES: Routes = [
       import('./pages/dashboard-home-page.component').then((m) => m.DashboardHomePageComponent),
   },
   {
-    path: 'sales',
+    path: 'analytics',
     loadComponent: () =>
-      import('./pages/dashboard-sales-page.component').then((m) => m.DashboardSalesPageComponent),
+      import('./pages/dashboard-analytics-page.component').then(
+        (m) => m.DashboardAnalyticsPageComponent,
+      ),
+  },
+  {
+    path: 'sales',
+    redirectTo: 'analytics',
+    pathMatch: 'full',
+  },
+  {
+    path: 'products',
+    loadComponent: () =>
+      import('./pages/dashboard-products-page.component').then((m) => m.DashboardProductsPageComponent),
+  },
+  {
+    path: 'orders',
+    loadComponent: () =>
+      import('./pages/dashboard-orders-page.component').then((m) => m.DashboardOrdersPageComponent),
   },
   {
     path: 'users',
@@ -17,14 +34,25 @@ export const DASHBOARD_ROUTES: Routes = [
       import('./pages/dashboard-users-page.component').then((m) => m.DashboardUsersPageComponent),
   },
   {
-    path: 'environment',
-    loadChildren: () =>
-      import('../environment-monitoring/environment-monitoring.routes').then(
-        (m) => m.ENVIRONMENT_ROUTES,
+    path: 'monitoring',
+    loadComponent: () =>
+      import('./pages/dashboard-monitoring-page.component').then(
+        (m) => m.DashboardMonitoringPageComponent,
       ),
   },
   {
+    path: 'settings',
+    loadComponent: () =>
+      import('./pages/dashboard-settings-page.component').then((m) => m.DashboardSettingsPageComponent),
+  },
+  {
+    path: 'environment',
+    redirectTo: 'monitoring',
+    pathMatch: 'full',
+  },
+  {
     path: 'production',
-    loadChildren: () => import('../production/production.routes').then((m) => m.PRODUCTION_ROUTES),
+    redirectTo: 'monitoring',
+    pathMatch: 'full',
   },
 ];

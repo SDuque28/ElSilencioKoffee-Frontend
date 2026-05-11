@@ -3,6 +3,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
+import { CartStateService } from '../../cart/services/cart-state.service';
 import { AuthFacadeService } from '../services/auth-facade.service';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
@@ -18,6 +19,7 @@ import { ToastService } from '../../../shared/ui/toast/toast.service';
 export class RegisterPageComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly authFacade = inject(AuthFacadeService);
+  private readonly cartState = inject(CartStateService);
   private readonly toastService = inject(ToastService);
   private readonly router = inject(Router);
 
@@ -53,7 +55,14 @@ export class RegisterPageComponent {
           variant: 'success',
         });
 
-        void this.router.navigateByUrl('/products');
+        this.cartState.loadCart().subscribe({
+          next: () => {
+            void this.router.navigateByUrl('/products');
+          },
+          error: () => {
+            void this.router.navigateByUrl('/products');
+          },
+        });
       },
       error: () => {
         this.toastService.show({

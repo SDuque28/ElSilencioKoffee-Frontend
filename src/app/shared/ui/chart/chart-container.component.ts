@@ -9,10 +9,12 @@ import {
   type OnDestroy,
   type SimpleChanges,
 } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { Chart, type ChartConfiguration, type ChartData, type ChartType } from 'chart.js/auto';
 
 @Component({
   selector: 'app-chart-container',
+  imports: [NgClass],
   templateUrl: './chart-container.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -36,8 +38,15 @@ export class ChartContainerComponent implements AfterViewInit, OnChanges, OnDest
     },
   };
   @Input() dataCy: string | null = null;
+  @Input() surface: 'light' | 'dark' = 'light';
 
   private chart: Chart | null = null;
+
+  get containerClasses(): string {
+    return this.surface === 'dark'
+      ? 'h-full min-h-0 w-full rounded-lg border border-white/10 bg-[#101011] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] sm:p-4'
+      : 'h-full min-h-0 w-full rounded-xl border border-border bg-white p-3 shadow-soft sm:p-4';
+  }
 
   ngAfterViewInit(): void {
     this.renderChart();

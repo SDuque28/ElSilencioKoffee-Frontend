@@ -1,11 +1,11 @@
 {
   "user": {
-    "username": "user",
-    "password": "123456"
+    "username": "luis_cafe",
+    "password": "Coffee123!"
   },
   "admin": {
-    "username": "admin",
-    "password": "123456"
+    "username": "admin_koffee",
+    "password": "Admin123!"
   },
   "register": {
     "username": "Pablo",

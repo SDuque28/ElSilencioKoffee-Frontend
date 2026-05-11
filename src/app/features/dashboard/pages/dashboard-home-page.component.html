@@ -1,27 +1,137 @@
 <section data-cy="dashboard-home-page" class="space-y-6">
-  <div>
-    <h1 class="text-2xl font-semibold text-[#f3f4f6]">Dashboard Overview</h1>
-    <p class="text-sm text-[#9ca3af]">
-      Unified entry point for ecommerce, production, and environmental analytics.
-    </p>
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-semibold text-white">Overview</h1>
+      <p class="mt-1 text-sm text-zinc-500">Welcome back, Admin. Here's what's happening today.</p>
+      @if (overview) {
+        <p data-cy="dashboard-home-active-filter" class="mt-2 text-xs text-zinc-500">
+          Active filter:
+          <span class="font-medium text-zinc-300">{{ overview.activeFilter.label }}</span>
+          <span class="text-zinc-500">| {{ overview.activeFilter.description }}</span>
+        </p>
+      }
+    </div>
+    <div class="flex gap-2">
+      <button
+        data-cy="dashboard-home-last-7-days"
+        type="button"
+        [attr.aria-pressed]="isLast7DaysFilterActive"
+        [class]="
+          filterButtonClass +
+          ' ' +
+          (isLast7DaysFilterActive ? activeFilterButtonClass : inactiveFilterButtonClass)
+        "
+        (click)="toggleLast7DaysFilter()"
+      >
+        Last 7 Days
+      </button>
+      <button
+        data-cy="dashboard-home-export-report"
+        type="button"
+        [disabled]="!overview || exporting"
+        class="rounded-md bg-[#f97316] px-3 py-2 text-xs font-semibold text-black transition-opacity disabled:cursor-not-allowed disabled:opacity-70"
+        (click)="exportResults()"
+      >
+        {{ exporting ? 'Exporting...' : 'Export Reports' }}
+      </button>
+    </div>
   </div>
 
-  <div class="grid gap-4 md:grid-cols-3">
-    @for (kpi of kpiCards; track kpi.label) {
-      <app-card className="border-[#2a2a2e] bg-[#1a1a1d] text-[#e5e5e5] shadow-none">
-        <p class="text-xs uppercase tracking-wide text-[#9ca3af]">{{ kpi.label }}</p>
-        <p class="mt-2 text-2xl font-semibold text-[#ff7a00]">{{ kpi.value }}</p>
-      </app-card>
-    }
-  </div>
+  @if (loading) {
+    <div
+      data-cy="dashboard-home-loading"
+      class="rounded-lg border border-white/10 bg-[#1b1b1d] p-6 text-sm text-zinc-400"
+    >
+      Loading admin overview...
+    </div>
+  } @else if (errorMessage) {
+    <div
+      data-cy="dashboard-home-error"
+      class="rounded-lg border border-rose-500/30 bg-rose-500/10 p-6 text-sm text-rose-200"
+    >
+      {{ errorMessage }}
+    </div>
+  } @else if (overview) {
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      @for (metric of overview.metrics; track metric.label) {
+        <app-admin-metric-card [metric]="metric" />
+      }
+    </div>
 
-  <app-card className="border-[#2a2a2e] bg-[#1a1a1d] text-[#e5e5e5] shadow-none">
-    <h2 class="mb-4 text-lg font-semibold text-[#f3f4f6]">Revenue trend</h2>
-    <app-chart-container
-      dataCy="dashboard-home-revenue-chart"
-      type="line"
-      [data]="chartData"
-      [options]="chartOptions"
-    />
-  </app-card>
+    <div class="grid gap-4 xl:grid-cols-[1fr_320px]">
+      <app-admin-chart-card
+        title="Sales Analytics"
+        [subtitle]="
+          overview.activeFilter.isRangeFiltered
+            ? 'Revenue performance for the active 7-day window'
+            : 'Revenue performance over the latest seeded dates'
+        "
+        type="line"
+        [data]="revenueChart"
+        [options]="chartOptions"
+        dataCy="dashboard-home-revenue-chart"
+      />
+
+      <section class="rounded-lg border border-white/10 bg-[#1b1b1d] p-5">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-white">Roastery Monitoring</h2>
+          <span class="rounded bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-300"
+            >LIVE</span
+          >
+        </div>
+        <div class="space-y-3">
+          @for (metric of overview.monitoring; track metric.label) {
+            <div class="rounded-lg border border-white/5 bg-black/30 p-3">
+              <p class="text-[11px] text-zinc-500">{{ metric.label }}</p>
+              <div class="mt-1 flex items-center justify-between gap-3">
+                <p class="font-semibold text-white">{{ metric.value }}</p>
+                <app-admin-status-badge [label]="metric.status" [tone]="metric.tone" />
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+
+    <app-admin-data-table
+      title="Recent Orders"
+      actionLabel="View All Orders"
+      (actionClicked)="viewAllOrders()"
+    >
+      <table data-cy="dashboard-home-orders-table" class="min-w-full text-left text-sm">
+        <thead class="bg-white/[0.03] text-[11px] uppercase text-zinc-500">
+          <tr>
+            <th class="px-5 py-3">Order ID</th>
+            <th class="px-5 py-3">Customer</th>
+            <th class="px-5 py-3">Date</th>
+            <th class="px-5 py-3">Total</th>
+            <th class="px-5 py-3">Status</th>
+            <th class="px-5 py-3">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          @for (order of overview.recentOrders; track order.id) {
+            <tr class="hover:bg-white/[0.02]">
+              <td class="px-5 py-3 font-semibold text-[#f97316]">{{ order.orderCode }}</td>
+              <td class="px-5 py-3 text-white">{{ order.customer }}</td>
+              <td class="px-5 py-3 text-zinc-400">{{ order.date }}</td>
+              <td class="px-5 py-3 text-white">{{ order.total }}</td>
+              <td class="px-5 py-3">
+                <app-admin-status-badge [label]="order.statusLabel" [tone]="order.statusTone" />
+              </td>
+              <td class="px-5 py-3">
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-[#f97316]"
+                  (click)="openOrder(order.id)"
+                >
+                  View
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-admin-data-table>
+  }
 </section>

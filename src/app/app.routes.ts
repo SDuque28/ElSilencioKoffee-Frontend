@@ -2,6 +2,7 @@ import type { Routes } from '@angular/router';
 
 import { adminGuard } from './core/guards/admin.guard';
 import { authGuard } from './core/guards/auth.guard';
+import { AdminLayoutComponent } from './features/dashboard/components/admin-layout.component';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 
 export const routes: Routes = [
@@ -52,12 +53,17 @@ export const routes: Routes = [
         canActivate: [authGuard],
         loadChildren: () => import('./features/orders/orders.routes').then((m) => m.ORDER_ROUTES),
       },
+      {
+        path: 'checkout',
+        canActivate: [authGuard],
+        loadChildren: () =>
+          import('./features/checkout/checkout.routes').then((m) => m.CHECKOUT_ROUTES),
+      },
     ],
   },
   {
     path: 'dashboard',
-    component: MainLayoutComponent,
-    data: { layout: 'admin' },
+    component: AdminLayoutComponent,
     canActivate: [authGuard, adminGuard],
     children: [
       {

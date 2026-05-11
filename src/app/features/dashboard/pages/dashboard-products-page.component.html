@@ -1,0 +1,168 @@
+<section class="space-y-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-semibold text-white">Products</h1>
+      <p class="mt-1 text-sm text-zinc-500">Manage your high-end coffee inventory and catalog details.</p>
+    </div>
+    <div class="flex gap-2">
+      <button
+        type="button"
+        class="inline-flex h-10 items-center rounded-md border border-white/10 px-3 text-xs text-zinc-300 transition-colors hover:border-white/20 hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-70"
+        [disabled]="exporting"
+        (click)="exportProducts()"
+      >
+        {{ exporting ? 'Exporting...' : 'Export' }}
+      </button>
+      <button type="button" class="inline-flex h-10 items-center rounded-md bg-[#f97316] px-3 text-xs font-semibold text-black" (click)="openModal()">
+        Add Product
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="rounded-lg border border-white/10 bg-[#1b1b1d] p-6 text-sm text-zinc-400">Loading products...</div>
+  } @else if (errorMessage) {
+    <div class="rounded-lg border border-rose-500/30 bg-rose-500/10 p-6 text-sm text-rose-200">{{ errorMessage }}</div>
+  } @else if (summary) {
+    <div class="grid gap-3 lg:grid-cols-[1.2fr_1fr_1fr_1fr_auto_auto]">
+      <input
+        [(ngModel)]="searchTerm"
+        type="search"
+        placeholder="Search products, categories, or status..."
+        class="h-10 rounded-md border border-white/10 bg-white/[0.05] px-3 text-sm text-white placeholder:text-zinc-600"
+      />
+      <app-admin-filter-select [(value)]="categoryFilter" [options]="categoryOptions" />
+      <app-admin-filter-select [(value)]="stockFilter" [options]="stockOptions" />
+      <app-admin-filter-select [(value)]="priceRangeFilter" [options]="priceRangeOptions" />
+      <div
+        class="flex h-10 items-center justify-between gap-3 rounded-md border border-white/10 bg-white/[0.05] px-3 text-sm text-zinc-400 opacity-70"
+        title="Featured filter is not available because the current admin snapshot does not expose featured product data."
+      >
+        <span>Featured</span>
+        <span class="grid h-4 w-4 place-items-center rounded border border-white/15 bg-black/20">
+          <span class="h-1.5 w-1.5 rounded-sm bg-zinc-500/60"></span>
+        </span>
+      </div>
+      <button
+        type="button"
+        class="rounded-md px-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:text-zinc-600"
+        [class.text-[#f97316]]="hasActiveFilters"
+        [class.hover:text-[#fb923c]]="hasActiveFilters"
+        [disabled]="!hasActiveFilters"
+        (click)="clearFilters()"
+      >
+        Clear All Filters
+      </button>
+    </div>
+
+    <app-admin-data-table class="mt-4">
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-white/[0.03] text-[11px] uppercase text-zinc-500">
+          <tr>
+            <th class="px-5 py-3">Preview</th>
+            <th class="px-5 py-3">Product Name</th>
+            <th class="px-5 py-3">Category</th>
+            <th class="px-5 py-3">Price</th>
+            <th class="px-5 py-3">Stock</th>
+            <th class="px-5 py-3">Status</th>
+            <th class="px-5 py-3">Featured</th>
+            <th class="px-5 py-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          @for (product of filteredProducts; track product.id) {
+            <tr class="hover:bg-white/[0.02]">
+              <td class="px-5 py-3">
+                @if (hasPreviewImage(product)) {
+                  <img
+                    [src]="product.imageUrl"
+                    [alt]="product.name"
+                    class="h-10 w-12 rounded object-cover"
+                    (error)="handleProductImageError(product.id)"
+                  />
+                } @else {
+                  <span
+                    class="grid h-10 w-12 overflow-hidden rounded border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.22),_transparent_55%),linear-gradient(180deg,_rgba(39,39,42,0.96)_0%,_rgba(24,24,27,0.98)_100%)]"
+                    [attr.aria-label]="'Placeholder image for ' + product.name"
+                  >
+                    <span class="grid place-items-center gap-0.5 text-center leading-none">
+                      <span class="text-[10px] font-semibold tracking-[0.12em] text-[#fdba74]">
+                        {{ productPlaceholderLabel(product.name) }}
+                      </span>
+                      <span class="text-[8px] uppercase tracking-[0.16em] text-zinc-500">No Img</span>
+                    </span>
+                  </span>
+                }
+              </td>
+              <td class="px-5 py-3 font-medium text-white">{{ product.name }}</td>
+              <td class="px-5 py-3 text-zinc-400">{{ product.category }}</td>
+              <td class="px-5 py-3 text-white">{{ product.price }}</td>
+              <td class="px-5 py-3 text-zinc-300">{{ product.stock }} units</td>
+              <td class="px-5 py-3">
+                <app-admin-status-badge [label]="product.statusLabel" [tone]="product.statusTone" />
+              </td>
+              <td class="px-5 py-3 text-zinc-500">{{ product.featuredLabel }}</td>
+              <td class="px-5 py-3">
+                <div class="flex items-center gap-3">
+                  <button type="button" class="text-xs font-semibold text-[#f97316]" (click)="editProduct(product)">
+                    Edit
+                  </button>
+                  <button type="button" class="text-xs font-semibold text-rose-300" (click)="requestDeleteProduct(product)">
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="px-5 py-10 text-center text-zinc-500">No products match the current filters.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-admin-data-table>
+
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      @for (metric of summary.metrics; track metric.label) {
+        <app-admin-metric-card [metric]="metric" />
+      }
+    </div>
+
+    <app-product-modal
+      [open]="modalOpen"
+      [saving]="saving"
+      [errorMessage]="modalErrorMessage"
+      [mode]="modalMode"
+      [initialValue]="modalInitialValue"
+      [presentationOptions]="summary.presentationOptions"
+      [productionOptions]="summary.productionOptions"
+      (cancelled)="closeModal()"
+      (saved)="saveProduct($event)"
+    />
+
+    <app-dialog
+      [open]="!!productPendingDelete"
+      title="Delete product"
+      [description]="
+        productPendingDelete
+          ? 'Are you sure you want to delete ' + productPendingDelete.name + '? This cannot be undone.'
+          : ''
+      "
+      (openChange)="closeDeleteDialog()"
+    >
+      <div class="flex justify-end gap-3">
+        <button type="button" class="rounded-md px-4 py-2 text-sm text-zinc-500 hover:text-zinc-800" (click)="closeDeleteDialog()">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          [disabled]="deleting"
+          (click)="confirmDeleteProduct()"
+        >
+          {{ deleting ? 'Deleting...' : 'Delete Product' }}
+        </button>
+      </div>
+    </app-dialog>
+  }
+</section>

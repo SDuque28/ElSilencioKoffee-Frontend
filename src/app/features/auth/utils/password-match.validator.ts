@@ -7,8 +7,8 @@ export function passwordMatchValidator(
   return (control: AbstractControl): ValidationErrors | null => {
     const passwordControl = control.get(passwordField);
     const confirmPasswordControl = control.get(confirmPasswordField);
-    const password = passwordControl?.value;
-    const confirmPassword = confirmPasswordControl?.value;
+    const password: unknown = passwordControl?.value;
+    const confirmPassword: unknown = confirmPasswordControl?.value;
 
     if (typeof password !== 'string' || typeof confirmPassword !== 'string') {
       return null;

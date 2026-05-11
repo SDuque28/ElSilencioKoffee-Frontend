@@ -7,11 +7,31 @@
   </div>
 
   <app-card className="border-[#2a2a2e] bg-[#1a1a1d] text-[#e5e5e5] shadow-none">
-    <app-chart-container
-      dataCy="dashboard-sales-chart"
-      type="bar"
-      [data]="chartData"
-      [options]="chartOptions"
-    />
+    @if (loading) {
+      <p data-cy="dashboard-sales-loading" class="p-6 text-sm text-[#9ca3af]">
+        Loading sales metrics...
+      </p>
+    } @else if (errorMessage) {
+      <p
+        data-cy="dashboard-sales-error"
+        class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900"
+      >
+        {{ errorMessage }}
+      </p>
+    } @else if (hasChartData) {
+      <app-chart-container
+        dataCy="dashboard-sales-chart"
+        type="bar"
+        [data]="chartData"
+        [options]="chartOptions"
+      />
+    } @else {
+      <p
+        data-cy="dashboard-sales-empty"
+        class="rounded-xl border border-dashed border-[#2a2a2e] bg-[#141416] px-4 py-8 text-center text-sm text-[#9ca3af]"
+      >
+        No orders are available to build the sales chart yet.
+      </p>
+    }
   </app-card>
 </section>

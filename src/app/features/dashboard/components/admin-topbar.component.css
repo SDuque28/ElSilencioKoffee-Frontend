@@ -1,0 +1,29 @@
+:host {
+  --notification-scrollbar-track: rgba(255, 255, 255, 0.04);
+  --notification-scrollbar-thumb: rgba(249, 115, 22, 0.5);
+  --notification-scrollbar-thumb-hover: rgba(251, 146, 60, 0.72);
+}
+
+.admin-topbar__notification-list {
+  scrollbar-width: thin;
+  scrollbar-color: var(--notification-scrollbar-thumb) var(--notification-scrollbar-track);
+}
+
+.admin-topbar__notification-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.admin-topbar__notification-list::-webkit-scrollbar-track {
+  background: var(--notification-scrollbar-track);
+  border-radius: 999px;
+}
+
+.admin-topbar__notification-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--notification-scrollbar-thumb) 0%, rgba(180, 83, 9, 0.9) 100%);
+  border: 2px solid #171719;
+  border-radius: 999px;
+}
+
+.admin-topbar__notification-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--notification-scrollbar-thumb-hover) 0%, rgba(194, 65, 12, 0.95) 100%);
+}

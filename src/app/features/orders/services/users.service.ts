@@ -22,7 +22,6 @@ export class UsersService {
   listUsers(): Observable<ApiResponse<OrdersUserSummary[]>> {
     return this.api.get<OrdersUserSummary[]>('users', {
       baseUrl: environment.authApiUrl,
-      bypassMock: true,
     });
   }
 }

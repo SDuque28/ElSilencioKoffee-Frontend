@@ -10,7 +10,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
-import type { Product } from '../../../core/models/product.model';
+import {
+  getProductAvailabilityLabel,
+  type Product,
+  type ProductAvailability,
+} from '../../../core/models/product.model';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
@@ -47,7 +51,7 @@ export class ProductDetailPageComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((product) => {
         this.product = product ?? null;
-        this.loadError = product ? null : 'This mock product is not available.';
+        this.loadError = product ? null : 'This product is not available.';
         this.cdr.markForCheck();
       });
   }
@@ -78,27 +82,23 @@ export class ProductDetailPageComponent implements OnInit {
     return this.currencyFormatter.format(price);
   }
 
-  stockVariant(stock: number): 'success' | 'warning' | 'danger' {
-    if (stock > 15) {
+  stockVariant(availability: ProductAvailability): 'success' | 'warning' | 'danger' {
+    if (availability === 'IN_STOCK') {
       return 'success';
     }
 
-    if (stock > 0) {
+    if (availability === 'LOW_STOCK') {
       return 'warning';
     }
 
     return 'danger';
   }
 
-  stockLabel(stock: number): string {
-    if (stock > 15) {
-      return 'In stock';
-    }
+  stockLabel(availability: ProductAvailability): string {
+    return getProductAvailabilityLabel(availability);
+  }
 
-    if (stock > 0) {
-      return `Only ${stock} left`;
-    }
-
-    return 'Sold out';
+  stockValueLabel(stock: number): string {
+    return String(stock);
   }
 }

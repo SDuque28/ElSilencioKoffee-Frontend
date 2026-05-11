@@ -5,36 +5,30 @@
       Coffee essentials and signature gear
     </h1>
     <p class="max-w-2xl text-sm leading-6 text-[#6b5c4f]">
-      Explore the complete mock catalog with beans, brewing equipment, and accessories prepared for
-      the ecommerce experience.
+      Explore the live catalog with beans, brewing equipment, and accessories connected to the
+      current backend data.
     </p>
   </div>
 
-  <div
-    *ngIf="isLoading"
-    data-cy="products-loading"
-    class="rounded-2xl border border-[#ebe3da] bg-white p-6 text-sm text-[#6b5c4f]"
-  >
-    Loading mock products...
-  </div>
-
-  <div
-    *ngIf="!isLoading && products.length === 0"
-    data-cy="products-empty"
-    class="rounded-2xl border border-[#ebe3da] bg-white p-6 text-sm text-[#6b5c4f]"
-  >
-    No mock products available.
-  </div>
-
-  <div
-    *ngIf="!isLoading && products.length > 0"
-    data-cy="products-grid"
-    class="grid gap-6 md:grid-cols-2 xl:grid-cols-3"
-  >
-    <app-product-card
-      *ngFor="let product of products; trackBy: trackByProductId"
-      [product]="product"
-      (addToCart)="addToCart($event)"
-    />
-  </div>
+  @if (isLoading) {
+    <div
+      data-cy="products-loading"
+      class="rounded-2xl border border-[#ebe3da] bg-white p-6 text-sm text-[#6b5c4f]"
+    >
+      Loading products...
+    </div>
+  } @else if (products.length === 0) {
+    <div
+      data-cy="products-empty"
+      class="rounded-2xl border border-[#ebe3da] bg-white p-6 text-sm text-[#6b5c4f]"
+    >
+      No products are available right now.
+    </div>
+  } @else {
+    <div data-cy="products-grid" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      @for (product of products; track trackByProductId($index, product)) {
+        <app-product-card [product]="product" (addToCart)="addToCart($event)" />
+      }
+    </div>
+  }
 </section>

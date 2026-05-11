@@ -1,0 +1,211 @@
+<section data-cy="checkout-page" class="space-y-6">
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div class="space-y-2">
+      <p class="text-xs font-semibold uppercase tracking-[0.3em] text-[#8c765f]">Checkout</p>
+      <h1 class="text-3xl font-semibold text-foreground">Shipping and payment</h1>
+      <p class="max-w-2xl text-sm text-muted">
+        Confirm your delivery information, complete the simulated payment, and we will create the
+        order, payment summary, and shipment from the server-side cart.
+      </p>
+    </div>
+
+    <app-button dataCy="checkout-back-cart" variant="outline" routerLink="/cart">
+      Back to cart
+    </app-button>
+  </div>
+
+  @if (serverError) {
+    <div
+      data-cy="checkout-error"
+      class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900"
+    >
+      {{ serverError }}
+    </div>
+  }
+
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_360px]">
+    <app-card className="space-y-6 p-6">
+      @if (loadingCart) {
+        <p data-cy="checkout-loading" class="text-sm text-muted">Loading your cart...</p>
+      } @else {
+        <form class="space-y-6" [formGroup]="form" (ngSubmit)="submit()">
+          <section class="space-y-4">
+            <div class="space-y-1">
+              <h2 class="text-lg font-semibold text-foreground">Shipping information</h2>
+              <p class="text-sm text-muted">We only store the delivery data needed to fulfill the order.</p>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <app-form-field
+                label="Address"
+                [error]="form.controls.address.touched && form.controls.address.invalid ? 'Address is required.' : ''"
+              >
+                <input data-cy="checkout-address" class="{{ controlClasses }}" formControlName="address" />
+              </app-form-field>
+
+              <app-form-field
+                label="Country"
+                [error]="form.controls.country.touched && form.controls.country.invalid ? 'Country is required.' : ''"
+              >
+                <input data-cy="checkout-country" class="{{ controlClasses }}" formControlName="country" />
+              </app-form-field>
+
+              <app-form-field
+                label="City"
+                [error]="form.controls.city.touched && form.controls.city.invalid ? 'City is required.' : ''"
+              >
+                <input data-cy="checkout-city" class="{{ controlClasses }}" formControlName="city" />
+              </app-form-field>
+
+              <app-form-field
+                label="Neighborhood"
+                [error]="form.controls.neighborhood.touched && form.controls.neighborhood.invalid ? 'Neighborhood is required.' : ''"
+              >
+                <input data-cy="checkout-neighborhood" class="{{ controlClasses }}" formControlName="neighborhood" />
+              </app-form-field>
+            </div>
+
+            <app-form-field label="Reference details">
+              <textarea
+                data-cy="checkout-reference-details"
+                class="min-h-24 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                formControlName="referenceDetails"
+              ></textarea>
+            </app-form-field>
+          </section>
+
+          <section class="space-y-4 border-t border-border pt-6">
+            <div class="space-y-1">
+              <h2 class="text-lg font-semibold text-foreground">Payment simulation</h2>
+              <p class="text-sm text-muted">
+                Card validation happens on the backend. The server stores only a masked card number, the payment method, and the approval summary.
+              </p>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <app-form-field label="Payment method">
+                <select
+                  data-cy="checkout-payment-method"
+                  class="{{ controlClasses }}"
+                  formControlName="paymentMethod"
+                >
+                  <option value="CREDIT_CARD">Credit card</option>
+                  <option value="DEBIT_CARD">Debit card</option>
+                </select>
+              </app-form-field>
+
+              <app-form-field
+                label="Cardholder name"
+                [error]="form.controls.cardholderName.touched && form.controls.cardholderName.invalid ? 'Cardholder name is required.' : ''"
+              >
+                <input
+                  data-cy="checkout-cardholder-name"
+                  class="{{ controlClasses }}"
+                  formControlName="cardholderName"
+                />
+              </app-form-field>
+
+              <app-form-field
+                label="Card number"
+                [error]="form.controls.cardNumber.touched && form.controls.cardNumber.invalid ? 'Use 13 to 19 digits.' : ''"
+              >
+                <input
+                  data-cy="checkout-card-number"
+                  class="{{ controlClasses }}"
+                  formControlName="cardNumber"
+                  inputmode="numeric"
+                />
+              </app-form-field>
+
+              <app-form-field
+                label="Expiration date"
+                hint="MM/YY or MM/YYYY"
+                [error]="form.controls.expirationDate.touched && form.controls.expirationDate.invalid ? 'Use MM/YY or MM/YYYY.' : ''"
+              >
+                <input
+                  data-cy="checkout-expiration-date"
+                  class="{{ controlClasses }}"
+                  formControlName="expirationDate"
+                  placeholder="12/29"
+                />
+              </app-form-field>
+
+              <app-form-field
+                label="CVV"
+                [error]="form.controls.cvv.touched && form.controls.cvv.invalid ? 'Use 3 or 4 digits.' : ''"
+              >
+                <input
+                  data-cy="checkout-cvv"
+                  class="{{ controlClasses }}"
+                  formControlName="cvv"
+                  inputmode="numeric"
+                />
+              </app-form-field>
+            </div>
+          </section>
+
+          <section class="space-y-4 border-t border-border pt-6">
+            <app-form-field label="Order notes">
+              <textarea
+                data-cy="checkout-notes"
+                class="min-h-24 w-full rounded-xl border border-border bg-white px-3 py-3 text-sm text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                formControlName="notes"
+              ></textarea>
+            </app-form-field>
+          </section>
+
+          <div class="flex flex-wrap justify-end gap-3 border-t border-border pt-6">
+            <app-button dataCy="checkout-submit" type="submit" [disabled]="submitting || cartState.items().length === 0">
+              {{ submitting ? 'Processing checkout...' : 'Confirm purchase' }}
+            </app-button>
+          </div>
+        </form>
+      }
+    </app-card>
+
+    <app-card className="h-fit space-y-5 p-6">
+      <div class="space-y-1">
+        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-[#8c765f]">Order summary</p>
+        <h2 class="text-lg font-semibold text-foreground">Current cart</h2>
+      </div>
+
+      @if (cartState.items().length === 0) {
+        <div
+          data-cy="checkout-empty-cart"
+          class="rounded-2xl border border-dashed border-border bg-amber-50/50 px-4 py-6 text-sm text-muted"
+        >
+          Your cart is empty. Add products before attempting checkout.
+        </div>
+      } @else {
+        <div class="space-y-3">
+          @for (item of cartState.items(); track item.itemId) {
+            <div class="flex items-start justify-between gap-3 rounded-2xl border border-border bg-[#fcf9f5] px-4 py-3">
+              <div class="min-w-0">
+                <p class="font-medium text-foreground">{{ item.name }}</p>
+                <p class="text-xs text-muted">{{ item.quantity }} x {{ item.unitPrice | currency: 'USD' : 'symbol' : '1.2-2' }}</p>
+              </div>
+              <p class="text-sm font-semibold text-foreground">
+                {{ item.subtotal | currency: 'USD' : 'symbol' : '1.2-2' }}
+              </p>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="space-y-3 rounded-2xl border border-border bg-white px-4 py-4">
+        <div class="flex items-center justify-between text-sm text-muted">
+          <span>Subtotal</span>
+          <span>{{ cartState.subtotal() | currency: 'USD' : 'symbol' : '1.2-2' }}</span>
+        </div>
+        <div class="flex items-center justify-between text-sm text-muted">
+          <span>Shipping</span>
+          <span>{{ cartState.shipping() === 0 ? 'FREE' : (cartState.shipping() | currency: 'USD' : 'symbol' : '1.2-2') }}</span>
+        </div>
+        <div class="flex items-center justify-between border-t border-border pt-3 text-base font-semibold text-foreground">
+          <span>Total</span>
+          <span data-cy="checkout-total">{{ cartState.total() | currency: 'USD' : 'symbol' : '1.2-2' }}</span>
+        </div>
+      </div>
+    </app-card>
+  </div>
+</section>

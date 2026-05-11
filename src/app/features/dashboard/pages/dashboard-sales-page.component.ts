@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  type OnInit,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { ChartConfiguration, ChartData } from 'chart.js';
 
@@ -14,6 +21,7 @@ import { DashboardService } from '../services/dashboard.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardSalesPageComponent implements OnInit {
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dashboardService = inject(DashboardService);
 
@@ -47,6 +55,8 @@ export class DashboardSalesPageComponent implements OnInit {
     },
   };
 
+  loading = true;
+  errorMessage: string | null = null;
   chartData: ChartData<'bar'> = {
     labels: [],
     datasets: [
@@ -60,23 +70,46 @@ export class DashboardSalesPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.dashboardService
-      .getSalesMetrics()
+      .getOrderVolumeSeries()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
+        this.loading = false;
+
         if (!isApiSuccessResponse(response)) {
+          this.errorMessage = response.error;
+          this.chartData = this.createEmptyChartData();
+          this.cdr.markForCheck();
           return;
         }
 
+        this.errorMessage = null;
         this.chartData = {
           ...this.chartData,
-          labels: response.data.map((item) => item.label),
+          labels: response.data.labels,
           datasets: [
             {
               ...this.chartData.datasets[0],
-              data: response.data.map((item) => item.value),
+              data: response.data.values,
             },
           ],
         };
+        this.cdr.markForCheck();
       });
+  }
+
+  get hasChartData(): boolean {
+    return Array.isArray(this.chartData.labels) && this.chartData.labels.length > 0;
+  }
+
+  private createEmptyChartData(): ChartData<'bar'> {
+    return {
+      labels: [],
+      datasets: [
+        {
+          ...this.chartData.datasets[0],
+          data: [],
+        },
+      ],
+    };
   }
 }

@@ -5,4 +5,9 @@ export const ORDER_ROUTES: Routes = [
     path: '',
     loadComponent: () => import('./pages/orders-page.component').then((m) => m.OrdersPageComponent),
   },
+  {
+    path: ':id',
+    loadComponent: () =>
+      import('./pages/order-detail-page.component').then((m) => m.OrderDetailPageComponent),
+  },
 ];

@@ -32,11 +32,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         error instanceof HttpErrorResponse
           ? {
               success: false as const,
-              error:
-                error.error?.error ??
-                error.error?.message ??
-                error.message ??
-                'Unexpected HTTP error.',
+              error: resolveHttpErrorMessage(error),
               code: error.status || 500,
             }
           : {
@@ -53,3 +49,30 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     }),
   );
 };
+
+function resolveHttpErrorMessage(error: HttpErrorResponse): string {
+  if (typeof error.error === 'string' && error.error.trim().length > 0) {
+    return error.error;
+  }
+
+  const apiError = readStringProperty(error.error, 'error');
+  if (apiError) {
+    return apiError;
+  }
+
+  const apiMessage = readStringProperty(error.error, 'message');
+  if (apiMessage) {
+    return apiMessage;
+  }
+
+  return error.message || 'Unexpected HTTP error.';
+}
+
+function readStringProperty(value: unknown, key: 'error' | 'message'): string | null {
+  if (typeof value !== 'object' || value === null || !(key in value)) {
+    return null;
+  }
+
+  const property = (value as Record<'error' | 'message', unknown>)[key];
+  return typeof property === 'string' ? property : null;
+}

@@ -8,11 +8,31 @@
 
   <app-card className="border-[#2a2a2e] bg-[#1a1a1d] text-[#e5e5e5] shadow-none">
     <h2 class="mb-4 text-lg font-semibold text-[#f3f4f6]">Production Output</h2>
-    <app-chart-container
-      dataCy="dashboard-production-chart"
-      type="bar"
-      [data]="productionData"
-      [options]="chartOptions"
-    />
+    @if (loading) {
+      <p data-cy="dashboard-production-loading" class="text-sm text-[#9ca3af]">
+        Loading production data...
+      </p>
+    } @else if (errorMessage) {
+      <p
+        data-cy="dashboard-production-error"
+        class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900"
+      >
+        {{ errorMessage }}
+      </p>
+    } @else if (hasChartData) {
+      <app-chart-container
+        dataCy="dashboard-production-chart"
+        type="bar"
+        [data]="productionData"
+        [options]="chartOptions"
+      />
+    } @else {
+      <p
+        data-cy="dashboard-production-empty"
+        class="rounded-xl border border-dashed border-[#2a2a2e] bg-[#141416] px-4 py-8 text-center text-sm text-[#9ca3af]"
+      >
+        No production records are available yet.
+      </p>
+    }
   </app-card>
 </section>

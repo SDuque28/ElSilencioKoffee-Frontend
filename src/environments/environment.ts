@@ -1,7 +1,11 @@
+import { resolveRuntimeEnv } from './runtime-env';
+
 export const environment = {
   production: false,
-  apiUrl: 'https://elsilenciokofee.com/api/v1',
-  authApiUrl: 'http://localhost:8080',
-  isMockMode: true,
-  debugApiLogging: true,
+  ...resolveRuntimeEnv({
+    apiUrl: '/api-auth',
+    authApiUrl: '/api-auth',
+    isMockMode: false,
+    debugApiLogging: true,
+  }),
 };

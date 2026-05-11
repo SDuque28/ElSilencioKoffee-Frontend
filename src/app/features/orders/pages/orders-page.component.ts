@@ -7,20 +7,58 @@ import {
   type OnInit,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
 import type { Order } from '../../../core/models/order.model';
+import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { CardComponent } from '../../../shared/ui/card/card.component';
-import { TableComponent, type TableColumn } from '../../../shared/ui/table/table.component';
 import { OrdersService } from '../services/orders.service';
 import type { OrdersUserSummary } from '../services/users.service';
 import { UsersService } from '../services/users.service';
+import {
+  buildOrderItemsPreview,
+  formatOrderCode,
+  formatOrderCurrency,
+  formatOrderDate,
+  getDeliveryStatusPresentation,
+  getOrderItemsSummary,
+  getPaymentStatusPresentation,
+  getPrimaryOrderStatusPresentation,
+  getShippingDestination,
+  type OrderBadgePresentation,
+} from '../utils/order-presentation';
+
+interface OrdersPageMetric {
+  label: string;
+  value: string;
+  supportingText: string;
+  tone: 'default' | 'success' | 'warning';
+}
+
+interface OrdersPageCard {
+  id: string | number;
+  route: string;
+  orderCode: string;
+  date: string;
+  total: string;
+  customerName: string | null;
+  customerEmail: string | null;
+  itemSummary: string;
+  itemPreview: string[];
+  notes: string | null;
+  destination: string | null;
+  primaryStatus: OrderBadgePresentation;
+  paymentStatus: OrderBadgePresentation;
+  deliveryStatus: OrderBadgePresentation;
+}
 
 @Component({
   selector: 'app-orders-page',
-  imports: [CardComponent, TableComponent],
+  standalone: true,
+  imports: [RouterLink, CardComponent, BadgeComponent],
   templateUrl: './orders-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -31,42 +69,12 @@ export class OrdersPageComponent implements OnInit {
   private readonly usersService = inject(UsersService);
   readonly authService = inject(AuthService);
 
-  private readonly currencyFormatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-
-  private readonly dateFormatter = new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-
-  private readonly adminColumns: TableColumn[] = [
-    { key: 'id', label: 'Order ID' },
-    { key: 'date', label: 'Date' },
-    { key: 'customer', label: 'Customer' },
-    { key: 'total', label: 'Total' },
-    { key: 'status', label: 'Status' },
-  ];
-
-  private readonly userColumns: TableColumn[] = [
-    { key: 'id', label: 'Order ID' },
-    { key: 'date', label: 'Date' },
-    { key: 'total', label: 'Total' },
-    { key: 'status', label: 'Status' },
-  ];
-
   loading = true;
   errorMessage: string | null = null;
   totalOrders = 0;
-  rows: Record<string, unknown>[] = [];
+  orderCards: OrdersPageCard[] = [];
+  metrics: OrdersPageMetric[] = [];
   private adminUsersById = new Map<string, string>();
-
-  get columns(): TableColumn[] {
-    return this.authService.isAdmin() ? this.adminColumns : this.userColumns;
-  }
 
   get heading(): string {
     return this.authService.isAdmin() ? 'All Orders' : 'My Orders';
@@ -100,20 +108,14 @@ export class OrdersPageComponent implements OnInit {
         this.loading = false;
 
         if (!isApiSuccessResponse(ordersResponse)) {
-          this.rows = [];
-          this.totalOrders = 0;
-          this.errorMessage = ordersResponse.error;
-          this.cdr.markForCheck();
+          this.setFailedState(ordersResponse.error);
           return;
         }
 
         this.adminUsersById = isApiSuccessResponse(usersResponse)
           ? this.buildUsersMap(usersResponse.data)
           : new Map<string, string>();
-
-        this.rows = ordersResponse.data.orders.map((order) => this.toRow(order));
-        this.totalOrders = ordersResponse.data.totalElements;
-        this.errorMessage = null;
+        this.setOrders(ordersResponse.data.orders);
         this.cdr.markForCheck();
       });
   }
@@ -126,33 +128,13 @@ export class OrdersPageComponent implements OnInit {
         this.loading = false;
 
         if (!isApiSuccessResponse(response)) {
-          this.rows = [];
-          this.totalOrders = 0;
-          this.errorMessage = response.error;
-          this.cdr.markForCheck();
+          this.setFailedState(response.error);
           return;
         }
 
-        this.rows = response.data.orders.map((order) => this.toRow(order));
-        this.totalOrders = response.data.totalElements;
-        this.errorMessage = null;
+        this.setOrders(response.data.orders);
         this.cdr.markForCheck();
       });
-  }
-
-  private toRow(order: Order): Record<string, unknown> {
-    const baseRow: Record<string, unknown> = {
-      id: order.id,
-      date: this.formatOrderDate(order.orderDate),
-      total: this.currencyFormatter.format(order.totalAmount),
-      status: order.status,
-    };
-
-    if (this.authService.isAdmin()) {
-      baseRow['customer'] = this.resolveCustomerName(order.userId);
-    }
-
-    return baseRow;
   }
 
   private resolveCustomerName(userId: string | number): string {
@@ -163,13 +145,106 @@ export class OrdersPageComponent implements OnInit {
     return new Map(users.map((user) => [String(user.id), user.username]));
   }
 
-  private formatOrderDate(value: string): string {
-    const parsedDate = new Date(value);
+  private setOrders(orders: Order[]): void {
+    this.totalOrders = orders.length;
+    this.orderCards = orders.map((order) => this.toCard(order));
+    this.metrics = this.buildMetrics(orders);
+    this.errorMessage = null;
+  }
 
-    if (Number.isNaN(parsedDate.getTime())) {
-      return value;
+  private setFailedState(message: string): void {
+    this.orderCards = [];
+    this.metrics = [];
+    this.totalOrders = 0;
+    this.errorMessage = message;
+    this.cdr.markForCheck();
+  }
+
+  private toCard(order: Order): OrdersPageCard {
+    return {
+      id: order.id,
+      route: `/orders/${order.id}`,
+      orderCode: formatOrderCode(order.id),
+      date: formatOrderDate(order.orderDate, 'detailed'),
+      total: formatOrderCurrency(order.totalAmount),
+      customerName: this.authService.isAdmin() ? this.resolveCustomerName(order.userId) : order.customer?.username ?? null,
+      customerEmail: this.authService.isAdmin() ? order.customer?.email ?? null : null,
+      itemSummary: getOrderItemsSummary(order.items),
+      itemPreview: buildOrderItemsPreview(order.items, 3),
+      notes: order.notes ?? null,
+      destination: getShippingDestination(order),
+      primaryStatus: getPrimaryOrderStatusPresentation(order),
+      paymentStatus: getPaymentStatusPresentation(order),
+      deliveryStatus: getDeliveryStatusPresentation(order),
+    };
+  }
+
+  private buildMetrics(orders: Order[]): OrdersPageMetric[] {
+    const paidOrders = orders.filter((order) => getPaymentStatusPresentation(order).label === 'Paid');
+    const deliveredOrders = orders.filter((order) => getDeliveryStatusPresentation(order).label === 'Delivered');
+    const pendingOrders = orders.filter((order) => getPaymentStatusPresentation(order).label === 'Payment Pending');
+
+    if (this.authService.isAdmin()) {
+      const customers = new Set(orders.map((order) => String(order.userId))).size;
+      const pendingShipment = orders.filter(
+        (order) =>
+          getDeliveryStatusPresentation(order).label === 'Preparing Shipment' ||
+          getDeliveryStatusPresentation(order).label === 'Out for Shipment',
+      ).length;
+
+      return [
+        {
+          label: 'Orders Managed',
+          value: String(orders.length),
+          supportingText: 'Across the current store history',
+          tone: 'default',
+        },
+        {
+          label: 'Paid Revenue',
+          value: formatOrderCurrency(paidOrders.reduce((sum, order) => sum + order.totalAmount, 0)),
+          supportingText: `${paidOrders.length} paid ${paidOrders.length === 1 ? 'order' : 'orders'}`,
+          tone: 'success',
+        },
+        {
+          label: 'Pending Fulfillment',
+          value: String(pendingShipment),
+          supportingText: 'Orders still in preparation or transit',
+          tone: pendingShipment > 0 ? 'warning' : 'success',
+        },
+        {
+          label: 'Customers',
+          value: String(customers),
+          supportingText: 'Unique buyers represented in this view',
+          tone: 'default',
+        },
+      ];
     }
 
-    return this.dateFormatter.format(parsedDate);
+    return [
+      {
+        label: 'Orders Placed',
+        value: String(orders.length),
+        supportingText: 'All purchases from this account',
+        tone: 'default',
+      },
+      {
+        label: 'Amount Paid',
+        value: formatOrderCurrency(paidOrders.reduce((sum, order) => sum + order.totalAmount, 0)),
+        supportingText: `${paidOrders.length} paid ${paidOrders.length === 1 ? 'order' : 'orders'}`,
+        tone: 'success',
+      },
+      {
+        label: 'Pending Payment',
+        value: String(pendingOrders.length),
+        supportingText: 'Orders that still require checkout completion',
+        tone: pendingOrders.length > 0 ? 'warning' : 'success',
+      },
+      {
+        label: 'Delivered',
+        value: String(deliveredOrders.length),
+        supportingText: 'Orders completed and received',
+        tone: deliveredOrders.length > 0 ? 'success' : 'default',
+      },
+    ];
   }
 }

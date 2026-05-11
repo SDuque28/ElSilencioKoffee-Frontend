@@ -1,14 +1,12 @@
 # El Silencio Koffee Frontend
 
-Angular frontend for El Silencio Koffee in `PRE-BACKEND STABILIZATION` mode. The application is fully navigable with structured mocks aligned to the API contract defined in [`documentation/routes.md`](./documentation/routes.md).
+Angular frontend for El Silencio Koffee with live backend integration enabled by default.
 
 ## 1. Current Status
 
-- Frontend works standalone without a real backend connection
-- Global mock mode is enabled through `isMockMode = true`
-- All frontend routes are accessible
-- Services are aligned with the documented API contract
-- Mocks live in services, not in components
+- Global mock mode is disabled through `isMockMode = false`
+- Frontend services use the real backend for supported flows
+- Runtime API URLs remain overrideable through `public/env.js`
 - Ecommerce home page is available at `/`
 
 ## 2. Tech Stack
@@ -58,28 +56,16 @@ Environment files live in [`src/environments`](./src/environments):
 - `environment.development.ts`
 - `environment.production.ts`
 
-Current shared configuration:
+Current shared defaults:
 
 ```ts
-apiUrl: 'https://elsilenciokofee.com/api/v1';
-isMockMode: true;
+apiUrl: '/api-auth';
+authApiUrl: '/api-auth';
+isMockMode: false;
 debugApiLogging: true;
 ```
 
-### Mock Mode Behavior
-
-When `isMockMode` is `true`:
-
-- guards allow full navigation
-- services return structured mock responses
-- interceptor keeps auth header behavior ready for future backend integration
-- API logs are printed for debugging
-
-When `isMockMode` is changed to `false` later:
-
-- the frontend will use the centralized API base URL
-- guards can enforce real access rules again
-- services are already prepared to call the documented endpoints
+Development uses [`proxy.conf.json`](./proxy.conf.json) to forward `/api-auth` to the Spring Boot backend. Production can override the runtime values through `public/env.js`.
 
 ## 5. Architecture Summary
 
@@ -105,26 +91,20 @@ src/app
 
 ### Core Layer
 
-- [`ApiService`](./src/app/core/services/api.service.ts) centralizes `get`, `post`, `patch`, `delete`
-- [`AuthService`](./src/app/core/services/auth.service.ts) manages mock/local session state
+- [`ApiService`](./src/app/core/services/api.service.ts) centralizes `get`, `post`, `put`, `patch`, and `delete`
+- [`AuthService`](./src/app/core/services/auth.service.ts) manages the persisted authenticated session
 - [`authInterceptor`](./src/app/core/interceptors/auth.interceptor.ts) attaches `Authorization` only when a token exists and normalizes HTTP errors
-- [`authGuard`](./src/app/core/guards/auth.guard.ts) and [`adminGuard`](./src/app/core/guards/admin.guard.ts) are bypassed by flag in mock mode
+- [`authGuard`](./src/app/core/guards/auth.guard.ts) and [`adminGuard`](./src/app/core/guards/admin.guard.ts) enforce authenticated/admin navigation where required
 
 ### Feature Layer
 
-Each feature owns its pages and services. Mock data is centralized in services to keep components simple and ready for future backend integration.
-
-### Shared Layer
-
-Reusable UI primitives live under `shared/ui` and are used across ecommerce and dashboard flows.
+Each feature owns its pages and services. Backend-supported flows use live APIs, and unsupported backend flows should surface empty or error states instead of falling back to fake data.
 
 ## 6. API Contract Alignment
 
-The single source of truth is [`documentation/routes.md`](./documentation/routes.md).
+The frontend currently expects:
 
-The frontend is currently prepared around:
-
-- Base URL: `/api/v1`
+- Base URL: `/api-auth` by default
 - Standard success response:
 
 ```json
@@ -137,52 +117,8 @@ The frontend is currently prepared around:
 { "success": false, "error": "message", "code": 400 }
 ```
 
-Typed models already aligned with the contract include:
+## 7. Development Notes
 
-- `User`
-- `AuthSession`
-- `Product`
-- `Order`
-- `Cart`
-- `Production`
-- `EnvironmentReading`
-- dashboard metric models
-
-## 7. Routing
-
-Main frontend routes:
-
-- `/`
-- `/login`
-- `/register`
-- `/products`
-- `/product/:id`
-- `/cart`
-- `/orders`
-- `/dashboard`
-- `/dashboard/sales`
-- `/dashboard/users`
-- `/dashboard/environment`
-- `/dashboard/production`
-
-In the current phase, no route is blocked.
-
-## 8. Manual Testing Documentation
-
-Use [`documentation/test-routes.md`](./documentation/test-routes.md) to test the frontend manually.
-
-That file includes:
-
-- all frontend routes
-- expected API endpoint per page
-- HTTP method
-- auth required by contract
-- current mode (`MOCK`)
-- manual validation checklist
-
-## 9. Development Notes
-
-- Do not move mocks back into components
-- Keep services aligned with `documentation/routes.md`
-- Prefer extending typed models before integrating the real backend
-- Preserve `isMockMode` until the backend is ready
+- Do not reintroduce mock data into components or feature services
+- Keep services aligned with real backend endpoints and response shapes
+- Prefer safe fallbacks for unsupported backend fields instead of inventing new client-side mocks

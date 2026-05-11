@@ -1,0 +1,113 @@
+<section class="space-y-6">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-semibold text-white">Detailed Analytics</h1>
+      <p class="mt-1 text-sm text-zinc-500">Revenue, order volume and customer metrics from backend data.</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <input
+        [(ngModel)]="searchTerm"
+        type="search"
+        placeholder="Search analytics..."
+        class="h-9 rounded-md border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-zinc-600"
+      />
+      <button type="button" class="rounded-md border border-white/10 px-3 py-2 text-xs text-zinc-300" (click)="exportAnalytics()">
+        {{ exporting ? 'Exporting...' : 'Export' }}
+      </button>
+      <button type="button" class="rounded-md bg-[#f97316] px-3 py-2 text-xs font-semibold text-black" (click)="generateReport()">
+        {{ generating ? 'Generating...' : 'Generate Report' }}
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="rounded-lg border border-white/10 bg-[#1b1b1d] p-6 text-sm text-zinc-400">
+      Loading analytics...
+    </div>
+  } @else if (errorMessage) {
+    <div class="rounded-lg border border-rose-500/30 bg-rose-500/10 p-6 text-sm text-rose-200">
+      {{ errorMessage }}
+    </div>
+  } @else if (analytics) {
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      @for (metric of analytics.metrics; track metric.label) {
+        <app-admin-metric-card [metric]="metric" />
+      }
+    </div>
+
+    <div class="grid gap-4 xl:grid-cols-[1fr_320px]">
+      <app-admin-chart-card
+        title="Sales Performance"
+        subtitle="Revenue and order volume by date"
+        [tabs]="['Revenue', 'Orders']"
+        [activeTab]="salesChartTab"
+        (activeTabChange)="setSalesChartTab($event)"
+        type="line"
+        [data]="revenueChart"
+        [options]="revenueChartOptions"
+      />
+
+      <section class="rounded-lg border border-white/10 bg-[#1b1b1d] p-5">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-white">Roastery Status</h2>
+          <span class="rounded bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-300">LIVE</span>
+        </div>
+        <div class="space-y-3">
+          @for (metric of analytics.monitoring; track metric.label) {
+            <div class="rounded-lg border border-white/5 bg-black/30 p-3">
+              <p class="text-[11px] text-zinc-500">{{ metric.label }}</p>
+              <p class="mt-1 font-semibold text-white">{{ metric.value }}</p>
+            </div>
+          }
+        </div>
+        <button type="button" class="mt-4 w-full rounded-md border border-white/10 py-2 text-xs text-zinc-300 hover:bg-white/[0.04]" (click)="configureThresholds()">
+          Configure Alert Thresholds
+        </button>
+      </section>
+    </div>
+
+    <app-admin-chart-card
+      title="Order Status Breakdown"
+      subtitle="Paid, processing, shipped and delivered orders from backend order and delivery status"
+      [tabs]="['Paid', 'Processing', 'Shipped', 'Delivered']"
+      [activeTab]="statusChartTab"
+      (activeTabChange)="setStatusChartTab($event)"
+      type="bar"
+      [data]="statusChart"
+      [options]="statusChartOptions"
+    />
+
+    <app-admin-data-table
+      title="Recent Orders"
+      actionLabel="View All Orders"
+      (actionClicked)="viewAllOrders()"
+    >
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-white/[0.03] text-[11px] uppercase text-zinc-500">
+          <tr>
+            <th class="px-5 py-3">Order ID</th>
+            <th class="px-5 py-3">Customer</th>
+            <th class="px-5 py-3">Product</th>
+            <th class="px-5 py-3">Date</th>
+            <th class="px-5 py-3">Amount</th>
+            <th class="px-5 py-3">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          @for (order of filteredRecentOrders; track order.id) {
+            <tr>
+              <td class="px-5 py-3 font-semibold text-[#f97316]">{{ order.orderCode }}</td>
+              <td class="px-5 py-3 text-white">{{ order.customer }}</td>
+              <td class="px-5 py-3 text-zinc-400">{{ order.source.items?.[0]?.productName ?? 'N/A' }}</td>
+              <td class="px-5 py-3 text-zinc-400">{{ order.date }}</td>
+              <td class="px-5 py-3 text-white">{{ order.total }}</td>
+              <td class="px-5 py-3">
+                <app-admin-status-badge [label]="order.statusLabel" [tone]="order.statusTone" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-admin-data-table>
+  }
+</section>

@@ -11,7 +11,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideAngularModule, ShoppingCart, X } from 'lucide-angular';
 
 import { isApiSuccessResponse } from '../../../core/models/api-response.model';
-import { PRODUCT_IMAGE_FALLBACK, type Product } from '../../../core/models/product.model';
+import {
+  PRODUCT_IMAGE_FALLBACK,
+  getProductAvailabilityLabel,
+  type Product,
+  type ProductAvailability,
+} from '../../../core/models/product.model';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
@@ -93,5 +98,9 @@ export class ProductModalComponent {
     }
 
     image.src = PRODUCT_IMAGE_FALLBACK;
+  }
+
+  stockLabel(availability: ProductAvailability): string {
+    return getProductAvailabilityLabel(availability);
   }
 }
