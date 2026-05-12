@@ -50,7 +50,7 @@ const fileValues = parseDotEnvFile(envFilePath);
 
 const runtimeConfig = Object.fromEntries(
   Object.entries(ENV_KEYS).flatMap(([publicKey, envKey]) => {
-    const value = fileValues[envKey] ?? process.env[envKey];
+    const value = process.env[envKey] ?? fileValues[envKey];
 
     return value && value.trim() ? [[publicKey, value.trim()]] : [];
   }),

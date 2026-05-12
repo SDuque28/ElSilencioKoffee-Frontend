@@ -56,7 +56,7 @@ Environment files live in [`src/environments`](./src/environments):
 - `environment.development.ts`
 - `environment.production.ts`
 
-Current shared defaults:
+Current local/development defaults:
 
 ```ts
 apiUrl: '/api-auth';
@@ -65,7 +65,25 @@ isMockMode: false;
 debugApiLogging: true;
 ```
 
-Development uses [`proxy.conf.json`](./proxy.conf.json) to forward `/api-auth` to the Spring Boot backend. Production can override the runtime values through `public/env.js`.
+Development uses [`proxy.conf.json`](./proxy.conf.json) to forward `/api-auth` to the Spring Boot backend.
+
+Production defaults point directly to the deployed backend:
+
+```ts
+apiUrl: 'https://elsilenciokoffee-backend-production.up.railway.app';
+authApiUrl: 'https://elsilenciokoffee-backend-production.up.railway.app';
+```
+
+Production can still override the runtime values through `public/env.js`.
+
+For Vercel, set these public build-time variables if you want explicit runtime config generation:
+
+```bash
+NG_APP_API_URL=https://elsilenciokoffee-backend-production.up.railway.app
+NG_APP_AUTH_API_URL=https://elsilenciokoffee-backend-production.up.railway.app
+NG_APP_IS_MOCK_MODE=false
+NG_APP_DEBUG_API_LOGGING=false
+```
 
 ## 5. Architecture Summary
 
@@ -104,7 +122,9 @@ Each feature owns its pages and services. Backend-supported flows use live APIs,
 
 The frontend currently expects:
 
-- Base URL: `/api-auth` by default
+- Base URL:
+  - development: `/api-auth`
+  - production: `https://elsilenciokoffee-backend-production.up.railway.app`
 - Standard success response:
 
 ```json
