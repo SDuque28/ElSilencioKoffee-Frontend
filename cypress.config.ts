@@ -13,8 +13,8 @@ export default defineConfig({
     openMode: 0,
   },
   e2e: {
-    baseUrl: 'http://127.0.0.1:4200',
-    specPattern: 'cypress/e2e/**/*.cy.ts',
+    baseUrl: process.env['CYPRESS_BASE_URL'] ?? 'https://el-silencio-koffee-frontend.vercel.app',
+    specPattern: 'src/pruebas/e2e/**/*.cy.ts',
     supportFile: 'cypress/support/e2e.ts',
     fixturesFolder: 'cypress/fixtures',
     downloadsFolder: 'cypress/downloads',

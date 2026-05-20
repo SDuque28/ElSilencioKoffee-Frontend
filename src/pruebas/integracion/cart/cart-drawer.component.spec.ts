@@ -4,11 +4,11 @@ import { of } from 'rxjs';
 import { provideRouter, Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
 
-import { AuthService } from '../../../core/services/auth.service';
-import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { ProductModalService } from '../../products/services/product-modal.service';
-import { CartStateService } from '../services/cart-state.service';
-import { CartDrawerComponent } from './cart-drawer.component';
+import { AuthService } from 'app/core/services/auth.service';
+import { ToastService } from 'app/shared/ui/toast/toast.service';
+import { ProductModalService } from 'app/features/products/services/product-modal.service';
+import { CartStateService } from 'app/features/cart/services/cart-state.service';
+import { CartDrawerComponent } from 'app/features/cart/components/cart-drawer.component';
 
 describe('CartDrawerComponent', () => {
   it('renders the empty state cleanly', async () => {

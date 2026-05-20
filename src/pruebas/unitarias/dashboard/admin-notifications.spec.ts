@@ -1,5 +1,5 @@
-import type { AdminSnapshotApi } from '../models/admin-api.model';
-import { buildAdminNotifications } from './admin-notifications';
+import type { AdminSnapshotApi } from 'app/features/dashboard/models/admin-api.model';
+import { buildAdminNotifications } from 'app/features/dashboard/services/admin-notifications';
 
 describe('buildAdminNotifications', () => {
   it('builds recent admin notifications from the existing admin snapshot data', () => {

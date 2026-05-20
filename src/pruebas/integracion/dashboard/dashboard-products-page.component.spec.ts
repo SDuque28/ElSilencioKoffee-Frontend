@@ -2,10 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
-import { DashboardProductsPageComponent } from './dashboard-products-page.component';
-import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { AdminDashboardReportService } from '../services/admin-dashboard-report.service';
-import { AdminDataService } from '../services/admin-data.service';
+import { DashboardProductsPageComponent } from 'app/features/dashboard/pages/dashboard-products-page.component';
+import { ToastService } from 'app/shared/ui/toast/toast.service';
+import { AdminDashboardReportService } from 'app/features/dashboard/services/admin-dashboard-report.service';
+import { AdminDataService } from 'app/features/dashboard/services/admin-data.service';
 
 describe('DashboardProductsPageComponent', () => {
   it('filters products by price range and resets active filters', async () => {

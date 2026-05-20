@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { AdminDataTableComponent } from './admin-data-table.component';
+import { AdminDataTableComponent } from 'app/features/dashboard/components/admin-data-table.component';
 
 describe('AdminDataTableComponent', () => {
   it('emits an action event when the header action button is clicked', async () => {

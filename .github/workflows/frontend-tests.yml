@@ -1,0 +1,57 @@
+name: Frontend Automated Tests
+
+on:
+  push:
+    branches:
+      - devel
+
+jobs:
+  frontend-tests:
+    name: Build, unit, integration and E2E
+    runs-on: ubuntu-latest
+
+    env:
+      CYPRESS_BASE_URL: https://el-silencio-koffee-frontend.vercel.app
+      CYPRESS_ADMIN_USERNAME: ${{ secrets.CYPRESS_ADMIN_USERNAME }}
+      CYPRESS_ADMIN_PASSWORD: ${{ secrets.CYPRESS_ADMIN_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      - name: Validate E2E credentials
+        run: |
+          test -n "$CYPRESS_ADMIN_USERNAME"
+          test -n "$CYPRESS_ADMIN_PASSWORD"
+
+      - name: Run E2E tests against Vercel
+        run: npm run test:e2e
+
+      - name: Upload Cypress artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-artifacts
+          if-no-files-found: ignore
+          path: |
+            cypress/screenshots
+            cypress/videos
+            cypress/results

@@ -3,10 +3,10 @@ import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { provideRouter, Router } from '@angular/router';
 
-import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { CartStateService } from '../../cart/services/cart-state.service';
-import { OrdersService } from '../../orders/services/orders.service';
-import { CheckoutPageComponent } from './checkout-page.component';
+import { ToastService } from 'app/shared/ui/toast/toast.service';
+import { CartStateService } from 'app/features/cart/services/cart-state.service';
+import { OrdersService } from 'app/features/orders/services/orders.service';
+import { CheckoutPageComponent } from 'app/features/checkout/pages/checkout-page.component';
 
 describe('CheckoutPageComponent', () => {
   const cartStateStub = {

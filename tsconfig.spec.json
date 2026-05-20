@@ -4,7 +4,13 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
+    "rootDir": "./src",
     "types": ["vitest/globals"]
   },
-  "include": ["src/**/*.d.ts", "src/**/*.spec.ts"]
+  "include": [
+    "src/**/*.d.ts",
+    "src/pruebas/unitarias/**/*.spec.ts",
+    "src/pruebas/integracion/**/*.spec.ts"
+  ],
+  "exclude": ["src/pruebas/e2e/**/*.cy.ts", "cypress/**/*.ts"]
 }

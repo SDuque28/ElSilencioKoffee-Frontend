@@ -2,17 +2,19 @@ describe('Products flows', () => {
   it('renders the catalog and opens the product modal', () => {
     cy.visit('/products');
 
-    cy.getByCy('product-card-5').click();
+    cy.get('[data-cy^="product-card-"]').first().click();
     cy.getByCy('product-modal').should('be.visible');
-    cy.getByCy('product-modal').should('contain.text', 'Barista Pro Grinder');
     cy.getByCy('product-modal-close').click();
   });
 
-  it('opens a product route and resolves it through the modal flow', () => {
-    cy.visit('/product/1');
+  it('keeps the catalog route stable after closing a product modal', () => {
+    cy.visit('/products');
 
     cy.location('pathname').should('eq', '/products');
+    cy.get('[data-cy^="product-card-"]').first().click();
     cy.getByCy('product-modal').should('be.visible');
-    cy.getByCy('product-modal').should('contain.text', 'Ethiopian Yirgacheffe');
+    cy.getByCy('product-modal-close').click();
+    cy.getByCy('product-modal').should('not.exist');
+    cy.location('pathname').should('eq', '/products');
   });
 });

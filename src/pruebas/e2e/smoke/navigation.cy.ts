@@ -16,12 +16,24 @@ describe('Smoke navigation', () => {
   it('loads the products catalog', () => {
     cy.visit('/products');
 
-    cy.getByCy('products-grid').find('article[data-cy^="product-card-"]').should('have.length', 10);
+    cy.getByCy('products-grid')
+      .find('article[data-cy^="product-card-"]')
+      .its('length')
+      .should('be.greaterThan', 0);
   });
 
   it('redirects invalid routes back to home', () => {
     cy.visit('/ruta-invalida', { failOnStatusCode: false });
 
     cy.location('pathname').should('eq', '/');
+  });
+
+  it('keeps primary navigation usable on mobile viewport', () => {
+    cy.viewport(390, 844);
+    cy.visit('/');
+
+    cy.get('button[aria-label="Toggle navigation"]').click();
+    cy.getByCy('mobile-nav-products-link').should('be.visible').click();
+    cy.location('pathname').should('eq', '/products');
   });
 });

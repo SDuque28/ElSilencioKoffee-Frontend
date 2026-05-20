@@ -1,5 +1,5 @@
-import type { AdminSnapshotApi } from '../models/admin-api.model';
-import { buildFilteredAdminSnapshot } from './admin-dashboard-filtering';
+import type { AdminSnapshotApi } from 'app/features/dashboard/models/admin-api.model';
+import { buildFilteredAdminSnapshot } from 'app/features/dashboard/services/admin-dashboard-filtering';
 
 describe('admin dashboard filtering', () => {
   it('filters dated dashboard collections to the latest 7 calendar days while preserving undated snapshots', () => {

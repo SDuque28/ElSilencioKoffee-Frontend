@@ -3,10 +3,10 @@ import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { provideRouter, Router } from '@angular/router';
 
-import { AuthService } from '../../../core/services/auth.service';
-import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { CartStateService } from '../services/cart-state.service';
-import { CartPageComponent } from './cart-page.component';
+import { AuthService } from 'app/core/services/auth.service';
+import { ToastService } from 'app/shared/ui/toast/toast.service';
+import { CartStateService } from 'app/features/cart/services/cart-state.service';
+import { CartPageComponent } from 'app/features/cart/components/cart-page.component';
 
 describe('CartPageComponent', () => {
   it('renders cart items returned by the cart service', async () => {

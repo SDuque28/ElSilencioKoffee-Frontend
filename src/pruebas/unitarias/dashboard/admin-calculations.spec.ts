@@ -1,6 +1,6 @@
-import type { AdminSnapshotApi } from '../models/admin-api.model';
-import { buildOverview } from './admin-calculations';
-import { buildFilteredAdminSnapshot } from './admin-dashboard-filtering';
+import type { AdminSnapshotApi } from 'app/features/dashboard/models/admin-api.model';
+import { buildOverview } from 'app/features/dashboard/services/admin-calculations';
+import { buildFilteredAdminSnapshot } from 'app/features/dashboard/services/admin-dashboard-filtering';
 
 describe('buildOverview', () => {
   it('builds a filtered overview and report payload from the same dashboard data', () => {

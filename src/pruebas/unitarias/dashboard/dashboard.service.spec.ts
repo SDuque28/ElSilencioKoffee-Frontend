@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, of } from 'rxjs';
 
-import type { ApiResponse } from '../../../core/models/api-response.model';
-import { ApiService } from '../../../core/services/api.service';
-import { DashboardService } from './dashboard.service';
+import type { ApiResponse } from 'app/core/models/api-response.model';
+import { ApiService } from 'app/core/services/api.service';
+import { DashboardService } from 'app/features/dashboard/services/dashboard.service';
 
 describe('DashboardService', () => {
   let service: DashboardService;

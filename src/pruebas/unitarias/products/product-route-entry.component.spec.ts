@@ -3,9 +3,9 @@ import { convertToParamMap } from '@angular/router';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ProductRouteEntryComponent } from './product-route-entry.component';
-import { ProductsService } from '../services/products.service';
-import { ProductModalService } from '../services/product-modal.service';
+import { ProductRouteEntryComponent } from 'app/features/products/components/product-route-entry.component';
+import { ProductsService } from 'app/features/products/services/products.service';
+import { ProductModalService } from 'app/features/products/services/product-modal.service';
 
 describe('ProductRouteEntryComponent', () => {
   function configureTestingModule(getProductResult: object | undefined): {

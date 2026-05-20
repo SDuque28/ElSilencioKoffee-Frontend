@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, of } from 'rxjs';
 
-import type { ApiResponse } from '../../../core/models/api-response.model';
-import type { CheckoutResult } from '../../../core/models/checkout.model';
-import { ApiService } from '../../../core/services/api.service';
-import { AuthService } from '../../../core/services/auth.service';
-import { OrdersService } from './orders.service';
+import type { ApiResponse } from 'app/core/models/api-response.model';
+import type { CheckoutResult } from 'app/core/models/checkout.model';
+import { ApiService } from 'app/core/services/api.service';
+import { AuthService } from 'app/core/services/auth.service';
+import { OrdersService } from 'app/features/orders/services/orders.service';
 
 describe('OrdersService', () => {
   let service: OrdersService;

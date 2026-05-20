@@ -2,10 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { DashboardOrdersPageComponent } from './dashboard-orders-page.component';
-import { AdminDashboardReportService } from '../services/admin-dashboard-report.service';
-import { AdminDataService } from '../services/admin-data.service';
+import { ToastService } from 'app/shared/ui/toast/toast.service';
+import { DashboardOrdersPageComponent } from 'app/features/dashboard/pages/dashboard-orders-page.component';
+import { AdminDashboardReportService } from 'app/features/dashboard/services/admin-dashboard-report.service';
+import { AdminDataService } from 'app/features/dashboard/services/admin-data.service';
 
 describe('DashboardOrdersPageComponent', () => {
   it('filters orders to the latest 30-day window', async () => {

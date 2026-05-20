@@ -3,11 +3,11 @@ import { signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
-import type { ApiResponse } from '../../../core/models/api-response.model';
-import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { DashboardHomePageComponent } from './dashboard-home-page.component';
-import { AdminDataService } from '../services/admin-data.service';
-import { AdminProjectReportService } from '../services/admin-project-report.service';
+import type { ApiResponse } from 'app/core/models/api-response.model';
+import { ToastService } from 'app/shared/ui/toast/toast.service';
+import { DashboardHomePageComponent } from 'app/features/dashboard/pages/dashboard-home-page.component';
+import { AdminDataService } from 'app/features/dashboard/services/admin-data.service';
+import { AdminProjectReportService } from 'app/features/dashboard/services/admin-project-report.service';
 
 describe('DashboardHomePageComponent', () => {
   const snapshotResponse = {

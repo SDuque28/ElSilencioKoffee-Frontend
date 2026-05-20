@@ -20,7 +20,7 @@ import { AdminMonitoringThresholdsService } from '../services/admin-monitoring-t
   selector: 'app-dashboard-monitoring-page',
   imports: [AdminStatusBadgeComponent],
   template: `
-    <section class="space-y-6">
+    <section data-cy="dashboard-monitoring-page" class="space-y-6">
       <div>
         <h1 class="text-2xl font-semibold text-white">Monitoring</h1>
         <p class="mt-1 text-sm text-zinc-500">Environmental metrics from /environment-metrics.</p>

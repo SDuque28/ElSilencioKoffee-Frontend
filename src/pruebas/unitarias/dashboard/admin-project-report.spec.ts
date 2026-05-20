@@ -1,5 +1,5 @@
-import type { AdminSnapshotApi } from '../models/admin-api.model';
-import { buildCompleteAdminProjectReport } from './admin-project-report';
+import type { AdminSnapshotApi } from 'app/features/dashboard/models/admin-api.model';
+import { buildCompleteAdminProjectReport } from 'app/features/dashboard/services/admin-project-report';
 
 describe('buildCompleteAdminProjectReport', () => {
   it('builds a complete admin project report with multi-section summaries', () => {

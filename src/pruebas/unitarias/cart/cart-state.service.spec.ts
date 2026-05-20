@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, of } from 'rxjs';
 
-import type { ApiResponse } from '../../../core/models/api-response.model';
-import type { Product } from '../../../core/models/product.model';
-import { PRODUCT_IMAGE_FALLBACK } from '../../../core/models/product.model';
-import { ApiService } from '../../../core/services/api.service';
-import { AuthService } from '../../../core/services/auth.service';
-import { CartStateService } from './cart-state.service';
+import type { ApiResponse } from 'app/core/models/api-response.model';
+import type { Product } from 'app/core/models/product.model';
+import { PRODUCT_IMAGE_FALLBACK } from 'app/core/models/product.model';
+import { ApiService } from 'app/core/services/api.service';
+import { AuthService } from 'app/core/services/auth.service';
+import { CartStateService } from 'app/features/cart/services/cart-state.service';
 
 describe('CartStateService', () => {
   let service: CartStateService;

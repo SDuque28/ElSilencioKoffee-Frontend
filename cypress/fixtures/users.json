@@ -1,15 +1,7 @@
 {
-  "user": {
-    "username": "luis_cafe",
-    "password": "Coffee123!"
-  },
-  "admin": {
-    "username": "admin_koffee",
-    "password": "Admin123!"
-  },
-  "register": {
-    "username": "Pablo",
-    "email": "pablo.herrera@test.com",
-    "password": "123456"
+  "testUser": {
+    "username": "qa_frontend_user",
+    "email": "qa.frontend.user@example.test",
+    "password": "QaFrontend123!"
   }
 }

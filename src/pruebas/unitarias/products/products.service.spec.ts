@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, of } from 'rxjs';
 
-import { type ApiResponse } from '../../../core/models/api-response.model';
-import { PRODUCT_IMAGE_FALLBACK } from '../../../core/models/product.model';
-import { ApiService } from '../../../core/services/api.service';
-import { ProductsService } from './products.service';
+import { type ApiResponse } from 'app/core/models/api-response.model';
+import { PRODUCT_IMAGE_FALLBACK } from 'app/core/models/product.model';
+import { ApiService } from 'app/core/services/api.service';
+import { ProductsService } from 'app/features/products/services/products.service';
 
 describe('ProductsService', () => {
   let service: ProductsService;

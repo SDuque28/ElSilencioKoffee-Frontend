@@ -3,12 +3,12 @@ import { TestBed } from '@angular/core/testing';
 import { NavigationStart, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 
-import type { AdminNotificationItem } from '../models/admin-view.model';
-import { AdminTopbarComponent } from './admin-topbar.component';
-import { AdminNotificationsService } from '../services/admin-notifications.service';
-import { AdminProjectReportService } from '../services/admin-project-report.service';
-import { AdminViewNavigationService } from '../services/admin-view-navigation.service';
-import { ToastService } from '../../../shared/ui/toast/toast.service';
+import type { AdminNotificationItem } from 'app/features/dashboard/models/admin-view.model';
+import { AdminTopbarComponent } from 'app/features/dashboard/components/admin-topbar.component';
+import { AdminNotificationsService } from 'app/features/dashboard/services/admin-notifications.service';
+import { AdminProjectReportService } from 'app/features/dashboard/services/admin-project-report.service';
+import { AdminViewNavigationService } from 'app/features/dashboard/services/admin-view-navigation.service';
+import { ToastService } from 'app/shared/ui/toast/toast.service';
 
 describe('AdminTopbarComponent', () => {
   it('opens notifications, closes on navigation, and triggers the header actions', async () => {

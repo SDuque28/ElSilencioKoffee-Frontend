@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
-import { ProductsPageComponent } from './products-page.component';
-import { ProductsService } from '../services/products.service';
-import { CartStateService } from '../../cart/services/cart-state.service';
-import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { ProductModalService } from '../services/product-modal.service';
+import { ProductsPageComponent } from 'app/features/products/pages/products-page.component';
+import { ProductsService } from 'app/features/products/services/products.service';
+import { CartStateService } from 'app/features/cart/services/cart-state.service';
+import { ToastService } from 'app/shared/ui/toast/toast.service';
+import { ProductModalService } from 'app/features/products/services/product-modal.service';
 
 describe('ProductsPageComponent', () => {
   beforeEach(async () => {

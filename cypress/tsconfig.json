@@ -4,5 +4,5 @@
     "types": ["cypress", "node"],
     "module": "commonjs"
   },
-  "include": ["./**/*.ts"]
+  "include": ["./**/*.ts", "../src/pruebas/e2e/**/*.ts"]
 }
