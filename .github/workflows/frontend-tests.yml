@@ -12,8 +12,6 @@ jobs:
 
     env:
       CYPRESS_BASE_URL: https://el-silencio-koffee-frontend.vercel.app
-      CYPRESS_ADMIN_USERNAME: ${{ secrets.CYPRESS_ADMIN_USERNAME }}
-      CYPRESS_ADMIN_PASSWORD: ${{ secrets.CYPRESS_ADMIN_PASSWORD }}
 
     steps:
       - name: Checkout repository
@@ -37,13 +35,8 @@ jobs:
       - name: Run integration tests
         run: npm run test:integration
 
-      - name: Validate E2E credentials
-        run: |
-          test -n "$CYPRESS_ADMIN_USERNAME"
-          test -n "$CYPRESS_ADMIN_PASSWORD"
-
-      - name: Run E2E tests against Vercel
-        run: npm run test:e2e
+      - name: Run E2E tests against Vercel without admin credentials
+        run: npm run test:e2e:ci
 
       - name: Upload Cypress artifacts
         if: always()

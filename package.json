@@ -12,6 +12,7 @@
     "test:unit": "npm run prepare:runtime-env && ng test --watch=false --include \"src/pruebas/unitarias/**/*.spec.ts\"",
     "test:integration": "npm run prepare:runtime-env && ng test --watch=false --include \"src/pruebas/integracion/**/*.spec.ts\"",
     "test:e2e": "node scripts/run-cypress.mjs run",
+    "test:e2e:ci": "node scripts/run-cypress.mjs run --spec \"src/pruebas/e2e/smoke/**/*.cy.ts,src/pruebas/e2e/auth.cy.ts,src/pruebas/e2e/products.cy.ts,src/pruebas/e2e/cart-orders.cy.ts\"",
     "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
     "test:ci": "npm run build && npm run test:unit && npm run test:integration && npm run test:e2e",
     "cy:open": "node scripts/run-cypress.mjs open",

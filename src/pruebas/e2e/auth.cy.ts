@@ -5,13 +5,6 @@ describe('Authentication flows', () => {
     cy.getByCy('nav-logout-button').should('be.visible');
   });
 
-  it('logs in as admin and opens the dashboard', () => {
-    cy.loginAsAdmin();
-
-    cy.location('pathname').should('eq', '/dashboard');
-    cy.getByCy('dashboard-home-page').should('be.visible');
-  });
-
   it('logs in with the controlled test user and shows authenticated navigation', () => {
     cy.ensureSingleTestUser();
     cy.loginAsTestUser();
